@@ -165,15 +165,7 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
           backgroundColor: isDark ? AppColors.cardDark : AppColors.white,
           elevation: 0,
           leading: AppBackButton(
-            onPressed: () {
-              setState(() => _isPlaying = false);
-              _saveProgress();
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go('/my-learning');
-              }
-            },
+            onPressed: _handleBack,
           ),
           title: Text(
             widget.courseTitle,
@@ -244,7 +236,7 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
                     onCast: () {},
                     onSeek: _onSeek,
                     onSpeedTap: () {},
-                    onBack: () => context.pop(),
+                    onBack: _handleBack,
                     courseTitle: state.courseTitle,
                     sectionIndex: sectionIndex,
                     lessonIndex: lessonIndex,
@@ -322,6 +314,24 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
         );
       },
     );
+  }
+
+  void _handleBack() {
+    setState(() => _isPlaying = false);
+    _saveProgress();
+
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    final navigator = Navigator.maybeOf(context);
+    if (navigator != null && navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+
+    context.go('/course/${widget.courseId}');
   }
 
   Widget _buildTabContent(CoursePlayerState state, bool isDark) {

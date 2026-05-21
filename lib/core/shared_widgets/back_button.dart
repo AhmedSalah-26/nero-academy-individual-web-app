@@ -8,6 +8,7 @@ class AppBackButton extends StatelessWidget {
   final double size;
   final double iconSize;
   final double borderRadius;
+  final String fallbackLocation;
 
   const AppBackButton({
     super.key,
@@ -15,6 +16,7 @@ class AppBackButton extends StatelessWidget {
     this.size = 36,
     this.iconSize = 18,
     this.borderRadius = 12,
+    this.fallbackLocation = '/',
   });
 
   @override
@@ -36,11 +38,22 @@ class AppBackButton extends StatelessWidget {
           color: isDark ? AppColors.white : AppColors.textMainLight,
         ),
       ),
-      onPressed: onPressed ?? () {
-        if (context.canPop()) {
-          context.pop();
-        }
-      },
+      onPressed: onPressed ?? () => _handleBack(context),
     );
+  }
+
+  void _handleBack(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    final navigator = Navigator.maybeOf(context);
+    if (navigator != null && navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+
+    context.go(fallbackLocation);
   }
 }

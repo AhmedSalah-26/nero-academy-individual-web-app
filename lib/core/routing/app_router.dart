@@ -108,8 +108,6 @@ import '../../features/instructor/data/datasources/instructor_remote_data_source
 import '../../features/instructor/presentation/cubit/instructor_cubit.dart';
 import '../../features/instructor/presentation/screens/instructor_profile_screen.dart';
 
-
-
 /// App Router - Centralized routing configuration
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -125,8 +123,6 @@ class AppRouter {
         name: 'splash',
         builder: (context, state) => const SplashScreen(),
       ),
-
-
 
       // ==================== Auth Routes ====================
       // Singleton cubits from GetIt must use BlocProvider.value to avoid
@@ -529,10 +525,6 @@ class AppRouter {
         builder: (context, state) => const TermsOfServiceScreen(),
       ),
 
-
-
-
-
       // Quiz Info
       GoRoute(
         path: '/quiz/:quizId',
@@ -638,8 +630,6 @@ class AppRouter {
           return AttachmentPreviewScreen(url: url, title: title);
         },
       ),
-
-
 
       // Instructor Dashboard
       GoRoute(
@@ -1010,12 +1000,9 @@ class AppRouter {
         },
       ),
     ],
-
     redirect: (context, state) async {
       final user = Supabase.instance.client.auth.currentUser;
       final path = state.uri.path;
-
-
 
       // Instructor dashboard access control (only /instructor route, not /instructor/:id profiles)
       if (path == '/instructor' || path == '/instructor/') {
@@ -1136,7 +1123,6 @@ class AppRouter {
   static void goToTermsOfService(BuildContext context) =>
       context.pushNamed('terms-of-service');
 
-
   static void goToQuiz(BuildContext context,
       {required String quizId,
       required String enrollmentId,
@@ -1165,8 +1151,6 @@ class AppRouter {
       context.pushNamed('notifications');
   static void goToCategories(BuildContext context) =>
       context.pushNamed('categories');
-
-
 
   static void goToInstructorDashboard(BuildContext context) =>
       context.pushNamed('instructor-dashboard');
@@ -1438,7 +1422,18 @@ class AppRouter {
   }
 
   static void pop(BuildContext context) {
-    if (context.canPop()) context.pop();
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    final navigator = Navigator.maybeOf(context);
+    if (navigator != null && navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+
+    context.go('/');
   }
 }
 

@@ -8,9 +8,9 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // Supabase Configuration
-  static const String supabaseUrl = 'https://glffragviwrrveqojlhb.supabase.co';
+  static const String supabaseUrl = 'https://ubjhdafxmncfbaldfivd.supabase.co';
   static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdsZmZyYWd2aXdycnZlcW9qbGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MzUxNjgsImV4cCI6MjA4MzMxMTE2OH0.7D9RPvizCEe-k6TiJSs8PdH14eidt5AoXzkHcF7ri-A';
+      'sb_publishable_wJvu57s6WvTFFi9JTZhBbg_mS3tYCE7';
 
   // Storage Buckets
   static const String avatarsBucket = 'avatars';

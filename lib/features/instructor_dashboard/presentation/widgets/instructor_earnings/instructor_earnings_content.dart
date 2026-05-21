@@ -1,15 +1,12 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/shared_widgets/dashboard/dashboard_widgets.dart';
+import 'package:intl/intl.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/routing/app_router.dart';
+import '../../../data/models/instructor_earning_model.dart';
 import '../../cubit/instructor_earnings_cubit.dart';
-import 'earnings_stats_cards.dart';
-import 'earnings_list_widgets.dart';
-import 'earnings_breakdown_widget.dart';
 
-/// Instructor Earnings Content — NEW SCHEMA
+/// Instructor Earnings Content — Simple Stats View
 class InstructorEarningsContent extends StatefulWidget {
   const InstructorEarningsContent({super.key});
 
@@ -18,13 +15,38 @@ class InstructorEarningsContent extends StatefulWidget {
       _InstructorEarningsContentState();
 }
 
-class _InstructorEarningsContentState extends State<InstructorEarningsContent> {
+class _InstructorEarningsContentState
+    extends State<InstructorEarningsContent> {
+  _Period _selectedPeriod = _Period.month;
+
   @override
   void initState() {
     super.initState();
-    final cubit = context.read<InstructorEarningsCubit>();
-    cubit.loadEarnings(refresh: true);
-    cubit.loadWithdrawHistory(refresh: true);
+    _loadForPeriod(_selectedPeriod);
+  }
+
+  void _loadForPeriod(_Period period) {
+    final now = DateTime.now();
+    DateTime start;
+    switch (period) {
+      case _Period.week:
+        start = now.subtract(const Duration(days: 7));
+        break;
+      case _Period.month:
+        start = DateTime(now.year, now.month, 1);
+        break;
+      case _Period.year:
+        start = DateTime(now.year, 1, 1);
+        break;
+      case _Period.all:
+        start = DateTime(2000);
+        break;
+    }
+    context.read<InstructorEarningsCubit>().loadEarnings(
+          refresh: true,
+          startDate: start,
+          endDate: now,
+        );
   }
 
   @override
@@ -34,31 +56,70 @@ class _InstructorEarningsContentState extends State<InstructorEarningsContent> {
 
     return BlocBuilder<InstructorEarningsCubit, InstructorEarningsState>(
       builder: (context, state) {
+        // Calculate stats from loaded earnings
+        final totalEarnings = state.earnings
+            .fold<double>(0, (sum, e) => sum + e.netAmount);
+        final totalEnrollments = state.earnings.length;
+
         return RefreshIndicator(
-          onRefresh: () async {
-            final cubit = context.read<InstructorEarningsCubit>();
-            await cubit.loadEarnings();
-            await cubit.loadWithdrawHistory();
-          },
+          onRefresh: () async => _loadForPeriod(_selectedPeriod),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                EarningsStatsCards(
-                    state: state, isArabic: isArabic, isDark: isDark),
+                // Period Filter
+                _PeriodFilter(
+                  selected: _selectedPeriod,
+                  isArabic: isArabic,
+                  isDark: isDark,
+                  onChanged: (p) {
+                    setState(() => _selectedPeriod = p);
+                    _loadForPeriod(p);
+                  },
+                ),
                 const SizedBox(height: 20),
-                _buildQuickActions(context, state, isArabic, isDark),
+
+                // Main Stats Cards
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.attach_money_rounded,
+                        label: isArabic ? 'إجمالي الأرباح' : 'Total Earnings',
+                        value:
+                            '${totalEarnings.toStringAsFixed(0)} ${isArabic ? 'ج.م' : 'EGP'}',
+                        color: AppColors.success,
+                        isDark: isDark,
+                        isLoading: state.isLoading,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.people_alt_rounded,
+                        label: isArabic
+                            ? 'عدد الاشتراكات'
+                            : 'Total Enrollments',
+                        value: '$totalEnrollments',
+                        color: AppColors.primary,
+                        isDark: isDark,
+                        isLoading: state.isLoading,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 24),
-                EarningsBreakdownWidget(
-                    state: state, isArabic: isArabic, isDark: isDark),
+
+                // Transactions List
+                _TransactionsList(
+                  earnings: state.earnings,
+                  isLoading: state.isLoading,
+                  isArabic: isArabic,
+                  isDark: isDark,
+                ),
                 const SizedBox(height: 24),
-                RecentEarningsList(
-                    state: state, isArabic: isArabic, isDark: isDark),
-                const SizedBox(height: 24),
-                WithdrawHistoryList(
-                    state: state, isArabic: isArabic, isDark: isDark),
               ],
             ),
           ),
@@ -66,58 +127,383 @@ class _InstructorEarningsContentState extends State<InstructorEarningsContent> {
       },
     );
   }
+}
 
-  Widget _buildQuickActions(BuildContext context, InstructorEarningsState state,
-      bool isArabic, bool isDark) {
-    final availableBalance = state.walletSummary.availableBalance;
+// ──────────────────────────────────────────────
+// Period Enum
+// ──────────────────────────────────────────────
+enum _Period { week, month, year, all }
 
-    return Row(
-      children: [
-        Expanded(
-          child: SolidActionButton(
-            icon: Icons.payments_rounded,
-            label: isArabic ? 'طلب سحب' : 'Request Withdrawal',
-            color: AppColors.success,
-            onPressed: availableBalance >= 50
-                ? () => _showWithdrawDialog(context, isArabic, availableBalance)
-                : null,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedActionButton(
-            icon: Icons.history_rounded,
-            label: isArabic ? 'سجل كامل' : 'Full History',
-            onPressed: () => AppRouter.goToEarningsHistory(context),
-          ),
-        ),
-      ],
-    );
+extension _PeriodLabel on _Period {
+  String label(bool isArabic) {
+    switch (this) {
+      case _Period.week:
+        return isArabic ? 'أسبوع' : 'Week';
+      case _Period.month:
+        return isArabic ? 'شهر' : 'Month';
+      case _Period.year:
+        return isArabic ? 'سنة' : 'Year';
+      case _Period.all:
+        return isArabic ? 'الكل' : 'All';
+    }
   }
+}
 
-  void _showWithdrawDialog(
-      BuildContext context, bool isArabic, double maxAmount) {
-    final cubit = context.read<InstructorEarningsCubit>();
+// ──────────────────────────────────────────────
+// Period Filter Widget
+// ──────────────────────────────────────────────
+class _PeriodFilter extends StatelessWidget {
+  final _Period selected;
+  final bool isArabic;
+  final bool isDark;
+  final ValueChanged<_Period> onChanged;
 
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.7),
-      builder: (dialogContext) => _WithdrawRequestDialog(
-        isArabic: isArabic,
-        maxAmount: maxAmount,
-        onSubmit: (amount, method, details) {
-          cubit.submitWithdrawRequest(
-            amount: amount,
-            method: method,
-            accountDetails: details,
+  const _PeriodFilter({
+    required this.selected,
+    required this.isArabic,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.grey100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+      ),
+      child: Row(
+        children: _Period.values.map((period) {
+          final isSelected = period == selected;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(period),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  period.label(isArabic),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected
+                        ? Colors.white
+                        : isDark
+                            ? AppColors.textMutedDark
+                            : AppColors.textMutedLight,
+                  ),
+                ),
+              ),
+            ),
           );
-        },
+        }).toList(),
       ),
     );
   }
 }
 
-/// Outlined Action Button
+// ──────────────────────────────────────────────
+// Stat Card
+// ──────────────────────────────────────────────
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final bool isDark;
+  final bool isLoading;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isDark,
+    required this.isLoading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(height: 14),
+          if (isLoading)
+            Container(
+              height: 28,
+              width: 80,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.borderDark : AppColors.grey100,
+                borderRadius: BorderRadius.circular(6),
+              ),
+            )
+          else
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textMainDark : AppColors.textMainLight,
+              ),
+            ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// Transactions List
+// ──────────────────────────────────────────────
+class _TransactionsList extends StatelessWidget {
+  final List<EarningsTransactionModel> earnings;
+  final bool isLoading;
+  final bool isArabic;
+  final bool isDark;
+
+  const _TransactionsList({
+    required this.earnings,
+    required this.isLoading,
+    required this.isArabic,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.receipt_long_rounded,
+              size: 20,
+              color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isArabic ? 'المعاملات' : 'Transactions',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color:
+                    isDark ? AppColors.textMainDark : AppColors.textMainLight,
+              ),
+            ),
+            if (earnings.isNotEmpty) ...[
+              const Spacer(),
+              Text(
+                '${earnings.length} ${isArabic ? 'معاملة' : 'records'}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? AppColors.textMutedDark
+                      : AppColors.textMutedLight,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (isLoading)
+          ...List.generate(
+            4,
+            (_) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              height: 72,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.cardDark : AppColors.grey100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          )
+        else if (earnings.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(40),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.cardDark : AppColors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              ),
+            ),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.receipt_outlined,
+                    size: 48,
+                    color: isDark
+                        ? AppColors.textMutedDark
+                        : AppColors.grey300,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isArabic
+                        ? 'لا توجد معاملات في هذه الفترة'
+                        : 'No transactions in this period',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.textMutedDark
+                          : AppColors.textMutedLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ...earnings.map((e) => _TransactionItem(
+                earning: e,
+                isArabic: isArabic,
+                isDark: isDark,
+              )),
+      ],
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// Transaction Item
+// ──────────────────────────────────────────────
+class _TransactionItem extends StatelessWidget {
+  final EarningsTransactionModel earning;
+  final bool isArabic;
+  final bool isDark;
+
+  const _TransactionItem({
+    required this.earning,
+    required this.isArabic,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isRefund = earning.sourceType == EarningSourceType.refund;
+    final color = isRefund ? AppColors.error : AppColors.success;
+    final prefix = isRefund ? '-' : '+';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              isRefund ? Icons.money_off_rounded : Icons.school_rounded,
+              color: color,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  earning.courseName.isNotEmpty
+                      ? earning.courseName
+                      : (isArabic ? 'كورس' : 'Course'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: isDark
+                        ? AppColors.textMainDark
+                        : AppColors.textMainLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('dd/MM/yyyy').format(earning.createdAt),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? AppColors.textMutedDark
+                        : AppColors.textMutedLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '$prefix${earning.netAmount.abs().toStringAsFixed(0)} ${isArabic ? 'ج.م' : 'EGP'}',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Outlined Action Button (kept for potential reuse elsewhere)
 class OutlinedActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -133,7 +519,6 @@ class OutlinedActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 18),
@@ -145,287 +530,5 @@ class OutlinedActionButton extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Withdraw Request Dialog — NEW SCHEMA
-class _WithdrawRequestDialog extends StatefulWidget {
-  final bool isArabic;
-  final double maxAmount;
-  final Function(double amount, String method, Map<String, String> details)
-      onSubmit;
-
-  const _WithdrawRequestDialog({
-    required this.isArabic,
-    required this.maxAmount,
-    required this.onSubmit,
-  });
-
-  @override
-  State<_WithdrawRequestDialog> createState() => _WithdrawRequestDialogState();
-}
-
-class _WithdrawRequestDialogState extends State<_WithdrawRequestDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
-  final _detailsController = TextEditingController();
-
-  String _selectedMethod = 'instapay';
-
-  @override
-  void dispose() {
-    _amountController.dispose();
-    _detailsController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Dialog(
-      backgroundColor: isDark ? AppColors.cardDark : AppColors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: 500,
-        constraints: const BoxConstraints(maxHeight: 600),
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.payments_rounded,
-                      color: AppColors.success,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      widget.isArabic ? 'طلب سحب' : 'Request Withdrawal',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Amount field
-              TextFormField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: widget.isArabic ? 'المبلغ' : 'Amount',
-                  hintText: widget.isArabic
-                      ? 'الحد الأقصى: ${widget.maxAmount.toStringAsFixed(0)} ج.م'
-                      : 'Max: ${widget.maxAmount.toStringAsFixed(0)} EGP',
-                  prefixIcon: const Icon(Icons.attach_money),
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return widget.isArabic ? 'مطلوب' : 'Required';
-                  }
-                  final amount = double.tryParse(value);
-                  if (amount == null || amount <= 0) {
-                    return widget.isArabic ? 'مبلغ غير صالح' : 'Invalid amount';
-                  }
-                  if (amount < 50) {
-                    return widget.isArabic
-                        ? 'الحد الأدنى 50 ج.م'
-                        : 'Minimum is 50 EGP';
-                  }
-                  if (amount > widget.maxAmount) {
-                    return widget.isArabic
-                        ? 'المبلغ أكبر من الرصيد المتاح'
-                        : 'Amount exceeds available balance';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Payment method selection
-              Text(
-                widget.isArabic ? 'وسيلة الدفع' : 'Payment Method',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedMethod,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: 'instapay',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.account_balance_wallet_rounded,
-                            size: 20, color: AppColors.primary),
-                        const SizedBox(width: 8),
-                        Text(widget.isArabic ? 'انستاباي' : 'InstaPay'),
-                      ],
-                    ),
-                  ),
-                  DropdownMenuItem(
-                    value: 'wallet',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.phone_android_rounded, size: 20),
-                        const SizedBox(width: 8),
-                        Text(widget.isArabic ? 'محفظة إلكترونية' : 'E-Wallet'),
-                      ],
-                    ),
-                  ),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedMethod = value!;
-                    _detailsController.clear();
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Payment details based on selected method
-              if (_selectedMethod == 'instapay') ...[
-                TextFormField(
-                  controller: _detailsController,
-                  decoration: InputDecoration(
-                    labelText: widget.isArabic
-                        ? 'معرف انستاباي (InstaPay ID)'
-                        : 'InstaPay ID',
-                    hintText: widget.isArabic
-                        ? 'أدخل معرف انستاباي'
-                        : 'Enter InstaPay ID',
-                    prefixIcon: const Icon(
-                      Icons.account_balance_wallet_rounded,
-                      color: AppColors.primary,
-                    ),
-                    border: const OutlineInputBorder(),
-                    helperText: widget.isArabic
-                        ? 'المعرف الخاص بك في تطبيق انستاباي'
-                        : 'Your InstaPay app identifier',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return widget.isArabic ? 'مطلوب' : 'Required';
-                    }
-                    return null;
-                  },
-                ),
-              ] else ...[
-                TextFormField(
-                  controller: _detailsController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText:
-                        widget.isArabic ? 'رقم الموبايل' : 'Mobile Number',
-                    hintText: widget.isArabic ? '01xxxxxxxxx' : '01xxxxxxxxx',
-                    prefixIcon: const Icon(Icons.phone_android),
-                    border: const OutlineInputBorder(),
-                    helperText: widget.isArabic
-                        ? 'رقم المحفظة الإلكترونية'
-                        : 'E-Wallet phone number',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return widget.isArabic ? 'مطلوب' : 'Required';
-                    }
-                    if (!value.startsWith('01') || value.length != 11) {
-                      return widget.isArabic
-                          ? 'رقم موبايل غير صالح'
-                          : 'Invalid mobile number';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-              const SizedBox(height: 24),
-
-              // Actions
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: Text(widget.isArabic ? 'إلغاء' : 'Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.success,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.check, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.isArabic ? 'طلب السحب' : 'Submit Request',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final amount = double.parse(_amountController.text);
-    final details = <String, String>{};
-
-    if (_selectedMethod == 'instapay') {
-      details['instapay_id'] = _detailsController.text;
-    } else {
-      details['phone_number'] = _detailsController.text;
-    }
-
-    widget.onSubmit(amount, _selectedMethod, details);
-    Navigator.pop(context);
   }
 }

@@ -493,6 +493,7 @@
     "not_found": "لم يتم العثور على الاختبار"
   },
   "course_details": {
+    "certificate": "شهادة إتمام",
     "preview": "معاينة",
     "bestseller": "الأكثر مبيعاً",
     "updated": "تم التحديث",

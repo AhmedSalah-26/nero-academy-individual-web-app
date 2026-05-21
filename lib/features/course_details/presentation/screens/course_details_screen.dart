@@ -505,7 +505,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   }
 
   void _navigateToInstructor(String instructorId) {
-    // No-op in single-instructor version
+    AppRouter.goToInstructor(context, instructorId);
   }
 
   void _navigateToReviews(String courseId) {

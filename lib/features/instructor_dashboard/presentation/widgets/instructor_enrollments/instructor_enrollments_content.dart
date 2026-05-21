@@ -464,20 +464,24 @@ class _EnrollmentListItemState extends State<_EnrollmentListItem> {
                 ),
 
                 // Status and amount
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _buildStatusChip(widget.enrollment.status),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '\${(widget.enrollment.paidAmount ?? 0).toStringAsFixed(0)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.green,
+                Flexible(
+                  flex: 0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildStatusChip(widget.enrollment.status),
+                      const SizedBox(height: 8),
+                      Text(
+                        '\$${(widget.enrollment.paidAmount ?? 0).toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.green,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

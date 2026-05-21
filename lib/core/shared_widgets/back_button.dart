@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
 
 /// Unified Back Button Widget - Used across the app for consistent design
@@ -35,7 +36,11 @@ class AppBackButton extends StatelessWidget {
           color: isDark ? AppColors.white : AppColors.textMainLight,
         ),
       ),
-      onPressed: onPressed ?? () => Navigator.of(context).pop(),
+      onPressed: onPressed ?? () {
+        if (context.canPop()) {
+          context.pop();
+        }
+      },
     );
   }
 }

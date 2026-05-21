@@ -103,6 +103,11 @@ import '../../features/instructor_dashboard/presentation/screens/banner_editor_s
 import '../../features/instructor_dashboard/data/models/category_model.dart';
 import '../../features/instructor_dashboard/data/models/banner_model.dart';
 
+// Instructor
+import '../../features/instructor/data/datasources/instructor_remote_data_source.dart';
+import '../../features/instructor/presentation/cubit/instructor_cubit.dart';
+import '../../features/instructor/presentation/screens/instructor_profile_screen.dart';
+
 
 
 /// App Router - Centralized routing configuration
@@ -315,6 +320,21 @@ class AppRouter {
                 const SearchFilterEntity(),
             categories:
                 extra?['categories'] as List<Map<String, dynamic>>? ?? [],
+          );
+        },
+      ),
+
+      // Instructor Profile
+      GoRoute(
+        path: '/instructor/profile/:instructorId',
+        name: 'instructor-profile',
+        builder: (context, state) {
+          final instructorId = state.pathParameters['instructorId']!;
+          return BlocProvider(
+            create: (_) => InstructorCubit(
+              remoteDataSource: InstructorRemoteDataSourceImpl(sl()),
+            )..loadInstructor(instructorId),
+            child: InstructorProfileScreen(instructorId: instructorId),
           );
         },
       ),
@@ -1410,6 +1430,11 @@ class AppRouter {
       'banner': banner,
       'onSave': onSave,
     });
+  }
+
+  static void goToInstructor(BuildContext context, String instructorId) {
+    context.pushNamed('instructor-profile',
+        pathParameters: {'instructorId': instructorId});
   }
 
   static void pop(BuildContext context) {

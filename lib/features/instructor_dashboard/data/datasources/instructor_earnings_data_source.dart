@@ -4,8 +4,8 @@ import '../models/instructor_earning_model.dart';
 import '../models/instructor_balance_model.dart';
 import '../models/instructor_payout_model.dart';
 
-/// Instructor Earnings Data Source — NEW SCHEMA
-/// Tables: instructor_balance, earnings_transactions, withdraw_requests
+/// Instructor Earnings Data Source — reads from instructor_earnings
+/// Tables used: instructor_earnings, withdraw_requests (history only)
 class InstructorEarningsDataSource {
   final SupabaseClient _client;
   static const _tag = 'InstructorEarningsDS';
@@ -18,29 +18,38 @@ class InstructorEarningsDataSource {
   // WALLET SUMMARY
   // ─────────────────────────────────────────────────────
 
-  /// Get wallet summary from instructor_balance table
+  /// Get wallet summary — computed live from instructor_earnings
   Future<WalletSummaryModel> getWalletSummary() async {
     AppLogger.d('[$_tag] getWalletSummary: userId=$_userId');
     try {
       final response = await _client
-          .from('instructor_balance')
-          .select()
-          .eq('instructor_id', _userId)
-          .maybeSingle();
+          .from('instructor_earnings')
+          .select('net_amount, status')
+          .eq('instructor_id', _userId);
 
-      if (response == null) {
-        AppLogger.w(
-            '[$_tag] getWalletSummary: no balance row found, returning empty');
-        return WalletSummaryModel.empty;
+      final rows = response as List;
+      double totalEarnings = 0;
+      double available = 0;
+
+      for (final row in rows) {
+        final amount = (row['net_amount'] as num?)?.toDouble() ?? 0;
+        totalEarnings += amount;
+        if (row['status'] == 'available' || row['status'] == 'paid') {
+          available += amount;
+        }
       }
 
-      final summary = WalletSummaryModel.fromJson(response);
       AppLogger.success(
-          '[$_tag] getWalletSummary: available=${summary.availableBalance}, '
-          'pending=${summary.pendingBalance}, '
-          'totalEarnings=${summary.totalEarnings}, '
-          'withdrawn=${summary.totalWithdrawn}');
-      return summary;
+          '[$_tag] getWalletSummary: totalEarnings=$totalEarnings, available=$available');
+
+      return WalletSummaryModel(
+        instructorId: _userId,
+        availableBalance: available,
+        pendingBalance: 0,
+        totalEarnings: totalEarnings,
+        totalWithdrawn: 0,
+        updatedAt: DateTime.now(),
+      );
     } catch (e, s) {
       AppLogger.e('[$_tag] getWalletSummary error', e, s);
       return WalletSummaryModel.empty;
@@ -51,7 +60,7 @@ class InstructorEarningsDataSource {
   // EARNINGS TRANSACTIONS
   // ─────────────────────────────────────────────────────
 
-  /// Get earnings transactions (feeds "سجل الأرباح")
+  /// Get earnings from instructor_earnings (real data source)
   Future<List<EarningsTransactionModel>> getTransactions({
     String? courseId,
     String? status,
@@ -63,8 +72,10 @@ class InstructorEarningsDataSource {
     AppLogger.d(
         '[$_tag] getTransactions: courseId=$courseId, status=$status, page=$page');
     try {
-      var query =
-          _client.from('earnings_transactions').select().eq('user_id', _userId);
+      var query = _client
+          .from('instructor_earnings')
+          .select('id, instructor_id, course_id, net_amount, gross_amount, platform_fee, status, created_at, courses(title_ar, title_en)')
+          .eq('instructor_id', _userId);
 
       if (courseId != null) query = query.eq('course_id', courseId);
       if (status != null) query = query.eq('status', status);
@@ -79,10 +90,23 @@ class InstructorEarningsDataSource {
           .order('created_at', ascending: false)
           .range((page - 1) * limit, page * limit - 1);
 
-      final transactions = (response as List)
-          .map((e) =>
-              EarningsTransactionModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final transactions = (response as List).map((e) {
+        final courseData = e['courses'] as Map<String, dynamic>?;
+        final courseName = courseData?['title_ar'] as String? ??
+            courseData?['title_en'] as String? ??
+            '';
+        return EarningsTransactionModel(
+          id: e['id'] as String,
+          userId: e['instructor_id'] as String,
+          courseId: e['course_id'] as String?,
+          courseName: courseName,
+          amount: (e['gross_amount'] as num?)?.toDouble() ?? 0,
+          commission: (e['platform_fee'] as num?)?.toDouble() ?? 0,
+          status: EarningStatus.fromString(e['status'] as String?),
+          sourceType: EarningSourceType.courseSale,
+          createdAt: DateTime.parse(e['created_at'] as String),
+        );
+      }).toList();
 
       AppLogger.success(
           '[$_tag] getTransactions: ${transactions.length} transactions');

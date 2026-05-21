@@ -22,8 +22,7 @@ mixin CoursePlayerQAMixin {
             user:user_id(id, name, avatar_url),
             answers:qa_answers(
               *,
-              user:user_id(id, name, avatar_url),
-              has_upvoted:qa_answer_upvotes!left(user_id)
+              user:user_id(id, name, avatar_url)
             )
           ''').eq('course_id', courseId);
 
@@ -33,16 +32,27 @@ mixin CoursePlayerQAMixin {
 
       final response = await query.order('created_at', ascending: false);
 
-      // Process the response to add has_upvoted flag for answers only
+      final answerIds = <String>[];
+      for (final question in response as List) {
+        final answersRaw = question['answers'] as List?;
+        if (answersRaw == null) continue;
+
+        for (final answer in answersRaw) {
+          final answerId = answer['id'] as String?;
+          if (answerId != null) answerIds.add(answerId);
+        }
+      }
+
+      final upvotedAnswerIds = await _getUpvotedAnswerIds(
+        answerIds: answerIds,
+        userId: userId,
+      );
+
       final questions = (response as List).map((json) {
-        // Process answers to add has_upvoted flag
         final answersRaw = json['answers'] as List?;
         if (answersRaw != null) {
           for (var answer in answersRaw) {
-            final answerUpvotes = answer['has_upvoted'] as List?;
-            answer['has_upvoted'] =
-                answerUpvotes?.any((upvote) => upvote['user_id'] == userId) ??
-                    false;
+            answer['has_upvoted'] = upvotedAnswerIds.contains(answer['id']);
           }
         }
 
@@ -55,6 +65,29 @@ mixin CoursePlayerQAMixin {
     } catch (e) {
       AppLogger.e('[DataSource] Failed to get questions: $e');
       throw ServerException(e.toString());
+    }
+  }
+
+  Future<Set<String>> _getUpvotedAnswerIds({
+    required List<String> answerIds,
+    required String? userId,
+  }) async {
+    if (userId == null || answerIds.isEmpty) return {};
+
+    try {
+      final response = await client
+          .from('qa_answer_upvotes')
+          .select('answer_id')
+          .eq('user_id', userId)
+          .inFilter('answer_id', answerIds);
+
+      return (response as List)
+          .map((json) => json['answer_id'] as String?)
+          .whereType<String>()
+          .toSet();
+    } catch (e) {
+      AppLogger.w('[DataSource] Answer upvotes unavailable: $e');
+      return {};
     }
   }
 

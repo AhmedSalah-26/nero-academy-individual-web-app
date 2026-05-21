@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS announcements CASCADE;
 DROP TABLE IF EXISTS quiz_attempts CASCADE;
 DROP TABLE IF EXISTS quiz_questions CASCADE;
 DROP TABLE IF EXISTS quizzes CASCADE;
+DROP TABLE IF EXISTS qa_answer_upvotes CASCADE;
 DROP TABLE IF EXISTS qa_answers CASCADE;
 DROP TABLE IF EXISTS qa_questions CASCADE;
 DROP TABLE IF EXISTS bookmarks CASCADE;
@@ -472,6 +473,18 @@ CREATE TABLE qa_answers (
 );
 
 CREATE INDEX idx_answers_question ON qa_answers(question_id);
+
+-- 3.6 Q&A ANSWER UPVOTES TABLE
+CREATE TABLE qa_answer_upvotes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  answer_id UUID NOT NULL REFERENCES qa_answers(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(answer_id, user_id)
+);
+
+CREATE INDEX idx_answer_upvotes_answer ON qa_answer_upvotes(answer_id);
+CREATE INDEX idx_answer_upvotes_user ON qa_answer_upvotes(user_id);
 
 -- ============================================================
 -- PART 4: QUIZZES & ASSESSMENTS
@@ -979,6 +992,31 @@ DROP TRIGGER IF EXISTS trigger_update_instructor_stats ON enrollments;
 CREATE TRIGGER trigger_update_instructor_stats
   AFTER INSERT OR UPDATE OR DELETE ON enrollments
   FOR EACH ROW EXECUTE FUNCTION update_instructor_stats();
+
+-- 11.9 Update answer upvotes count
+CREATE OR REPLACE FUNCTION update_qa_answer_upvotes_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE qa_answers
+    SET upvotes_count = upvotes_count + 1
+    WHERE id = NEW.answer_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE qa_answers
+    SET upvotes_count = GREATEST(0, upvotes_count - 1)
+    WHERE id = OLD.answer_id;
+    RETURN OLD;
+  END IF;
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trigger_update_qa_answer_upvotes_count ON qa_answer_upvotes;
+CREATE TRIGGER trigger_update_qa_answer_upvotes_count
+  AFTER INSERT OR DELETE ON qa_answer_upvotes
+  FOR EACH ROW EXECUTE FUNCTION update_qa_answer_upvotes_count();
 
 
 -- ============================================================
@@ -1605,6 +1643,7 @@ ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookmarks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE qa_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE qa_answers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE qa_answer_upvotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quizzes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quiz_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quiz_attempts ENABLE ROW LEVEL SECURITY;
@@ -1686,6 +1725,10 @@ CREATE POLICY "Users or instructor can update QA" ON qa_questions FOR UPDATE USI
 CREATE POLICY "Anyone can view visible answers" ON qa_answers FOR SELECT USING (is_visible = true);
 CREATE POLICY "Authenticated can answer QA" ON qa_answers FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users or instructor can update answers" ON qa_answers FOR UPDATE USING (auth.uid() = user_id OR is_admin());
+
+CREATE POLICY "Anyone can view answer upvotes" ON qa_answer_upvotes FOR SELECT USING (true);
+CREATE POLICY "Authenticated can upvote answers" ON qa_answer_upvotes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can remove their answer upvotes" ON qa_answer_upvotes FOR DELETE USING (auth.uid() = user_id);
 
 -- 15.16 Quizzes Policies
 CREATE POLICY "Enrolled can view quizzes" ON quizzes FOR SELECT USING (is_enrolled(course_id) OR is_admin());

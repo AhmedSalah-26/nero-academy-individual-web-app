@@ -16,7 +16,7 @@ class AppBackButton extends StatelessWidget {
     this.size = 36,
     this.iconSize = 18,
     this.borderRadius = 12,
-    this.fallbackLocation = '/',
+    this.fallbackLocation = '/home',
   });
 
   @override

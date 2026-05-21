@@ -117,6 +117,11 @@ class AppRouter {
     initialLocation: '/splash',
     debugLogDiagnostics: true,
     routes: [
+      GoRoute(
+        path: '/',
+        redirect: (_, __) => '/home',
+      ),
+
       // ==================== Splash Screen ====================
       GoRoute(
         path: '/splash',
@@ -1433,7 +1438,7 @@ class AppRouter {
       return;
     }
 
-    context.go('/');
+    context.go('/home');
   }
 }
 

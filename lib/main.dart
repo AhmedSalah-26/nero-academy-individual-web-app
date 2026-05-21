@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +9,7 @@ import 'core/core.dart';
 import 'core/config/paymob_config.dart';
 import 'core/di/injection_container.dart';
 import 'core/routing/app_router.dart';
+import 'core/services/dev_http_overrides.dart';
 import 'core/services/theme_service.dart';
 import 'features/payment/data/services/paymob_service.dart';
 
@@ -19,7 +19,7 @@ void main() async {
   // DEVELOPMENT ONLY: Allow self-signed certificates
   // Remove this in production!
   if (kDebugMode) {
-    HttpOverrides.global = _DevHttpOverrides();
+    configureDevHttpOverrides();
   }
 
   // Initialize EasyLocalization
@@ -68,16 +68,6 @@ void main() async {
   );
 }
 
-// DEVELOPMENT ONLY: Allow self-signed certificates
-class _DevHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-  }
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -106,13 +96,74 @@ class MyApp extends StatelessWidget {
             routerConfig: AppRouter.router,
             // Builder for RTL support
             builder: (context, child) {
-              return Directionality(
+              final app = Directionality(
                 textDirection: context.locale.languageCode == 'ar'
                     ? ui.TextDirection.rtl
                     : ui.TextDirection.ltr,
                 child: child ?? const SizedBox(),
               );
+
+              return kIsWeb ? MobileWebViewport(child: app) : app;
             },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class MobileWebViewport extends StatelessWidget {
+  const MobileWebViewport({super.key, required this.child});
+
+  static const double maxMobileWidth = 430;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final viewportWidth = constraints.maxWidth > maxMobileWidth
+            ? maxMobileWidth
+            : constraints.maxWidth;
+        final viewportHeight = constraints.maxHeight;
+        final constrainedMediaQuery = mediaQuery.copyWith(
+          size: Size(viewportWidth, viewportHeight),
+        );
+
+        if (constraints.maxWidth <= maxMobileWidth) {
+          return MediaQuery(
+            data: constrainedMediaQuery,
+            child: child,
+          );
+        }
+
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        return ColoredBox(
+          color: isDark ? const Color(0xFF111827) : const Color(0xFFE5E7EB),
+          child: Center(
+            child: Container(
+              width: viewportWidth,
+              height: viewportHeight,
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 30,
+                    offset: Offset(0, 16),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: MediaQuery(
+                data: constrainedMediaQuery,
+                child: child,
+              ),
+            ),
           ),
         );
       },

@@ -8,7 +8,6 @@ export 'home_categories_section.dart';
 export 'home_continue_learning_section.dart';
 export 'home_course_section.dart';
 export 'home_flash_sale_section.dart';
-export 'home_instructors_section.dart';
 export 'home_loading_skeleton.dart';
 export 'home_recommended_section.dart';
 export 'home_search_bar.dart';

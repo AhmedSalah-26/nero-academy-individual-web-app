@@ -1,3 +1,4 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/instructor_entities.dart';
 import '../../domain/repositories/instructor_repository.dart';
 import '../datasources/instructor_data_sources.dart';
@@ -6,6 +7,7 @@ import '../models/instructor_balance_model.dart';
 
 /// Instructor Repository Implementation
 class InstructorRepositoryImpl implements InstructorRepository {
+  final SupabaseClient _client;
   final InstructorStatsDataSource _statsDataSource;
   final InstructorCoursesDataSource _coursesDataSource;
   final InstructorStudentsDataSource _studentsDataSource;
@@ -17,6 +19,7 @@ class InstructorRepositoryImpl implements InstructorRepository {
   final InstructorAnnouncementsDataSource _announcementsDataSource;
 
   InstructorRepositoryImpl({
+    required SupabaseClient client,
     required InstructorStatsDataSource statsDataSource,
     required InstructorCoursesDataSource coursesDataSource,
     required InstructorStudentsDataSource studentsDataSource,
@@ -26,7 +29,8 @@ class InstructorRepositoryImpl implements InstructorRepository {
     required InstructorReviewsDataSource reviewsDataSource,
     required InstructorCourseEditorDataSource courseEditorDataSource,
     required InstructorAnnouncementsDataSource announcementsDataSource,
-  })  : _statsDataSource = statsDataSource,
+  })  : _client = client,
+        _statsDataSource = statsDataSource,
         _coursesDataSource = coursesDataSource,
         _studentsDataSource = studentsDataSource,
         _enrollmentsDataSource = enrollmentsDataSource,
@@ -464,5 +468,153 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<bool> deleteAnnouncement(String announcementId) async {
     return await _announcementsDataSource.deleteAnnouncement(announcementId);
+  }
+
+  // Categories (Merged from Admin)
+  @override
+  Future<List<CategoryModel>> getAdminCategories({bool? isActive}) async {
+    try {
+      var query = _client.from('categories').select();
+      if (isActive != null) {
+        query = query.eq('is_active', isActive);
+      }
+      final response = await query.order('sort_order', ascending: true);
+      return response.map((e) => CategoryModel.fromJson(e)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<CategoryModel> createCategory(CategoryCreateDto dto) async {
+    try {
+      final response = await _client.from('categories').insert({
+        'name_ar': dto.nameAr,
+        'name_en': dto.nameEn,
+        'description': dto.description,
+        'icon': dto.icon,
+        'parent_id': dto.parentId,
+      }).select().single();
+      return CategoryModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<CategoryModel> updateCategory(String id, CategoryUpdateDto dto) async {
+    try {
+      final data = <String, dynamic>{};
+      if (dto.nameAr != null) data['name_ar'] = dto.nameAr;
+      if (dto.nameEn != null) data['name_en'] = dto.nameEn;
+      if (dto.description != null) data['description'] = dto.description;
+      if (dto.icon != null) data['icon'] = dto.icon;
+      if (dto.parentId != null) data['parent_id'] = dto.parentId;
+      if (dto.isActive != null) data['is_active'] = dto.isActive;
+      if (dto.sortOrder != null) data['sort_order'] = dto.sortOrder;
+
+      final response = await _client
+          .from('categories')
+          .update(data)
+          .eq('id', id)
+          .select()
+          .single();
+      return CategoryModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> toggleCategoryStatus(String id) async {
+    try {
+      final categories = await getAdminCategories();
+      final category = categories.firstWhere((c) => c.id == id);
+      await _client.from('categories').update({
+        'is_active': !category.isActive,
+      }).eq('id', id);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Banners (Merged from Admin)
+  @override
+  Future<List<BannerModel>> getBanners({BannerType? type, bool? isActive}) async {
+    try {
+      var query = _client.from('banners').select();
+      if (isActive != null) {
+        query = query.eq('is_active', isActive);
+      }
+      final response = await query.order('sort_order', ascending: true);
+      return response.map((e) => BannerModel.fromJson(e)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<BannerModel> createBanner(BannerCreateDto dto) async {
+    try {
+      final response = await _client.from('banners').insert({
+        'title_ar': dto.titleAr,
+        'title_en': dto.titleEn,
+        'subtitle_ar': dto.subtitleAr,
+        'subtitle_en': dto.subtitleEn,
+        'image_url': dto.imageUrl,
+        'link_type': dto.linkType,
+        'link_value': dto.linkValue,
+        'sort_order': dto.sortOrder,
+        'start_date': dto.startDate?.toUtc().toIso8601String(),
+        'end_date': dto.endDate?.toUtc().toIso8601String(),
+      }).select().single();
+      return BannerModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<BannerModel> updateBanner(String id, BannerUpdateDto dto) async {
+    try {
+      final response = await _client
+          .from('banners')
+          .update(dto.toJson())
+          .eq('id', id)
+          .select()
+          .single();
+      return BannerModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> deleteBanner(String id) async {
+    try {
+      await _client.from('banners').delete().eq('id', id);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> toggleBannerStatus(String id) async {
+    try {
+      final banner = await _client
+          .from('banners')
+          .select('is_active')
+          .eq('id', id)
+          .single();
+      final currentStatus = banner['is_active'] as bool? ?? false;
+      await _client.from('banners').update({
+        'is_active': !currentStatus,
+      }).eq('id', id);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
   }
 }

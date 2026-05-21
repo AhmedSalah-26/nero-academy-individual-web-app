@@ -19,7 +19,7 @@ class PaymentsHistoryCubit extends Cubit<PaymentsHistoryState> {
 
     result.fold(
       (failure) =>
-          emit(PaymentsHistoryError(failure.message ?? 'Unknown error')),
+          emit(PaymentsHistoryError(failure.message)),
       (payments) => emit(PaymentsHistoryLoaded(payments)),
     );
   }

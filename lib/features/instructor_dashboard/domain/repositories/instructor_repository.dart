@@ -161,6 +161,19 @@ abstract class InstructorRepository {
   Future<bool> updateAnnouncement(
       String announcementId, Map<String, dynamic> data);
   Future<bool> deleteAnnouncement(String announcementId);
+
+  // Categories (Merged from Admin)
+  Future<List<CategoryModel>> getAdminCategories({bool? isActive});
+  Future<CategoryModel> createCategory(CategoryCreateDto dto);
+  Future<CategoryModel> updateCategory(String id, CategoryUpdateDto dto);
+  Future<bool> toggleCategoryStatus(String id);
+
+  // Banners (Merged from Admin)
+  Future<List<BannerModel>> getBanners({BannerType? type, bool? isActive});
+  Future<BannerModel> createBanner(BannerCreateDto dto);
+  Future<BannerModel> updateBanner(String id, BannerUpdateDto dto);
+  Future<bool> deleteBanner(String id);
+  Future<bool> toggleBannerStatus(String id);
 }
 
 /// Chart Data Point
@@ -838,4 +851,141 @@ class QuizOptionDetail {
     required this.textEn,
     this.isCorrect,
   });
+}
+
+// ============ CATEGORIES & BANNERS DTOs ============
+
+class CategoryCreateDto {
+  final String nameAr;
+  final String? nameEn;
+  final String? description;
+  final String? icon;
+  final String? parentId;
+
+  const CategoryCreateDto({
+    required this.nameAr,
+    this.nameEn,
+    this.description,
+    this.icon,
+    this.parentId,
+  });
+}
+
+class CategoryUpdateDto {
+  final String? nameAr;
+  final String? nameEn;
+  final String? description;
+  final String? icon;
+  final String? parentId;
+  final bool? isActive;
+  final int? sortOrder;
+
+  const CategoryUpdateDto({
+    this.nameAr,
+    this.nameEn,
+    this.description,
+    this.icon,
+    this.parentId,
+    this.isActive,
+    this.sortOrder,
+  });
+}
+
+class BannerCreateDto {
+  final String titleAr;
+  final String? titleEn;
+  final String? subtitleAr;
+  final String? subtitleEn;
+  final String imageUrl;
+  final String linkType;
+  final String? linkValue;
+  final int sortOrder;
+  final DateTime? startDate;
+  final DateTime? endDate;
+
+  const BannerCreateDto({
+    required this.titleAr,
+    this.titleEn,
+    this.subtitleAr,
+    this.subtitleEn,
+    required this.imageUrl,
+    this.linkType = 'none',
+    this.linkValue,
+    this.sortOrder = 0,
+    this.startDate,
+    this.endDate,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'title_ar': titleAr,
+        'title_en': titleEn,
+        'subtitle_ar': subtitleAr,
+        'subtitle_en': subtitleEn,
+        'image_url': imageUrl,
+        'link_type': linkType,
+        'link_value': linkValue,
+        'sort_order': sortOrder,
+        'start_date': startDate?.toUtc().toIso8601String(),
+        'end_date': endDate?.toUtc().toIso8601String(),
+      };
+
+  String? validate() {
+    if (titleAr.isEmpty) return 'Arabic title is required';
+    if (imageUrl.isEmpty) return 'Image URL is required';
+    if (linkType != 'none' && (linkValue == null || linkValue!.isEmpty)) {
+      return 'Link value is required when link type is set';
+    }
+    if (endDate != null && startDate != null && endDate!.isBefore(startDate!)) {
+      return 'End date must be after start date';
+    }
+    return null;
+  }
+}
+
+class BannerUpdateDto {
+  final String? titleAr;
+  final String? titleEn;
+  final String? subtitleAr;
+  final String? subtitleEn;
+  final String? imageUrl;
+  final String? linkType;
+  final String? linkValue;
+  final int? sortOrder;
+  final bool? isActive;
+  final DateTime? startDate;
+  final DateTime? endDate;
+
+  const BannerUpdateDto({
+    this.titleAr,
+    this.titleEn,
+    this.subtitleAr,
+    this.subtitleEn,
+    this.imageUrl,
+    this.linkType,
+    this.linkValue,
+    this.sortOrder,
+    this.isActive,
+    this.startDate,
+    this.endDate,
+  });
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    if (titleAr != null) map['title_ar'] = titleAr;
+    if (titleEn != null) map['title_en'] = titleEn;
+    if (subtitleAr != null) map['subtitle_ar'] = subtitleAr;
+    if (subtitleEn != null) map['subtitle_en'] = subtitleEn;
+    if (imageUrl != null) map['image_url'] = imageUrl;
+    if (linkType != null) map['link_type'] = linkType;
+    if (linkValue != null) map['link_value'] = linkValue;
+    if (sortOrder != null) map['sort_order'] = sortOrder;
+    if (isActive != null) map['is_active'] = isActive;
+    if (startDate != null) {
+      map['start_date'] = startDate!.toUtc().toIso8601String();
+    }
+    if (endDate != null) {
+      map['end_date'] = endDate!.toUtc().toIso8601String();
+    }
+    return map;
+  }
 }

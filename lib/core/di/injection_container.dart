@@ -113,37 +113,14 @@ import '../../features/wishlist/domain/usecases/remove_from_wishlist_usecase.dar
 import '../../features/wishlist/domain/usecases/toggle_wishlist_usecase.dart'
     as wishlist;
 import '../../features/wishlist/presentation/cubit/wishlist_cubit.dart';
+
 // Settings Feature
 import '../../features/settings/data/datasources/settings_remote_data_source.dart';
-// Instructor Feature
-import '../../features/instructor/data/datasources/instructor_remote_data_source.dart';
 import '../../features/settings/data/datasources/settings_local_data_source.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/settings/presentation/cubit/settings_cubit.dart';
 import '../../features/settings/presentation/cubit/profile_cubit.dart';
-// Portfolio Feature
-import '../../features/portfolio/data/datasources/portfolio_remote_data_source.dart';
-import '../../features/portfolio/data/datasources/portfolio_local_data_source.dart';
-import '../../features/portfolio/data/repositories/portfolio_repository_impl.dart';
-import '../../features/portfolio/domain/repositories/portfolio_repository.dart';
-import '../../features/portfolio/presentation/cubit/portfolio_cubit.dart';
-// Admin Dashboard Feature
-import '../../features/admin_dashboard/data/datasources/admin_banners_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_coupons_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_courses_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_payouts_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_reports_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_stats_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_users_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_reviews_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_qa_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_forum_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_commission_data_source.dart';
-import '../../features/admin_dashboard/data/datasources/admin_levels_data_source.dart';
-import '../../features/admin_dashboard/data/repositories/admin_repository_impl.dart';
-import '../../features/admin_dashboard/domain/repositories/admin_repository.dart';
-import '../../features/admin_dashboard/presentation/cubit/admin_cubits.dart';
 // Instructor Dashboard Feature
 import '../../features/instructor_dashboard/data/datasources/instructor_data_sources.dart';
 import '../../features/instructor_dashboard/data/repositories/instructor_repository_impl.dart';
@@ -154,11 +131,6 @@ import '../../features/notifications/data/datasources/notifications_remote_data_
 import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
 import '../../features/notifications/domain/repositories/notifications_repository.dart';
 import '../../features/notifications/presentation/cubit/notifications_cubit.dart';
-// Parent Portal Feature
-import '../../features/parent_portal/data/datasources/parent_portal_data_source.dart';
-import '../../features/parent_portal/data/repositories/parent_portal_repository_impl.dart';
-import '../../features/parent_portal/domain/repositories/parent_portal_repository.dart';
-import '../../features/parent_portal/presentation/cubit/parent_portal_cubit.dart';
 // Payments History Feature
 import '../../features/payments_history/data/datasources/payments_remote_data_source.dart';
 import '../../features/payments_history/data/repositories/payments_repository_impl.dart';
@@ -211,23 +183,11 @@ Future<void> initDependencies() async {
   // ============ Settings Feature ============
   _initSettings();
 
-  // ============ Instructor Feature ============
-  _initInstructor();
-
-  // ============ Portfolio Feature ============
-  _initPortfolio();
-
-  // ============ Admin Dashboard Feature ============
-  _initAdminDashboard();
-
   // ============ Instructor Dashboard Feature ============
   _initInstructorDashboard();
 
   // ============ Notifications Feature ============
   _initNotifications();
-
-  // ============ Parent Portal Feature ============
-  _initParentPortal();
 
   // ============ Payments History Feature ============
   _initPaymentsHistory();
@@ -283,7 +243,6 @@ void _initHome() {
         getPopularCoursesUseCase: sl(),
         getNewCoursesUseCase: sl(),
         getFlashSaleCoursesUseCase: sl(),
-        instructorDataSource: sl(),
       ));
 
   // Use Cases
@@ -560,89 +519,7 @@ void _initSettings() {
       () => SettingsLocalDataSourceImpl(prefs: sl()));
 }
 
-void _initInstructor() {
-  // Data Sources
-  sl.registerLazySingleton<InstructorRemoteDataSource>(
-      () => InstructorRemoteDataSourceImpl(sl()));
-}
 
-void _initPortfolio() {
-  // Cubit
-  sl.registerFactory(() => PortfolioCubit(repository: sl()));
-
-  // Repository
-  sl.registerLazySingleton<PortfolioRepository>(() => PortfolioRepositoryImpl(
-        remoteDataSource: sl(),
-        localDataSource: sl(),
-      ));
-
-  // Data Sources
-  sl.registerLazySingleton<PortfolioRemoteDataSource>(
-      () => PortfolioRemoteDataSourceImpl(client: sl()));
-  sl.registerLazySingleton<PortfolioLocalDataSource>(
-      () => PortfolioLocalDataSourceImpl(prefs: sl()));
-}
-
-void _initAdminDashboard() {
-  // Data Sources - Register first as cubits depend on them
-  sl.registerLazySingleton<AdminStatsDataSource>(
-      () => AdminStatsDataSource(sl()));
-  sl.registerLazySingleton<AdminUsersDataSource>(
-      () => AdminUsersDataSource(sl()));
-  sl.registerLazySingleton<AdminCoursesDataSource>(
-      () => AdminCoursesDataSource(sl()));
-  sl.registerLazySingleton<AdminBannersDataSource>(
-      () => AdminBannersDataSource(sl()));
-  sl.registerLazySingleton<AdminCouponsDataSource>(
-      () => AdminCouponsDataSource(sl()));
-  sl.registerLazySingleton<AdminReportsDataSource>(
-      () => AdminReportsDataSource(sl()));
-  sl.registerLazySingleton<AdminPayoutsDataSource>(
-      () => AdminPayoutsDataSource(sl()));
-  sl.registerLazySingleton<AdminReviewsDataSource>(
-      () => AdminReviewsDataSource(sl()));
-  sl.registerLazySingleton<AdminQADataSource>(() => AdminQADataSource(sl()));
-  sl.registerLazySingleton<AdminForumDataSource>(
-      () => AdminForumDataSource(sl()));
-  sl.registerLazySingleton<AdminCommissionDataSource>(
-      () => AdminCommissionDataSource(sl()));
-  sl.registerLazySingleton<AdminLevelsDataSource>(
-      () => AdminLevelsDataSource(sl()));
-
-  // Repository - Uses multiple data sources
-  sl.registerLazySingleton<AdminRepository>(() => AdminRepositoryImpl(
-        statsDataSource: sl(),
-        usersDataSource: sl(),
-        coursesDataSource: sl(),
-        bannersDataSource: sl(),
-        couponsDataSource: sl(),
-        reportsDataSource: sl(),
-        payoutsDataSource: sl(),
-        reviewsDataSource: sl(),
-        qaDataSource: sl(),
-        forumDataSource: sl(),
-        levelsDataSource: sl(),
-      ));
-
-  // Cubits - Some use repository, some use data sources directly
-  sl.registerFactory(() => AdminDashboardCubit(sl<AdminRepository>()));
-  sl.registerFactory(() => AdminUsersCubit(sl<AdminRepository>()));
-  sl.registerFactory(() => AdminCoursesCubit(sl<AdminRepository>()));
-  sl.registerFactory(() => AdminCategoriesCubit(sl<AdminRepository>()));
-  sl.registerFactory(() => AdminLevelsCubit(sl<AdminLevelsDataSource>()));
-  sl.registerFactory(() => AdminEnrollmentsCubit(sl<AdminRepository>()));
-  sl.registerFactory(() => AdminAnalyticsCubit(sl<AdminRepository>()));
-  sl.registerFactory(() => AdminReviewsCubit(sl<AdminRepository>()));
-  sl.registerFactory(() => AdminQACubit(sl<AdminRepository>()));
-  sl.registerFactory(() => AdminForumCubit(sl<AdminRepository>()));
-  // These cubits use data sources directly
-  sl.registerFactory(() => AdminPayoutsCubit(sl<AdminPayoutsDataSource>()));
-  sl.registerFactory(() => AdminBannersCubit(sl<AdminBannersDataSource>()));
-  sl.registerFactory(() => AdminCouponsCubit(sl<AdminCouponsDataSource>()));
-  sl.registerFactory(() => AdminReportsCubit(sl<AdminReportsDataSource>()));
-  sl.registerFactory(
-      () => AdminCommissionCubit(sl<AdminCommissionDataSource>()));
-}
 
 void _initInstructorDashboard() {
   // Data Sources - Register first as repository depends on them
@@ -667,6 +544,7 @@ void _initInstructorDashboard() {
 
   // Repository - Uses multiple data sources
   sl.registerLazySingleton<InstructorRepository>(() => InstructorRepositoryImpl(
+        client: sl(),
         statsDataSource: sl(),
         coursesDataSource: sl(),
         studentsDataSource: sl(),
@@ -690,6 +568,8 @@ void _initInstructorDashboard() {
   sl.registerFactory(() => InstructorCouponsCubit(sl()));
   sl.registerFactory(() => InstructorQuizzesCubit(sl()));
   sl.registerFactory(() => InstructorAnnouncementsCubit(sl()));
+  sl.registerFactory(() => InstructorCategoriesCubit(sl()));
+  sl.registerFactory(() => InstructorBannersCubit(sl()));
 }
 
 void _initNotifications() {
@@ -705,18 +585,7 @@ void _initNotifications() {
   sl.registerLazySingleton(() => NotificationsCubit(sl()));
 }
 
-void _initParentPortal() {
-  // Data Source
-  sl.registerLazySingleton<ParentPortalDataSource>(
-      () => ParentPortalDataSourceImpl(client: sl()));
 
-  // Repository
-  sl.registerLazySingleton<ParentPortalRepository>(
-      () => ParentPortalRepositoryImpl(dataSource: sl()));
-
-  // Cubit
-  sl.registerFactory(() => ParentPortalCubit(repository: sl()));
-}
 
 void _initPaymentsHistory() {
   // Data Source

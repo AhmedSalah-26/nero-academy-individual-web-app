@@ -43,7 +43,7 @@ class UserRoleService {
   /// Check if current user is admin
   static Future<bool> isAdmin() async {
     final role = await getCurrentUserRole();
-    return role == 'admin';
+    return role == 'instructor' || role == 'admin';
   }
 
   /// Check if current user is instructor
@@ -54,8 +54,7 @@ class UserRoleService {
 
   /// Check if current user is parent
   static Future<bool> isParent() async {
-    final role = await getCurrentUserRole();
-    return role == 'parent';
+    return false;
   }
 
   /// Check if current user is student

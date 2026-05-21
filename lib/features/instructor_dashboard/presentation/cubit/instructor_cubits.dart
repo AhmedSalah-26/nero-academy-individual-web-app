@@ -12,3 +12,5 @@ export 'course_editor_cubit.dart';
 export 'instructor_coupons_cubit.dart';
 export 'instructor_quizzes_cubit.dart';
 export 'instructor_announcements_cubit.dart';
+export 'instructor_categories_cubit.dart';
+export 'instructor_banners_cubit.dart';

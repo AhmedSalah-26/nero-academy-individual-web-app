@@ -652,18 +652,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               if (result.success && result.transactionId != null) {
                 // Confirm payment in backend
-                if (!mounted) return;
+                if (!context.mounted) return;
                 final success =
                     await checkoutCubit.confirmPayment(result.transactionId!);
 
-                if (success && mounted) {
+                if (success && context.mounted) {
                   // Clear cart and navigate to success
                   cartCubit.clearCart();
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context); // Close webview
                   }
                   _navigateToSuccess(orderId);
-                } else if (mounted) {
+                } else if (context.mounted) {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context); // Close webview
                   }
@@ -671,9 +671,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 }
               } else if (!result.success) {
                 // Payment failed
-                if (!mounted) return;
+                if (!context.mounted) return;
                 await checkoutCubit.markPaymentFailed();
-                if (mounted) {
+                if (context.mounted) {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context); // Close webview
                   }
@@ -682,7 +682,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               }
             } catch (e) {
               debugPrint('❌ Error in payment complete handler: $e');
-              if (mounted) {
+              if (context.mounted) {
                 if (Navigator.canPop(context)) {
                   Navigator.pop(context); // Close webview
                 }
@@ -693,14 +693,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           onCancel: () async {
             try {
               // User cancelled payment
-              if (!mounted) return;
+              if (!context.mounted) return;
               await checkoutCubit.markPaymentFailed();
-              if (mounted && Navigator.canPop(context)) {
+              if (context.mounted && Navigator.canPop(context)) {
                 Navigator.pop(context); // Close webview
               }
             } catch (e) {
               debugPrint('❌ Error in cancel handler: $e');
-              if (mounted && Navigator.canPop(context)) {
+              if (context.mounted && Navigator.canPop(context)) {
                 Navigator.pop(context);
               }
             }

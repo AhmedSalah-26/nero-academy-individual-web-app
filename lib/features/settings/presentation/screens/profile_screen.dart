@@ -213,20 +213,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               future: UserRoleService.getCurrentUserRole(),
               builder: (context, snapshot) {
                 final role = snapshot.data;
-                return Column(
-                  children: [
-                    // Admin Dashboard
-                    if (role == 'admin') ...[
-                      _buildMenuItem(
-                        icon: Icons.admin_panel_settings_outlined,
-                        title: 'dashboard.admin_dashboard'.tr(),
-                        onTap: () => AppRouter.goToAdminDashboard(context),
-                        isDark: isDark,
-                      ),
-                      _buildDivider(isDark),
-                    ],
-                    // Instructor Dashboard
-                    if (role == 'instructor' || role == 'admin') ...[
+                if (role == 'instructor' || role == 'admin') {
+                  return Column(
+                    children: [
                       _buildMenuItem(
                         icon: Icons.school_outlined,
                         title: 'dashboard.instructor_dashboard'.tr(),
@@ -235,8 +224,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       _buildDivider(isDark),
                     ],
-                  ],
-                );
+                  );
+                }
+                return const SizedBox.shrink();
               },
             ),
             _buildMenuItem(

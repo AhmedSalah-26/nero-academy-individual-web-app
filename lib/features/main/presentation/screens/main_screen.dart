@@ -118,28 +118,22 @@ class _MainScreenState extends State<MainScreen> {
                         onTap: () => _onTabTapped(0),
                       ),
                       _NavItem(
-                        icon: Icons.school_outlined,
-                        activeIcon: Icons.school_rounded,
+                        icon: Icons.play_circle_outline_rounded,
+                        activeIcon: Icons.play_circle_rounded,
                         isSelected: currentIndex == 1,
                         onTap: () => _onTabTapped(1),
                       ),
                       _NavItem(
-                        icon: Icons.play_circle_outline_rounded,
-                        activeIcon: Icons.play_circle_rounded,
+                        icon: Icons.forum_outlined,
+                        activeIcon: Icons.forum_rounded,
                         isSelected: currentIndex == 2,
                         onTap: () => _onTabTapped(2),
                       ),
                       _NavItem(
-                        icon: Icons.forum_outlined,
-                        activeIcon: Icons.forum_rounded,
-                        isSelected: currentIndex == 3,
-                        onTap: () => _onTabTapped(3),
-                      ),
-                      _NavItem(
                         icon: Icons.person_outline_rounded,
                         activeIcon: Icons.person_rounded,
-                        isSelected: currentIndex == 4,
-                        onTap: () => _onTabTapped(4),
+                        isSelected: currentIndex == 3,
+                        onTap: () => _onTabTapped(3),
                       ),
                     ],
                   ),
@@ -166,7 +160,7 @@ class _MainScreenState extends State<MainScreen> {
         case 0:
           _homeCubit.loadHomeData();
           break;
-        case 2:
+        case 1:
           _myLearningCubit.loadMyLearning(user.id);
           break;
       }

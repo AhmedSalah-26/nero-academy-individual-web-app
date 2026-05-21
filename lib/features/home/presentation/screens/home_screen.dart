@@ -15,7 +15,6 @@ import '../widgets/home/home_banner_carousel.dart';
 
 import '../widgets/home/home_course_section.dart';
 import '../widgets/home/home_flash_sale_section.dart';
-import '../widgets/home/home_instructors_section.dart';
 import '../widgets/home/home_loading_skeleton.dart';
 import '../widgets/home/home_search_bar.dart';
 import '../../../../core/di/injection_container.dart' as di;
@@ -225,20 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Top Instructors Section
-    if (state.topInstructors.isNotEmpty) {
-      sections.add(
-        SlideFadeIn.fromBottom(
-          delay: Duration(milliseconds: 100 * sectionIndex++),
-          child: Padding(
-            padding: EdgeInsets.only(top: sectionSpacing),
-            child: HomeInstructorsSection(
-              instructors: state.topInstructors,
-            ),
-          ),
-        ),
-      );
-    }
+
 
     // New Arrivals Section
     if (state.newCourses.isNotEmpty) {

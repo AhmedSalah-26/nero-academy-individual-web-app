@@ -129,3 +129,19 @@ extension QuizQuestionTypeExtension on QuizQuestionType {
     }
   }
 }
+
+/// Banner Type Enum
+enum BannerType { home, course, category }
+
+extension BannerTypeExtension on BannerType {
+  String getLabel(bool isArabic) {
+    switch (this) {
+      case BannerType.home:
+        return isArabic ? 'الرئيسية' : 'Home';
+      case BannerType.course:
+        return isArabic ? 'الكورسات' : 'Courses';
+      case BannerType.category:
+        return isArabic ? 'التصنيفات' : 'Categories';
+    }
+  }
+}

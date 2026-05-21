@@ -14,6 +14,8 @@ import '../widgets/instructor_reviews/instructor_reviews_content.dart';
 import '../widgets/instructor_coupons/instructor_coupons_content.dart';
 import '../widgets/instructor_quizzes/instructor_quizzes_content.dart';
 import '../widgets/instructor_settings/instructor_settings_content.dart';
+import '../widgets/instructor_categories/instructor_categories_content.dart';
+import '../widgets/instructor_banners/instructor_banners_content.dart';
 
 /// Instructor Dashboard Screen
 class InstructorDashboardScreen extends StatefulWidget {
@@ -79,6 +81,16 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
       icon: Icons.star_rounded,
     ),
     DashboardNavItem(
+      label: 'Categories',
+      labelAr: 'التصنيفات',
+      icon: Icons.category_rounded,
+    ),
+    DashboardNavItem(
+      label: 'Banners',
+      labelAr: 'البانرات',
+      icon: Icons.image_rounded,
+    ),
+    DashboardNavItem(
       label: 'Settings',
       labelAr: 'الإعدادات',
       icon: Icons.settings_rounded,
@@ -127,6 +139,12 @@ class _InstructorDashboardScreenState extends State<InstructorDashboardScreen> {
         content = const InstructorReviewsContent();
         break;
       case 10:
+        content = const InstructorCategoriesContent();
+        break;
+      case 11:
+        content = const InstructorBannersContent();
+        break;
+      case 12:
         content = const InstructorSettingsContent();
         break;
       default:

@@ -31,11 +31,7 @@ import '../../features/main/presentation/screens/main_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/courses_list_screen.dart';
 import '../../features/home/domain/entities/course_entity.dart' as home;
-// Instructors
-import '../../features/instructor/presentation/screens/instructors_screen.dart';
-import '../../features/instructor/presentation/cubit/instructor_cubit.dart';
-import '../../features/instructor/presentation/screens/instructor_profile_screen.dart';
-import '../../features/instructor/data/datasources/instructor_remote_data_source.dart';
+
 // My Learning
 import '../../features/my_learning/presentation/screens/my_learning_screen.dart';
 // History
@@ -81,33 +77,7 @@ import '../../features/quizzes/presentation/cubit/quiz_cubit.dart';
 import '../../features/quizzes/presentation/screens/quiz_info_screen.dart';
 import '../../features/quizzes/presentation/screens/quiz_question_screen.dart';
 import '../../features/quizzes/presentation/screens/quiz_results_screen.dart';
-// Portfolio
-import '../../features/portfolio/presentation/cubit/portfolio_cubit.dart';
-import '../../features/portfolio/presentation/screens/portfolio_screen.dart';
-// Admin Dashboard
-import '../../features/admin_dashboard/presentation/cubit/admin_cubits.dart';
-import '../../features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/report_details_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/user_details_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/ban_user_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/category_editor_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/level_editor_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/coupon_editor_screen.dart'
-    as admin_coupon;
-import '../../features/admin_dashboard/presentation/screens/banner_editor_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/course_details_screen.dart'
-    as admin_course;
-import '../../features/admin_dashboard/presentation/screens/course_enrollments_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/coupon_usage_screen.dart';
-import '../../features/admin_dashboard/presentation/screens/report_action_screen.dart';
-import '../../features/admin_dashboard/data/models/admin_report_model.dart';
-import '../../features/admin_dashboard/data/models/admin_user_model.dart';
-import '../../features/admin_dashboard/data/models/admin_course_model.dart';
-import '../../features/admin_dashboard/data/models/admin_coupon_model.dart';
-import '../../features/admin_dashboard/data/models/admin_banner_model.dart';
-import '../../features/admin_dashboard/data/models/category_model.dart';
-import '../../features/admin_dashboard/data/models/level_model.dart';
-import '../../features/admin_dashboard/domain/entities/admin_entities.dart';
+
 // Instructor Dashboard
 import '../../features/instructor_dashboard/presentation/cubit/instructor_cubits.dart';
 import '../../features/instructor_dashboard/presentation/screens/instructor_dashboard_screen.dart';
@@ -128,9 +98,12 @@ import '../../features/instructor_dashboard/presentation/screens/quiz_questions_
 import '../../features/instructor_dashboard/presentation/screens/quiz_preview_screen.dart';
 import '../../features/instructor_dashboard/data/models/instructor_student_model.dart';
 import '../../features/instructor_dashboard/domain/repositories/instructor_repository.dart';
-// Parent Portal Effect
-import '../../features/parent_portal/presentation/screens/parent_entrance_screen.dart';
-import '../../features/parent_portal/presentation/screens/parent_dashboard_screen.dart';
+import '../../features/instructor_dashboard/presentation/screens/category_editor_screen.dart';
+import '../../features/instructor_dashboard/presentation/screens/banner_editor_screen.dart';
+import '../../features/instructor_dashboard/data/models/category_model.dart';
+import '../../features/instructor_dashboard/data/models/banner_model.dart';
+
+
 
 /// App Router - Centralized routing configuration
 class AppRouter {
@@ -148,20 +121,7 @@ class AppRouter {
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // ==================== Parent Portal ====================
-      GoRoute(
-        path: '/parent_entrance',
-        name: 'parent_entrance',
-        builder: (context, state) => const ParentEntranceScreen(),
-      ),
-      GoRoute(
-        path: '/parent_dashboard',
-        name: 'parent_dashboard',
-        builder: (context, state) {
-          final phone = state.extra as String? ?? '';
-          return ParentDashboardScreen(parentPhone: phone);
-        },
-      ),
+
 
       // ==================== Auth Routes ====================
       // Singleton cubits from GetIt must use BlocProvider.value to avoid
@@ -209,18 +169,7 @@ class AppRouter {
               ),
             ],
           ),
-          // Instructors tab (index 1)
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/instructors',
-                name: 'instructors',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: InstructorsScreen(),
-                ),
-              ),
-            ],
-          ),
+
           // My Learning tab (index 2)
           StatefulShellBranch(
             routes: [
@@ -560,30 +509,9 @@ class AppRouter {
         builder: (context, state) => const TermsOfServiceScreen(),
       ),
 
-      // Portfolio
-      GoRoute(
-        path: '/portfolio',
-        name: 'portfolio',
-        builder: (context, state) => BlocProvider(
-          create: (_) => sl<PortfolioCubit>(),
-          child: const PortfolioScreen(),
-        ),
-      ),
 
-      // Instructor Profile
-      GoRoute(
-        path: '/instructor/:instructorId',
-        name: 'instructor-profile',
-        builder: (context, state) {
-          final instructorId = state.pathParameters['instructorId']!;
-          return BlocProvider(
-            create: (_) => InstructorCubit(
-              remoteDataSource: InstructorRemoteDataSourceImpl(sl()),
-            ),
-            child: InstructorProfileScreen(instructorId: instructorId),
-          );
-        },
-      ),
+
+
 
       // Quiz Info
       GoRoute(
@@ -691,253 +619,7 @@ class AppRouter {
         },
       ),
 
-      // Admin Dashboard
-      GoRoute(
-        path: '/admin',
-        name: 'admin-dashboard',
-        builder: (context, state) => MultiBlocProvider(
-          providers: [
-            BlocProvider(create: (_) => sl<AdminDashboardCubit>()),
-            BlocProvider(create: (_) => sl<AdminUsersCubit>()),
-            BlocProvider(create: (_) => sl<AdminCoursesCubit>()),
-            BlocProvider(create: (_) => sl<AdminCategoriesCubit>()),
-            BlocProvider(create: (_) => sl<AdminLevelsCubit>()),
-            BlocProvider(create: (_) => sl<AdminEnrollmentsCubit>()),
-            BlocProvider(create: (_) => sl<AdminPayoutsCubit>()),
-            BlocProvider(create: (_) => sl<AdminBannersCubit>()),
-            BlocProvider(create: (_) => sl<AdminCouponsCubit>()),
-            BlocProvider(create: (_) => sl<AdminReportsCubit>()),
-            BlocProvider(create: (_) => sl<AdminAnalyticsCubit>()),
-            BlocProvider(create: (_) => sl<AdminReviewsCubit>()),
-            BlocProvider(create: (_) => sl<AdminQACubit>()),
-            BlocProvider(create: (_) => sl<AdminForumCubit>()),
-            BlocProvider(create: (_) => sl<AdminCommissionCubit>()),
-          ],
-          child: const AdminDashboardScreen(),
-        ),
-      ),
 
-      // Report Details
-      GoRoute(
-        path: '/admin/report/:reportId',
-        name: 'report-details',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final report = extra?['report'] as AdminReportModel?;
-          if (report == null) {
-            return const Scaffold(
-              body: Center(child: Text('Report not found')),
-            );
-          }
-          return BlocProvider.value(
-            value: sl<AdminReportsCubit>(),
-            child: ReportDetailsScreen(report: report),
-          );
-        },
-      ),
-
-      // User Details
-      GoRoute(
-        path: '/admin/user/:userId',
-        name: 'user-details',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final user = extra?['user'] as AdminUserModel?;
-          if (user == null) {
-            return const Scaffold(
-              body: Center(child: Text('User not found')),
-            );
-          }
-          return BlocProvider.value(
-            value: sl<AdminUsersCubit>(),
-            child: UserDetailsScreen(
-              user: user,
-              onUpdate: extra?['onUpdate'] as Function(AdminUserModel),
-              onBan: extra?['onBan'] as VoidCallback?,
-              onUnban: extra?['onUnban'] as VoidCallback?,
-            ),
-          );
-        },
-      ),
-
-      // Ban User
-      GoRoute(
-        path: '/admin/user/:userId/ban',
-        name: 'ban-user',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final userId = state.pathParameters['userId']!;
-          final userName = extra?['userName'] as String? ?? 'User';
-          if (extra?['onBan'] == null) {
-            return const Scaffold(
-              body: Center(child: Text('Invalid ban data')),
-            );
-          }
-          return BanUserScreen(
-            userId: userId,
-            userName: userName,
-            onBan: extra!['onBan'] as Function(BanDuration, String),
-          );
-        },
-      ),
-
-      // Category Editor
-      GoRoute(
-        path: '/admin/category/edit',
-        name: 'category-editor',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          if (extra?['onSave'] == null) {
-            return const Scaffold(
-              body: Center(child: Text('Invalid category data')),
-            );
-          }
-          return CategoryEditorScreen(
-            category: extra?['category'] as CategoryModel?,
-            onSave: extra!['onSave'] as Function(dynamic),
-          );
-        },
-      ),
-
-      // Level Editor
-      GoRoute(
-        path: '/admin/level/edit',
-        name: 'level-editor',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          if (extra?['onSave'] == null) {
-            return const Scaffold(
-              body: Center(child: Text('Invalid level data')),
-            );
-          }
-          return LevelEditorScreen(
-            level: extra?['level'] as LevelModel?,
-            onSave: extra!['onSave'] as Function(dynamic),
-          );
-        },
-      ),
-
-      // Coupon Editor (Admin)
-      GoRoute(
-        path: '/admin/coupon/edit',
-        name: 'admin-coupon-editor',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          if (extra?['onSave'] == null) {
-            return const Scaffold(
-              body: Center(child: Text('Invalid coupon data')),
-            );
-          }
-          return admin_coupon.CouponEditorScreen(
-            coupon: extra?['coupon'] as AdminCouponModel?,
-            onSave: extra!['onSave'] as Function(CreateCouponDto),
-          );
-        },
-      ),
-
-      // Banner Editor
-      GoRoute(
-        path: '/admin/banner/edit',
-        name: 'banner-editor',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          if (extra?['onSave'] == null) {
-            return const Scaffold(
-              body: Center(child: Text('Invalid banner data')),
-            );
-          }
-          return BannerEditorScreen(
-            banner: extra?['banner'] as AdminBannerModel?,
-            onSave: extra!['onSave'] as Future<void> Function(CreateBannerDto),
-          );
-        },
-      ),
-
-      // Course Details (Admin)
-      GoRoute(
-        path: '/admin/course/:courseId/details',
-        name: 'admin-course-details',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final course = extra?['course'] as AdminCourseModel?;
-          if (course == null) {
-            return const Scaffold(
-              body: Center(child: Text('Course not found')),
-            );
-          }
-          return BlocProvider.value(
-            value: sl<AdminCoursesCubit>(),
-            child: admin_course.CourseDetailsScreen(
-              course: course,
-              onPublish: extra?['onPublish'] as VoidCallback?,
-              onUnpublish: extra?['onUnpublish'] as VoidCallback?,
-              onFeature: extra?['onFeature'] as VoidCallback?,
-              onUnfeature: extra?['onUnfeature'] as VoidCallback?,
-              onSuspend: extra?['onSuspend'] as VoidCallback?,
-              onUnsuspend: extra?['onUnsuspend'] as VoidCallback?,
-              onDelete: extra?['onDelete'] as VoidCallback?,
-              onViewEnrollments: extra?['onViewEnrollments'] as VoidCallback?,
-            ),
-          );
-        },
-      ),
-
-      // Course Enrollments (Admin)
-      GoRoute(
-        path: '/admin/course/:courseId/enrollments',
-        name: 'admin-course-enrollments',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final course = extra?['course'] as AdminCourseModel?;
-          if (course == null) {
-            return const Scaffold(
-              body: Center(child: Text('Course not found')),
-            );
-          }
-          return BlocProvider.value(
-            value: sl<AdminCoursesCubit>(),
-            child: CourseEnrollmentsScreen(course: course),
-          );
-        },
-      ),
-
-      // Coupon Usage (Admin)
-      GoRoute(
-        path: '/admin/coupon/:couponId/usage',
-        name: 'coupon-usage',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final coupon = extra?['coupon'] as AdminCouponModel?;
-          if (coupon == null) {
-            return const Scaffold(
-              body: Center(child: Text('Coupon not found')),
-            );
-          }
-          return BlocProvider.value(
-            value: sl<AdminCouponsCubit>(),
-            child: CouponUsageScreen(coupon: coupon),
-          );
-        },
-      ),
-
-      // Report Action (Admin)
-      GoRoute(
-        path: '/admin/report/:reportId/action',
-        name: 'report-action',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final report = extra?['report'] as AdminReportModel?;
-          if (report == null) {
-            return const Scaffold(
-              body: Center(child: Text('Report not found')),
-            );
-          }
-          return ReportActionScreen(
-            report: report,
-            onActionComplete: extra?['onActionComplete'] as VoidCallback?,
-          );
-        },
-      ),
 
       // Instructor Dashboard
       GoRoute(
@@ -954,6 +636,8 @@ class AppRouter {
             BlocProvider(create: (_) => sl<InstructorReviewsCubit>()),
             BlocProvider(create: (_) => sl<InstructorCouponsCubit>()),
             BlocProvider(create: (_) => sl<InstructorQuizzesCubit>()),
+            BlocProvider(create: (_) => sl<InstructorCategoriesCubit>()),
+            BlocProvider(create: (_) => sl<InstructorBannersCubit>()),
           ],
           child: const InstructorDashboardScreen(),
         ),
@@ -1269,22 +953,49 @@ class AppRouter {
           );
         },
       ),
+
+      // Category Editor
+      GoRoute(
+        path: '/instructor/category-editor',
+        name: 'category-editor',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra == null) {
+            return const Scaffold(
+              body: Center(child: Text('Invalid category data')),
+            );
+          }
+          return CategoryEditorScreen(
+            category: extra['category'] as CategoryModel?,
+            onSave: extra['onSave'] as void Function(dynamic),
+          );
+        },
+      ),
+
+      // Banner Editor
+      GoRoute(
+        path: '/instructor/banner-editor',
+        name: 'banner-editor',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra == null) {
+            return const Scaffold(
+              body: Center(child: Text('Invalid banner data')),
+            );
+          }
+          return BannerEditorScreen(
+            banner: extra['banner'] as BannerModel?,
+            onSave: extra['onSave'] as Future<void> Function(BannerCreateDto),
+          );
+        },
+      ),
     ],
+
     redirect: (context, state) async {
       final user = Supabase.instance.client.auth.currentUser;
       final path = state.uri.path;
 
-      // Admin dashboard access control
-      if (path.startsWith('/admin')) {
-        if (user == null) {
-          return '/login';
-        }
-        // Check if user is admin from database
-        final isAdmin = await UserRoleService.isAdmin();
-        if (!isAdmin) {
-          return '/home';
-        }
-      }
+
 
       // Instructor dashboard access control (only /instructor route, not /instructor/:id profiles)
       if (path == '/instructor' || path == '/instructor/') {
@@ -1404,13 +1115,7 @@ class AppRouter {
       context.pushNamed('privacy-policy');
   static void goToTermsOfService(BuildContext context) =>
       context.pushNamed('terms-of-service');
-  static void goToPortfolio(BuildContext context) =>
-      context.pushNamed('portfolio');
 
-  static void goToInstructor(BuildContext context, String instructorId) {
-    context.pushNamed('instructor-profile',
-        pathParameters: {'instructorId': instructorId});
-  }
 
   static void goToQuiz(BuildContext context,
       {required String quizId,
@@ -1441,162 +1146,7 @@ class AppRouter {
   static void goToCategories(BuildContext context) =>
       context.pushNamed('categories');
 
-  static void goToAdminDashboard(BuildContext context) =>
-      context.pushNamed('admin-dashboard');
 
-  static void goToReportDetails(
-    BuildContext context, {
-    required String reportId,
-    required AdminReportModel report,
-  }) {
-    context.pushNamed('report-details', pathParameters: {
-      'reportId': reportId
-    }, extra: {
-      'report': report,
-    });
-  }
-
-  static void goToUserDetails(
-    BuildContext context, {
-    required String userId,
-    required AdminUserModel user,
-    required Function(AdminUserModel) onUpdate,
-    VoidCallback? onBan,
-    VoidCallback? onUnban,
-  }) {
-    context.pushNamed('user-details', pathParameters: {
-      'userId': userId
-    }, extra: {
-      'user': user,
-      'onUpdate': onUpdate,
-      'onBan': onBan,
-      'onUnban': onUnban,
-    });
-  }
-
-  static void goToBanUser(
-    BuildContext context, {
-    required String userId,
-    required String userName,
-    required Function(BanDuration, String) onBan,
-  }) {
-    context.pushNamed('ban-user', pathParameters: {
-      'userId': userId
-    }, extra: {
-      'userName': userName,
-      'onBan': onBan,
-    });
-  }
-
-  static void goToCategoryEditor(
-    BuildContext context, {
-    CategoryModel? category,
-    required Function(dynamic) onSave,
-  }) {
-    context.pushNamed('category-editor', extra: {
-      'category': category,
-      'onSave': onSave,
-    });
-  }
-
-  static void goToLevelEditor(
-    BuildContext context, {
-    LevelModel? level,
-    required Function(dynamic) onSave,
-  }) {
-    context.pushNamed('level-editor', extra: {
-      'level': level,
-      'onSave': onSave,
-    });
-  }
-
-  static void goToAdminCouponEditor(
-    BuildContext context, {
-    AdminCouponModel? coupon,
-    required Function(CreateCouponDto) onSave,
-  }) {
-    context.pushNamed('admin-coupon-editor', extra: {
-      'coupon': coupon,
-      'onSave': onSave,
-    });
-  }
-
-  static void goToBannerEditor(
-    BuildContext context, {
-    AdminBannerModel? banner,
-    required Future<void> Function(CreateBannerDto) onSave,
-  }) {
-    context.pushNamed('banner-editor', extra: {
-      'banner': banner,
-      'onSave': onSave,
-    });
-  }
-
-  static void goToAdminCourseDetails(
-    BuildContext context, {
-    required String courseId,
-    required AdminCourseModel course,
-    VoidCallback? onPublish,
-    VoidCallback? onUnpublish,
-    VoidCallback? onFeature,
-    VoidCallback? onUnfeature,
-    VoidCallback? onSuspend,
-    VoidCallback? onUnsuspend,
-    VoidCallback? onDelete,
-    VoidCallback? onViewEnrollments,
-  }) {
-    context.pushNamed('admin-course-details', pathParameters: {
-      'courseId': courseId
-    }, extra: {
-      'course': course,
-      'onPublish': onPublish,
-      'onUnpublish': onUnpublish,
-      'onFeature': onFeature,
-      'onUnfeature': onUnfeature,
-      'onSuspend': onSuspend,
-      'onUnsuspend': onUnsuspend,
-      'onDelete': onDelete,
-      'onViewEnrollments': onViewEnrollments,
-    });
-  }
-
-  static void goToAdminCourseEnrollments(
-    BuildContext context, {
-    required String courseId,
-    required AdminCourseModel course,
-  }) {
-    context.pushNamed('admin-course-enrollments', pathParameters: {
-      'courseId': courseId
-    }, extra: {
-      'course': course,
-    });
-  }
-
-  static void goToCouponUsage(
-    BuildContext context, {
-    required String couponId,
-    required AdminCouponModel coupon,
-  }) {
-    context.pushNamed('coupon-usage', pathParameters: {
-      'couponId': couponId
-    }, extra: {
-      'coupon': coupon,
-    });
-  }
-
-  static void goToReportAction(
-    BuildContext context, {
-    required String reportId,
-    required AdminReportModel report,
-    VoidCallback? onActionComplete,
-  }) {
-    context.pushNamed('report-action', pathParameters: {
-      'reportId': reportId
-    }, extra: {
-      'report': report,
-      'onActionComplete': onActionComplete,
-    });
-  }
 
   static void goToInstructorDashboard(BuildContext context) =>
       context.pushNamed('instructor-dashboard');
@@ -1837,6 +1387,28 @@ class AppRouter {
       'quizTitle': quizTitle,
       'questions': questions,
       'timeLimit': timeLimit,
+    });
+  }
+
+  static void goToCategoryEditor(
+    BuildContext context, {
+    CategoryModel? category,
+    required void Function(dynamic) onSave,
+  }) {
+    context.pushNamed('category-editor', extra: {
+      'category': category,
+      'onSave': onSave,
+    });
+  }
+
+  static void goToBannerEditor(
+    BuildContext context, {
+    BannerModel? banner,
+    required Future<void> Function(BannerCreateDto) onSave,
+  }) {
+    context.pushNamed('banner-editor', extra: {
+      'banner': banner,
+      'onSave': onSave,
     });
   }
 

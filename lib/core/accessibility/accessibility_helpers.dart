@@ -260,7 +260,11 @@ class ScalableText extends StatelessWidget {
 
 /// Announce message to screen readers
 void announceToScreenReader(BuildContext context, String message) {
-  SemanticsService.announce(message, Directionality.of(context));
+  SemanticsService.sendAnnouncement(
+    View.of(context),
+    message,
+    Directionality.of(context),
+  );
 }
 
 /// Extension for accessibility helpers

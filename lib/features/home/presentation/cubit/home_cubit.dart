@@ -9,8 +9,6 @@ import '../../domain/usecases/get_featured_courses_usecase.dart';
 import '../../domain/usecases/get_flash_sale_courses_usecase.dart';
 import '../../domain/usecases/get_new_courses_usecase.dart';
 import '../../domain/usecases/get_popular_courses_usecase.dart';
-import '../../../instructor/data/datasources/instructor_remote_data_source.dart';
-import '../../../instructor/domain/entities/instructor_entity.dart';
 import 'home_state.dart';
 
 /// Home Cubit - Manages Home Screen State
@@ -21,7 +19,6 @@ class HomeCubit extends Cubit<HomeState> {
   final GetPopularCoursesUseCase getPopularCoursesUseCase;
   final GetNewCoursesUseCase getNewCoursesUseCase;
   final GetFlashSaleCoursesUseCase getFlashSaleCoursesUseCase;
-  final InstructorRemoteDataSource instructorDataSource;
 
   HomeCubit({
     required this.getBannersUseCase,
@@ -30,7 +27,6 @@ class HomeCubit extends Cubit<HomeState> {
     required this.getPopularCoursesUseCase,
     required this.getNewCoursesUseCase,
     required this.getFlashSaleCoursesUseCase,
-    required this.instructorDataSource,
   }) : super(const HomeState());
 
   /// Load all home data
@@ -49,12 +45,6 @@ class HomeCubit extends Cubit<HomeState> {
     final flashSaleResult = await getFlashSaleCoursesUseCase(
         const GetFlashSaleCoursesParams(limit: 10));
 
-    // Load top instructors
-    List<InstructorEntity> instructors = [];
-    try {
-      instructors = await instructorDataSource.getTopInstructors(limit: 10);
-    } catch (_) {}
-
     // Check for any errors
     String? errorMessage;
     bannersResult.fold((f) => errorMessage ??= f.message, (_) {});
@@ -72,7 +62,6 @@ class HomeCubit extends Cubit<HomeState> {
       popularCourses: popularResult.fold((_) => <CourseEntity>[], (c) => c),
       newCourses: newResult.fold((_) => <CourseEntity>[], (c) => c),
       flashSaleCourses: flashSaleResult.fold((_) => <CourseEntity>[], (c) => c),
-      topInstructors: instructors,
       errorMessage: errorMessage,
     ));
   }

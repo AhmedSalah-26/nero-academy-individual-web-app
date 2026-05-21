@@ -62,50 +62,49 @@ class CourseCard extends StatelessWidget {
           children: [
             _buildThumbnail(isDark),
             Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        course.getTitle(locale),
-                        style: TextStyle(
-                          color: isDark
-                              ? AppColors.textMainDark
-                              : AppColors.textMainLight,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      course.getTitle(locale),
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.textMainDark
+                            : AppColors.textMainLight,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        height: 1.3,
                       ),
-                      const SizedBox(height: 4),
-                      // Instructor
-                      Text(
-                        course.instructorName ?? '',
-                        style: TextStyle(
-                          color: isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMutedLight,
-                          fontSize: 11,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Instructor
+                    Text(
+                      course.instructorName ?? '',
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.textMutedDark
+                            : AppColors.textMutedLight,
+                        fontSize: 11,
                       ),
-                      const Spacer(),
-                      // Stats Row
-                      _buildStatsRow(isDark),
-                      const SizedBox(height: 8),
-                      // Price Row
-                      _buildPrice(isDark),
-                    ],
-                  ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    // Stats Row
+                    _buildStatsRow(isDark),
+                    const SizedBox(height: 8),
+                    // Price Row
+                    _buildPrice(isDark),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

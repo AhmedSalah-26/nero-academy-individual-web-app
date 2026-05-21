@@ -42,22 +42,22 @@ class HomeSliverAppBar extends StatelessWidget {
     return SliverAppBar(
       pinned: true,
       elevation: 0,
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFEEE4FC),
       expandedHeight: expandedHeight,
-      toolbarHeight: 0, // only show bottom search bar when collapsed
-      flexibleSpace: Container(
-        color: const Color(0xFFEEE4FC), // Exact match of the image's top edge
-        child: FlexibleSpaceBar(
-          background: SafeArea(
-            bottom: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top icons row
-                HomeAppBar(userName: userName),
-                // Hero content + teacher image
-                Expanded(
-                  child: Image.asset(
+      toolbarHeight: 70, // Height for HomeAppBar
+      titleSpacing: 0,
+      title: HomeAppBar(userName: userName),
+      flexibleSpace: FlexibleSpaceBar(
+        background: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero content + teacher image (pushed down by the title automatically, but since it's background it might underlap. 
+              // We'll add a SizedBox to prevent the image from going under the AppBar)
+              const SizedBox(height: 70),
+              Expanded(
+                child: Image.asset(
                     'assets/footer2.png',
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -68,7 +68,6 @@ class HomeSliverAppBar extends StatelessWidget {
             ),
           ),
         ),
-      ),
       bottom: PreferredSize(
         preferredSize: Size.fromHeight(50.0 + (w * 0.04) + 6.0),
         child: Container(

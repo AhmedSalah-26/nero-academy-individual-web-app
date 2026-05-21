@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/routing/app_router.dart';
@@ -23,15 +24,10 @@ class HomeAppBar extends StatelessWidget {
     final horizontalPadding = screenWidth * 0.04;
     final verticalPadding = screenWidth * 0.03;
 
-    // Build greeting with name (first two words only)
-    String greeting;
-    if (userName != null && userName!.isNotEmpty) {
-      final nameParts = userName!.trim().split(' ');
-      final displayName = nameParts.take(2).join(' ');
-      greeting = '${'home.hello'.tr()} $displayName';
-    } else {
-      greeting = 'home.hello'.tr();
-    }
+    final String helloText = 'home.hello'.tr();
+    final String displayName = (userName != null && userName!.isNotEmpty)
+        ? userName!.trim().split(' ').take(2).join(' ')
+        : '';
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -42,16 +38,31 @@ class HomeAppBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              greeting,
-              style: AppTextStyles.headlineMedium.copyWith(
-                color:
-                    isDark ? AppColors.textMainDark : AppColors.textMainLight,
-                fontWeight: FontWeight.w700,
-                fontSize: (screenWidth * 0.05).clamp(18.0, 22.0),
-              ),
+            child: RichText(
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              text: TextSpan(
+                text: helloText,
+                style: AppTextStyles.headlineMedium.copyWith(
+                  color:
+                      isDark ? AppColors.textMainDark : AppColors.textMainLight,
+                  fontWeight: FontWeight.w700,
+                  fontSize: (screenWidth * 0.05).clamp(18.0, 22.0),
+                  fontFamily: 'Almarai',
+                ),
+                children: [
+                  if (displayName.isNotEmpty)
+                    TextSpan(
+                      text: ' $displayName',
+                      style: GoogleFonts.dancingScript(
+                        color: const Color(0xFF6D28D9),
+                        fontWeight: FontWeight.w400,
+                        fontStyle: FontStyle.italic,
+                        fontSize: (screenWidth * 0.06).clamp(22.0, 26.0),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           Row(

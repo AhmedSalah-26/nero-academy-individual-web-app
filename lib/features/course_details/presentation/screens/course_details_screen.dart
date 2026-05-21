@@ -587,9 +587,14 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
           _showSuccessSnackBar('cart.added_to_cart'.tr());
           AppRouter.goToCart(context);
         } else {
-          // Course might be already in cart (from server)
-          _showInfoSnackBar('cart.already_in_cart'.tr());
-          AppRouter.goToCart(context);
+          final errorMsg = cartCubit.state.addToCartError;
+          if (errorMsg != null && errorMsg.isNotEmpty) {
+            _showErrorSnackBar(errorMsg);
+          } else {
+            // Course might be already in cart
+            _showInfoSnackBar('cart.already_in_cart'.tr());
+            AppRouter.goToCart(context);
+          }
         }
       }
     } catch (e, stack) {

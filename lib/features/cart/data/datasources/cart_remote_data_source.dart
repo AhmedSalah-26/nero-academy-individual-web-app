@@ -66,14 +66,17 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
       // Check if user is already enrolled in this course
       final enrollment = await supabase
           .from('enrollments')
-          .select('id')
+          .select('id, status')
           .eq('user_id', userId)
           .eq('course_id', courseId)
           .maybeSingle();
 
       if (enrollment != null) {
-        throw const ValidationException(
-            'You are already enrolled in this course');
+        final status = enrollment['status'] as String?;
+        if (status == 'active' || status == 'completed') {
+          throw const ValidationException(
+              'You are already enrolled in this course');
+        }
       }
 
       final course = await supabase
@@ -347,7 +350,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
         final existing = await supabase
             .from('enrollments')
-            .select('id')
+            .select('id, status')
             .eq('user_id', userId)
             .eq('course_id', courseId)
             .maybeSingle();
@@ -433,8 +436,20 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
                 '🛒 [Checkout] Skipping earnings: effectivePrice=$priceAtAdd, instructorId=$instructorId');
           }
         } else {
-          AppLogger.w(
-              '🛒 [Checkout] User already enrolled in course $courseId');
+          final existingStatus = existing['status'] as String?;
+          if (existingStatus == 'pending') {
+            AppLogger.i('🛒 [Checkout] Updating existing pending enrollment...');
+            await supabase.from('enrollments').update({
+              'parent_enrollment_id': parentEnrollmentId,
+              'status': finalTotal == 0 ? 'active' : 'pending',
+              'price': priceAtAdd,
+              'discount': itemCouponDiscount,
+              'enrolled_at': DateTime.now().toIso8601String(),
+            }).eq('id', existing['id']);
+          } else {
+            AppLogger.w(
+                '🛒 [Checkout] User already enrolled in course $courseId (status: $existingStatus)');
+          }
         }
       }
 

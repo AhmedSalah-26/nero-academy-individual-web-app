@@ -23,7 +23,8 @@ class CourseHeroSection extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasPreview = (course.previewVideoUrl ?? '').trim().isNotEmpty;
 
-    // Use ParallaxImage if scrollController is provided and image exists
+    // Temporarily disabled ParallaxImage as it might be causing ANR during page transitions
+    /*
     if (scrollController != null &&
         course.thumbnailUrl != null &&
         course.thumbnailUrl!.isNotEmpty) {
@@ -42,6 +43,7 @@ class CourseHeroSection extends StatelessWidget {
         ),
       );
     }
+    */
 
     // Fallback to regular AspectRatio
     return AspectRatio(

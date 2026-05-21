@@ -37,6 +37,7 @@ class CourseCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: cardWidth,
+        height: double.infinity,
         decoration: BoxDecoration(
           color: isDark ? AppColors.cardDark : AppColors.white,
           borderRadius: BorderRadius.circular(8),
@@ -56,12 +57,11 @@ class CourseCard extends StatelessWidget {
             ),
           ],
         ),
-        child: IntrinsicHeight(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildThumbnail(isDark),
-              Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildThumbnail(isDark),
+            Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(10),
                   child: Column(

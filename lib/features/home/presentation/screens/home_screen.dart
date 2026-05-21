@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/animations/animations.dart';
 import '../../../../core/routing/app_router.dart';
@@ -10,13 +11,12 @@ import '../../../../core/utils/toast_utils.dart';
 import '../../../../core/services/app_logger.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
-import '../widgets/home/home_app_bar.dart';
+import '../widgets/home/home_hero_section.dart';
 import '../widgets/home/home_banner_carousel.dart';
 
 import '../widgets/home/home_course_section.dart';
 import '../widgets/home/home_flash_sale_section.dart';
 import '../widgets/home/home_loading_skeleton.dart';
-import '../widgets/home/home_search_bar.dart';
 import '../../../../core/di/injection_container.dart' as di;
 import '../../../notifications/presentation/cubit/notifications_cubit.dart';
 
@@ -101,42 +101,33 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           },
           builder: (context, state) {
-            return Column(
-              children: [
-                // Fixed Header (App Bar + Search)
-                SafeArea(
-                  bottom: false,
-                  child: Column(
-                    children: [
-                      HomeAppBar(userName: _userName),
-                      const HomeSearchBar(),
-                    ],
-                  ),
-                ),
-                // Scrollable Content
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _onRefresh,
-                    color: AppColors.primary,
-                    backgroundColor:
-                        isDark ? AppColors.cardDark : AppColors.white,
-                    displacement: 40,
-                    child: state.isLoading
-                        ? SingleChildScrollView(
-                            controller: _scrollController,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: const HomeLoadingSkeleton(),
-                          )
-                        : ListView(
-                            controller: _scrollController,
-                            physics: const AlwaysScrollableScrollPhysics(
-                                parent: BouncingScrollPhysics()),
-                            padding: EdgeInsets.zero,
-                            children: _buildContent(state, isDark),
-                          ),
-                  ),
-                ),
-              ],
+            final topPadding = MediaQuery.of(context).padding.top;
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: AppColors.primary,
+              backgroundColor:
+                  isDark ? AppColors.cardDark : AppColors.white,
+              displacement: 40,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics()),
+                slivers: [
+                  // Sticky Header with Hero Image and Search Bar
+                  HomeSliverAppBar(userName: _userName),
+                  // Scrollable Content
+                  if (state.isLoading)
+                    const SliverToBoxAdapter(
+                      child: HomeLoadingSkeleton(),
+                    )
+                  else
+                    SliverList(
+                      delegate: SliverChildListDelegate(
+                        _buildContent(state, isDark),
+                      ),
+                    ),
+                ],
+              ),
             );
           },
         ),

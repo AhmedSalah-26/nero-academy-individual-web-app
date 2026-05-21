@@ -1,0 +1,67 @@
+import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../domain/entities/quiz_entity.dart';
+
+/// Quiz Info Card - Displays quiz title and description
+class QuizInfoCard extends StatelessWidget {
+  final QuizEntity quiz;
+  final String locale;
+  final bool isDark;
+
+  const QuizInfoCard({
+    super.key,
+    required this.quiz,
+    required this.locale,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Title
+          Text(
+            quiz.getTitle(locale),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              height: 1.3,
+            ),
+          ),
+
+          // Description
+          if (quiz.getDescription(locale) != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              quiz.getDescription(locale)!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color:
+                    isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

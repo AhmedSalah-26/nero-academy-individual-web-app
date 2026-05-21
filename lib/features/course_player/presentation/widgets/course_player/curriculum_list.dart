@@ -1,0 +1,108 @@
+import 'package:flutter/material.dart';
+import '../../../../../core/shared_widgets/empty_state.dart';
+import '../../../domain/entities/section_entity.dart';
+import '../../../domain/entities/lesson_entity.dart';
+import 'section_header.dart';
+import 'lesson_item.dart';
+
+/// Curriculum List Widget
+class CurriculumList extends StatelessWidget {
+  final List<SectionEntity> sections;
+  final LessonEntity? currentLesson;
+  final Map<String, bool> completedLessons;
+  final bool isDark;
+  final ValueChanged<LessonEntity> onLessonTap;
+  final bool Function(String lessonId) isLessonCompleted;
+  final int Function(SectionEntity section) getSectionCompletedCount;
+
+  const CurriculumList({
+    super.key,
+    required this.sections,
+    this.currentLesson,
+    required this.completedLessons,
+    required this.isDark,
+    required this.onLessonTap,
+    required this.isLessonCompleted,
+    required this.getSectionCompletedCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (sections.isEmpty || _calculateItemCount() == 0) {
+      return const Center(
+        child: EmptyState(
+          type: EmptyStateType.lessons,
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _calculateItemCount(),
+      itemBuilder: (context, index) {
+        return _buildItem(index);
+      },
+    );
+  }
+
+  int _calculateItemCount() {
+    int count = 0;
+    for (final section in sections) {
+      count++; // Section header
+      count += section.lessons.length; // Lessons
+    }
+    return count;
+  }
+
+  Widget _buildItem(int index) {
+    int currentIndex = 0;
+    int globalLessonNumber = 0;
+
+    // First, calculate the global lesson number up to this index
+    for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      final section = sections[sectionIndex];
+
+      // Section header
+      if (currentIndex == index) {
+        return SectionHeader(
+          section: section,
+          sectionIndex: sectionIndex,
+          completedCount: getSectionCompletedCount(section),
+          isDark: isDark,
+          showDivider: sectionIndex > 0,
+        );
+      }
+      currentIndex++;
+
+      // Lessons
+      for (int lessonIndex = 0;
+          lessonIndex < section.lessons.length;
+          lessonIndex++) {
+        globalLessonNumber++;
+        if (currentIndex == index) {
+          final lesson = section.lessons[lessonIndex];
+          final isCurrentLesson = currentLesson?.id == lesson.id;
+          final isCompleted = isLessonCompleted(lesson.id);
+
+          // Determine if lesson is locked
+          // For now, only lock if not preview and not enrolled
+          final isLocked = !lesson.isPreview && !lesson.isPublished;
+
+          return LessonItem(
+            lesson: lesson,
+            lessonNumber: globalLessonNumber,
+            isCurrentLesson: isCurrentLesson,
+            isCompleted: isCompleted,
+            isLocked: isLocked,
+            isDark: isDark,
+            onTap: () => onLessonTap(lesson),
+          );
+        }
+        currentIndex++;
+      }
+    }
+
+    return const SizedBox.shrink();
+  }
+}

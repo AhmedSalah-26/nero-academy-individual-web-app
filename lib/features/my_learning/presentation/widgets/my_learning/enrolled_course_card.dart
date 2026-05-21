@@ -1,0 +1,203 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../domain/entities/enrollment_entity.dart';
+
+/// Enrolled Course Card - List item for My Learning screen
+class EnrolledCourseCard extends StatelessWidget {
+  final EnrollmentEntity enrollment;
+  final String locale;
+  final VoidCallback onTap;
+
+  const EnrolledCourseCard({
+    super.key,
+    required this.enrollment,
+    required this.locale,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final title = enrollment.getTitle(locale);
+    final progress = enrollment.progressPercentage.round();
+    final remaining = _formatDuration(enrollment.remainingMinutes);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? AppColors.grey700.withValues(alpha: 0.5)
+                : AppColors.grey100,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.12),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: isDark ? 0.08 : 0.06),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Thumbnail
+            _buildThumbnail(isDark),
+            const SizedBox(width: 14),
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title row with chevron
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? AppColors.white
+                                : AppColors.textMainLight,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 20,
+                        color: isDark ? AppColors.grey500 : AppColors.grey400,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Progress bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      value: enrollment.progressPercentage / 100,
+                      backgroundColor:
+                          isDark ? AppColors.grey700 : AppColors.grey100,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _getProgressColor(progress),
+                      ),
+                      minHeight: 6,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // Progress text
+                  Row(
+                    children: [
+                      Text(
+                        '$progress%',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _getProgressColor(progress),
+                        ),
+                      ),
+                      Text(
+                        ' • $remaining',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? AppColors.grey400 : AppColors.grey500,
+                        ),
+                      ),
+                      if (enrollment.isCompleted) ...[
+                        const Spacer(),
+                        _buildCompletedBadge(),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThumbnail(bool isDark) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(
+        width: 64,
+        height: 64,
+        child: enrollment.thumbnailUrl != null
+            ? CachedNetworkImage(
+                imageUrl: enrollment.thumbnailUrl!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(
+                  color: isDark ? AppColors.grey800 : AppColors.grey100,
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  color: isDark ? AppColors.grey800 : AppColors.grey100,
+                  child: const Icon(Icons.play_circle_outline, size: 24),
+                ),
+              )
+            : Container(
+                color: isDark ? AppColors.grey800 : AppColors.grey100,
+                child: const Icon(Icons.play_circle_outline, size: 24),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.check_circle_rounded,
+            size: 12,
+            color: AppColors.success,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            'my_learning.completed'.tr(),
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: AppColors.success,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getProgressColor(int progress) {
+    if (progress >= 80) return AppColors.success;
+    if (progress >= 30) return AppColors.primary;
+    return AppColors.warning;
+  }
+
+  String _formatDuration(int minutes) {
+    if (minutes <= 0) return 'my_learning.completed'.tr();
+    if (minutes < 60) return '${minutes}m ${'my_learning.remaining'.tr()}';
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    if (mins == 0) return '${hours}h ${'my_learning.remaining'.tr()}';
+    return '${hours}h ${mins}m ${'my_learning.remaining'.tr()}';
+  }
+}

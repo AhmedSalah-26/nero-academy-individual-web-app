@@ -1,0 +1,587 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'dart:typed_data';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import '../../../../core/animations/animations.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/toast_utils.dart';
+import '../../../../core/utils/validators.dart';
+import '../../../settings/presentation/cubit/settings_cubit.dart';
+import '../../domain/entities/user_entity.dart';
+import '../cubit/auth_cubit.dart';
+import '../cubit/auth_state.dart';
+import '../widgets/login/auth_tab_bar.dart';
+import '../widgets/login/auth_text_field.dart';
+import '../widgets/login/avatar_picker.dart';
+import '../widgets/login/multi_stage_register.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final _confirmPassCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _headlineCtrl = TextEditingController();
+  final _bioCtrl = TextEditingController();
+  bool _isLogin = true;
+  bool _obscure = true;
+  bool _obscureConfirm = true;
+  UserRole _role = UserRole.student;
+  Uint8List? _avatarBytes;
+  String _countryDialCode = '+20';
+  bool _isSubmittingInstructorRequest = false;
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _confirmPassCtrl.dispose();
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _headlineCtrl.dispose();
+    _bioCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickAvatar() async {
+    final bytes = await pickImage();
+    if (bytes != null) {
+      setState(() => _avatarBytes = bytes);
+    }
+  }
+
+  Future<void> _loadSettingsAndNavigate(
+      BuildContext context, String route) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      await sl<SettingsCubit>().loadSettings(userId);
+    }
+    if (mounted) {
+      context.go(route);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isArabic = context.locale.languageCode.toLowerCase() == 'ar';
+    return Scaffold(
+      backgroundColor:
+          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      body: BlocListener<AuthCubit, AuthState>(
+        listener: (ctx, state) {
+          if (state.isError && state.errorMessage != null) {
+            ToastUtils.showError(state.errorMessage!);
+            ctx.read<AuthCubit>().clearError();
+          }
+          if (state.needsInterests) {
+            _loadSettingsAndNavigate(ctx, '/interests');
+          } else if (state.isLoggedIn && state.user != null) {
+            final user = state.user!;
+            if (user.isAdmin) {
+              _loadSettingsAndNavigate(ctx, '/admin');
+            } else if (user.isInstructor) {
+              _loadSettingsAndNavigate(ctx, '/instructor');
+            } else {
+              _loadSettingsAndNavigate(ctx, '/home');
+            }
+          }
+        },
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 32),
+                            FadeIn(
+                              duration: const Duration(milliseconds: 600),
+                              child: _titleSection(
+                                isDark,
+                                isArabic,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            SlideFadeIn.fromBottom(
+                              delay: const Duration(milliseconds: 200),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
+                                child: AuthTabBar(
+                                  isLogin: _isLogin,
+                                  loginLabel: 'auth.login'.tr(),
+                                  registerLabel: 'auth.register'.tr(),
+                                  onChanged: (v) =>
+                                      setState(() => _isLogin = v),
+                                  isDark: isDark,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            SlideFadeIn.fromBottom(
+                              delay: const Duration(milliseconds: 300),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
+                                child: _isLogin
+                                    ? Form(
+                                        key: _formKey,
+                                        child: Column(
+                                          children: [
+                                            _loginForm(isDark),
+                                            const SizedBox(height: 24),
+                                            _submitBtn(),
+                                            const SizedBox(height: 16),
+                                            _parentLoginBtn(isDark),
+                                            const SizedBox(height: 32),
+                                            _terms(),
+                                          ],
+                                        ),
+                                      )
+                                    : MultiStageRegister(
+                                        nameCtrl: _nameCtrl,
+                                        phoneCtrl: _phoneCtrl,
+                                        emailCtrl: _emailCtrl,
+                                        passCtrl: _passCtrl,
+                                        confirmPassCtrl: _confirmPassCtrl,
+                                        headlineCtrl: _headlineCtrl,
+                                        bioCtrl: _bioCtrl,
+                                        avatarBytes: _avatarBytes,
+                                        onPickAvatar: _pickAvatar,
+                                        obscurePassword: _obscure,
+                                        obscureConfirmPassword: _obscureConfirm,
+                                        onTogglePassword: () => setState(
+                                            () => _obscure = !_obscure),
+                                        onToggleConfirmPassword: () => setState(
+                                            () => _obscureConfirm =
+                                                !_obscureConfirm),
+                                        selectedRole: _role,
+                                        onRoleChanged: (r) =>
+                                            setState(() => _role = r),
+                                        onCountryCodeChanged: (code) =>
+                                            setState(
+                                                () => _countryDialCode = code),
+                                        isDark: isDark,
+                                        isSubmitting:
+                                            _isSubmittingInstructorRequest,
+                                        onComplete: _submit,
+                                      ),
+                              ),
+                            ),
+                            if (!_isLogin) ...[
+                              const SizedBox(height: 16),
+                              FadeIn(
+                                delay: const Duration(milliseconds: 400),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24),
+                                  child: _terms(),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _titleSection(bool d, bool isArabic) => Column(
+        children: [
+          _brandNameText(isArabic, d),
+          const SizedBox(height: 14),
+          Text(
+            _isLogin ? 'auth.login'.tr() : 'auth.join_community'.tr(),
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: d ? AppColors.white : AppColors.textMainLight,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _isLogin
+                ? 'auth.login_subtitle'.tr()
+                : 'auth.create_account_subtitle'.tr(),
+            style: TextStyle(
+              fontSize: 14,
+              color: d ? AppColors.grey400 : AppColors.grey500,
+            ),
+          ),
+        ],
+      );
+
+  Widget _brandNameText(bool isArabic, bool isDark) {
+    final brandName = isArabic ? 'نيرو اكاديمى' : 'Nero Academy';
+    final gradient = isDark
+        ? const LinearGradient(
+            colors: [
+              AppColors.primaryOnDark,
+              AppColors.primary,
+              AppColors.primaryLight,
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          )
+        : const LinearGradient(
+            colors: [
+              AppColors.primaryDark,
+              AppColors.primary,
+              AppColors.primaryOnDark,
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          );
+
+    return ShaderMask(
+      shaderCallback: (bounds) => gradient.createShader(
+        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+      ),
+      child: Text(
+        brandName,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontFamily: 'Almarai',
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          letterSpacing: -0.1,
+        ),
+      ),
+    );
+  }
+
+  Widget _loginForm(bool d) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AuthTextField(
+            controller: _emailCtrl,
+            label: 'auth.email'.tr(),
+            hint: 'auth.email_placeholder'.tr(),
+            icon: Icons.mail_outline_rounded,
+            keyboardType: TextInputType.emailAddress,
+            validator: Validators.email,
+            isDark: d,
+          ),
+          const SizedBox(height: 16),
+          AuthTextField(
+            controller: _passCtrl,
+            label: 'auth.password'.tr(),
+            hint: 'auth.password_placeholder'.tr(),
+            icon: Icons.lock_outline_rounded,
+            obscureText: _obscure,
+            isDark: d,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscure
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                size: 20,
+                color: AppColors.grey400,
+              ),
+              onPressed: () => setState(() => _obscure = !_obscure),
+            ),
+            validator: (v) => Validators.password(v, minLength: 8),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton(
+              onPressed: () => context.push('/forgot-password'),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+              ),
+              child: Text(
+                'auth.forgot_password'.tr(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+
+  Widget _submitBtn() => BlocBuilder<AuthCubit, AuthState>(
+        builder: (_, s) => SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: s.isLoading ? null : _submit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: s.isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _isLogin
+                            ? 'auth.login'.tr()
+                            : 'auth.create_account'.tr(),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_forward_rounded, size: 18),
+                    ],
+                  ),
+          ),
+        ),
+      );
+
+  Widget _parentLoginBtn(bool isDark) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: () => context.push('/parent_entrance'),
+        icon: Icon(
+          Icons.family_restroom_rounded,
+          size: 20,
+          color: isDark ? AppColors.white : AppColors.primary,
+        ),
+        label: Text(
+          context.locale.languageCode == 'ar'
+              ? 'دخول كولي أمر'
+              : 'Login as Parent',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: isDark ? AppColors.white : AppColors.primary,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+            color: isDark ? AppColors.grey700 : AppColors.primary,
+            width: 1.5,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _terms() => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Text.rich(
+          TextSpan(
+            text: '${'auth.terms_text'.tr()} ',
+            style: const TextStyle(fontSize: 12, color: AppColors.grey400),
+            children: [
+              TextSpan(
+                text: 'auth.terms_of_service'.tr(),
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+              TextSpan(text: ' ${'auth.and'.tr()} '),
+              TextSpan(
+                text: 'auth.privacy_policy'.tr(),
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+
+  void _submit() {
+    // Only validate form for login, register has its own validation per stage
+    if (_isLogin && !_formKey.currentState!.validate()) return;
+
+    final c = context.read<AuthCubit>();
+    if (_isLogin) {
+      c.login(email: _emailCtrl.text.trim(), password: _passCtrl.text);
+    } else if (_role == UserRole.instructor) {
+      _submitInstructorApplication();
+    } else {
+      c.register(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+        name: _nameCtrl.text.trim(),
+        phone: _getFullPhoneNumber(),
+        role: _role,
+        headline:
+            _role == UserRole.instructor && _headlineCtrl.text.trim().isNotEmpty
+                ? _headlineCtrl.text.trim()
+                : null,
+        bio: _role == UserRole.instructor && _bioCtrl.text.trim().isNotEmpty
+            ? _bioCtrl.text.trim()
+            : null,
+        avatarBytes: _avatarBytes,
+      );
+    }
+  }
+
+  Future<void> _submitInstructorApplication() async {
+    if (_isSubmittingInstructorRequest) return;
+
+    final isArabic = context.locale.languageCode == 'ar';
+    final name = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim().toLowerCase();
+    final phone = _getFullPhoneNumber();
+
+    final nameError = Validators.required(
+      name,
+      message: isArabic ? 'الاسم مطلوب' : 'Name is required',
+    );
+    if (nameError != null) {
+      ToastUtils.showError(nameError);
+      return;
+    }
+
+    final emailError = Validators.email(
+      email,
+      emptyMessage: isArabic ? 'البريد الإلكتروني مطلوب' : 'Email is required',
+      invalidMessage:
+          isArabic ? 'البريد الإلكتروني غير صالح' : 'Invalid email address',
+    );
+    if (emailError != null) {
+      ToastUtils.showError(emailError);
+      return;
+    }
+
+    if (phone == null || phone.isEmpty) {
+      ToastUtils.showError(
+          isArabic ? 'رقم التواصل مطلوب' : 'Phone number is required');
+      return;
+    }
+
+    setState(() => _isSubmittingInstructorRequest = true);
+
+    try {
+      final client = Supabase.instance.client;
+      final existing = await client
+          .from('instructor_applications')
+          .select('id, status')
+          .eq('email', email)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (existing != null && existing['status'] == 'pending') {
+        ToastUtils.showInfo(
+          isArabic
+              ? 'تم إرسال طلب سابق لنفس البريد وهو قيد المراجعة'
+              : 'A request with this email is already pending review',
+        );
+        return;
+      }
+
+      await client.from('instructor_applications').insert({
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'status': 'pending',
+      });
+
+      if (!mounted) return;
+      ToastUtils.showSuccess(
+        isArabic
+            ? 'تم إرسال طلب التدريس بنجاح. سيتواصل معك الأدمن بعد المراجعة.'
+            : 'Instructor request submitted successfully. Admin will contact you after review.',
+      );
+
+      _clearRegisterFields();
+      setState(() {
+        _isLogin = true;
+        _role = UserRole.student;
+      });
+    } on PostgrestException catch (e) {
+      final message = e.message.toLowerCase();
+      if (message.contains('relation') &&
+          message.contains('instructor_applications')) {
+        ToastUtils.showError(
+          isArabic
+              ? 'جدول طلبات المدرسين غير موجود. نفّذ سكربت قاعدة البيانات أولاً.'
+              : 'Instructor applications table is missing. Run the database script first.',
+        );
+      } else {
+        ToastUtils.showError(
+          isArabic ? 'تعذر إرسال الطلب حالياً' : 'Failed to submit request',
+        );
+      }
+    } catch (_) {
+      ToastUtils.showError(
+        isArabic ? 'حدث خطأ أثناء إرسال الطلب' : 'Unexpected error occurred',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingInstructorRequest = false);
+      }
+    }
+  }
+
+  void _clearRegisterFields() {
+    _nameCtrl.clear();
+    _phoneCtrl.clear();
+    _emailCtrl.clear();
+    _passCtrl.clear();
+    _confirmPassCtrl.clear();
+    _headlineCtrl.clear();
+    _bioCtrl.clear();
+    _avatarBytes = null;
+  }
+
+  String? _getFullPhoneNumber() {
+    final phone = _phoneCtrl.text.trim();
+    if (phone.isEmpty) return null;
+    final cleanPhone = phone.startsWith('0') ? phone.substring(1) : phone;
+    return '$_countryDialCode$cleanPhone';
+  }
+}

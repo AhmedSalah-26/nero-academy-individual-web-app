@@ -1,0 +1,371 @@
+import 'dart:ui' as ui;
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../domain/entities/course_entity.dart';
+
+class CourseCard extends StatelessWidget {
+  final CourseEntity course;
+  final String locale;
+  final VoidCallback? onTap;
+  final VoidCallback? onAddToCart;
+  final VoidCallback? onWishlistTap;
+  final double? width;
+  final bool showAddToCart;
+  final bool isInWishlist;
+
+  const CourseCard({
+    super.key,
+    required this.course,
+    required this.locale,
+    this.onTap,
+    this.onAddToCart,
+    this.onWishlistTap,
+    this.width,
+    this.showAddToCart = false,
+    this.isInWishlist = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = width ?? screenWidth * 0.44;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: cardWidth,
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.grey200,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: isDark ? 0.1 : 0.08),
+              blurRadius: 24,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: IntrinsicHeight(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildThumbnail(isDark),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        course.getTitle(locale),
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.textMainDark
+                              : AppColors.textMainLight,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // Instructor
+                      Text(
+                        course.instructorName ?? '',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.textMutedDark
+                              : AppColors.textMutedLight,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Spacer(),
+                      // Stats Row
+                      _buildStatsRow(isDark),
+                      const SizedBox(height: 8),
+                      // Price Row
+                      _buildPrice(isDark),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThumbnail(bool isDark) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: (course.thumbnailUrl ?? '').isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: course.thumbnailUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(
+                      color: isDark ? AppColors.surfaceDark : AppColors.grey200,
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: isDark ? AppColors.surfaceDark : AppColors.grey200,
+                      child: const Icon(Icons.play_circle_outline,
+                          color: AppColors.grey400),
+                    ),
+                  )
+                : Container(
+                    color: isDark ? AppColors.surfaceDark : AppColors.grey200,
+                    child: const Icon(Icons.play_circle_outline,
+                        color: AppColors.grey400),
+                  ),
+          ),
+        ),
+        // Custom Badge, Free Badge, or Discount Badge (Priority Order)
+        if (course.effectiveBadge != null && course.effectiveBadge!.isNotEmpty)
+          Positioned(
+            top: 8,
+            left: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFFF512F),
+                    Color(0xFFDD2476)
+                  ], // Red-Pink Gradient
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                course.effectiveBadge!,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+          )
+        else if (course.isFree)
+          Positioned(
+            top: 8,
+            left: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.success,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'course.free'.tr(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          )
+        else if (course.discountPercentage != null &&
+            course.discountPercentage! > 0)
+          Positioned(
+            top: 8,
+            left: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '${course.discountPercentage!.toInt()}%',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ),
+        // Wishlist Button - Accessible touch target (44px minimum)
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: onWishlistTap,
+            child: Container(
+              width: 44, // Minimum touch target
+              height: 44, // Minimum touch target
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isInWishlist
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                size: 20,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+        // Add to Cart Button (overlay) - Accessible touch target
+        if (showAddToCart && !course.isFree)
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: GestureDetector(
+              onTap: onAddToCart,
+              child: Container(
+                width: 44, // Minimum touch target
+                height: 44, // Minimum touch target
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.add_shopping_cart_rounded,
+                  size: 20,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildStatsRow(bool isDark) {
+    return Row(
+      children: [
+        // Students
+        Icon(Icons.people_alt_outlined,
+            size: 14, color: isDark ? AppColors.grey400 : AppColors.grey500),
+        const SizedBox(width: 3),
+        Text(
+          _formatCount(course.enrolledCount),
+          style: TextStyle(
+            color: isDark ? AppColors.grey400 : AppColors.grey500,
+            fontSize: 11,
+          ),
+        ),
+        const Spacer(),
+        // Rating
+        Text(
+          '(${_formatCount(course.ratingCount)})',
+          style: TextStyle(
+            color: isDark ? AppColors.grey400 : AppColors.grey500,
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(width: 4),
+        const Icon(Icons.star_rounded, size: 14, color: AppColors.rating),
+        const SizedBox(width: 2),
+        Text(
+          course.rating.toStringAsFixed(1),
+          style: const TextStyle(
+            color: AppColors.rating,
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrice(bool isDark) {
+    if (course.isFree) {
+      return Text(
+        'course.free'.tr(),
+        style: const TextStyle(
+          color: AppColors.success,
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
+      );
+    }
+
+    final hasDiscount = course.discountPrice != null ||
+        (course.discountPercentage != null && course.discountPercentage! > 0);
+    final currentPrice = course.currentPrice;
+    final originalPrice = course.price;
+    final currency = course.currency;
+
+    return Directionality(
+      textDirection: ui.TextDirection.ltr,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              '$currency ${currentPrice.toStringAsFixed(0)}',
+              style: TextStyle(
+                color: isDark ? AppColors.white : AppColors.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (hasDiscount && originalPrice > currentPrice) ...[
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                originalPrice.toStringAsFixed(0),
+                style: TextStyle(
+                  color: isDark ? AppColors.grey500 : AppColors.grey400,
+                  decoration: TextDecoration.lineThrough,
+                  fontSize: 11,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k';
+    return count.toString();
+  }
+}

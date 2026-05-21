@@ -1,0 +1,70 @@
+import 'package:logger/logger.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/errors/exceptions.dart' as app_exceptions;
+import '../../models/user_model.dart';
+// import 'auth_helpers_mixin.dart';
+
+mixin AuthProfileMixin {
+  // Dependencies
+  SupabaseClient get supabase;
+  Logger get logger;
+  Future<UserModel> getProfile(String userId);
+  app_exceptions.AuthException handleAuthError(AuthApiException e);
+
+  Future<void> forgotPassword(String email) async {
+    try {
+      await supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: AppConstants.passwordResetRedirectUrl,
+      );
+    } on AuthApiException catch (e) {
+      throw handleAuthError(e);
+    }
+  }
+
+  Future<void> resetPassword(
+      {required String token, required String newPassword}) async {
+    try {
+      await supabase.auth.updateUser(UserAttributes(password: newPassword));
+    } on AuthApiException catch (e) {
+      throw handleAuthError(e);
+    }
+  }
+
+  Future<UserModel> updateInterests(List<String> interests) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) throw app_exceptions.AuthException.sessionExpired();
+
+    try {
+      await supabase.from('profiles').update({
+        'interests': interests,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+      return await getProfile(userId);
+    } on PostgrestException catch (e) {
+      throw app_exceptions.ServerException(e.message, code: e.code);
+    }
+  }
+
+  Future<UserModel> updateProfile(
+      {String? name, String? phone, String? avatarUrl}) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) throw app_exceptions.AuthException.sessionExpired();
+
+    try {
+      final updates = <String, dynamic>{
+        'updated_at': DateTime.now().toIso8601String()
+      };
+      if (name != null) updates['name'] = name;
+      if (phone != null) updates['phone'] = phone;
+      if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
+
+      await supabase.from('profiles').update(updates).eq('id', userId);
+      return await getProfile(userId);
+    } on PostgrestException catch (e) {
+      throw app_exceptions.ServerException(e.message, code: e.code);
+    }
+  }
+}

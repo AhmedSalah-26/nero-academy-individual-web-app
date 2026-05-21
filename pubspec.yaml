@@ -122,16 +122,16 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon.png"
+  image_path: "assets/logo.jpg"
   min_sdk_android: 21
   adaptive_icon_background: "#7C3AED"
-  adaptive_icon_foreground: "assets/icon.png"
+  adaptive_icon_foreground: "assets/logo.jpg"
   web:
     generate: true
-    image_path: "assets/icon.png"
+    image_path: "assets/logo.jpg"
   windows:
     generate: true
-    image_path: "assets/icon.png"
+    image_path: "assets/logo.jpg"
 
 flutter_native_splash:
   # This package generates native code to customize Flutter's default white native splash screen

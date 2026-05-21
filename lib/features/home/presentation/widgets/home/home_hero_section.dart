@@ -34,6 +34,7 @@ class HomeSliverAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final w = size.width;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     // Estimate expanded height based on image aspect ratio and AppBar
     // HomeAppBar ~ 80px + Image (4:3 aspect ratio = w * 0.75)
@@ -42,7 +43,7 @@ class HomeSliverAppBar extends StatelessWidget {
     return SliverAppBar(
       pinned: true,
       elevation: 0,
-      backgroundColor: const Color(0xFFEEE4FC),
+      backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFEEE4FC),
       expandedHeight: expandedHeight,
       toolbarHeight: 70, // Height for HomeAppBar
       titleSpacing: 0,
@@ -58,7 +59,7 @@ class HomeSliverAppBar extends StatelessWidget {
               const SizedBox(height: 70),
               Expanded(
                 child: Image.asset(
-                    'assets/footer2.png',
+                    isDark ? 'assets/footer_dark.png' : 'assets/footer2.png',
                     width: double.infinity,
                     fit: BoxFit.cover,
                     alignment: Alignment.topCenter,
@@ -84,11 +85,11 @@ class HomeSliverAppBar extends StatelessWidget {
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppColors.cardDark : Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.06),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -99,12 +100,12 @@ class HomeSliverAppBar extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: w * 0.04),
                     child: Icon(Icons.search_rounded,
-                        color: const Color(0xFF5D5FEF), size: w * 0.055),
+                        color: isDark ? Colors.white70 : const Color(0xFF5D5FEF), size: w * 0.055),
                   ),
                   Text(
                     'ابحث عن درس، امتحان، مذكرة ...',
                     style: TextStyle(
-                      color: Colors.black38,
+                      color: isDark ? Colors.white54 : Colors.black38,
                       fontSize: w * 0.036,
                     ),
                   ),

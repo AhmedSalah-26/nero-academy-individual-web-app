@@ -13,6 +13,7 @@ class GlassIconButton extends StatelessWidget {
   final bool hasNotification;
   final int? badgeCount;
   final bool compactBadge;
+  final Color? iconColor;
 
   const GlassIconButton({
     super.key,
@@ -24,44 +25,49 @@ class GlassIconButton extends StatelessWidget {
     this.hasNotification = false,
     this.badgeCount,
     this.compactBadge = false,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final numberBadgeScale = compactBadge ? 0.78 : 1.0;
+    const borderWidth = 1.5;
+    final radius = BorderRadius.circular(borderRadius);
+    final innerRadius = BorderRadius.circular(borderRadius - borderWidth);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.15)
+        : AppColors.primary.withValues(alpha: 0.28);
+    final fillColor = isDark
+        ? AppColors.surfaceDark.withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.74);
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(borderRadius),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(borderRadius),
-                child: Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.surfaceDark.withValues(alpha: 0.92)
-                        : Colors.white.withValues(alpha: 0.82),
-                    borderRadius: BorderRadius.circular(borderRadius),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : AppColors.primary.withValues(alpha: 0.25),
-                      width: 1.5,
-                    ),
-                  ),
+        Container(
+          width: size,
+          height: size,
+          padding: const EdgeInsets.all(borderWidth),
+          decoration: BoxDecoration(
+            color: borderColor,
+            borderRadius: radius,
+          ),
+          child: ClipRRect(
+            borderRadius: innerRadius,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Material(
+                color: fillColor,
+                borderRadius: innerRadius,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: innerRadius,
                   child: Icon(
                     icon,
                     size: iconSize,
-                    color: isDark ? AppColors.textMainDark : AppColors.primary,
+                    color: iconColor ??
+                        (isDark ? AppColors.textMainDark : AppColors.primary),
                   ),
                 ),
               ),

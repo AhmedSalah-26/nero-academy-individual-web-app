@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../../core/shared_widgets/glass_icon_button.dart';
 import '../../../../../core/theme/app_colors.dart';
 
 /// Wishlist App Bar - Header with title and clear button
@@ -39,7 +40,13 @@ class WishlistAppBar extends StatelessWidget {
           children: [
             Row(
               children: [
-                GestureDetector(
+                GlassIconButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  size: 44,
+                  iconSize: 19,
+                  borderRadius: 14,
+                  iconColor:
+                      isDark ? AppColors.grey400 : AppColors.textMainLight,
                   onTap: () {
                     if (context.canPop()) {
                       context.pop();
@@ -47,18 +54,6 @@ class WishlistAppBar extends StatelessWidget {
                       context.go('/home');
                     }
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDark : AppColors.grey100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      size: 18,
-                      color: isDark ? AppColors.grey400 : AppColors.grey600,
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -74,22 +69,13 @@ class WishlistAppBar extends StatelessWidget {
               ],
             ),
             if (hasItems && onClear != null)
-              IconButton(
-                onPressed: onClear,
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.grey800.withValues(alpha: 0.5)
-                        : AppColors.grey100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.delete_outline_rounded,
-                    size: 22,
-                    color: AppColors.error,
-                  ),
-                ),
+              GlassIconButton(
+                icon: Icons.delete_outline_rounded,
+                onTap: onClear,
+                size: 44,
+                iconSize: 22,
+                borderRadius: 14,
+                iconColor: AppColors.error,
               ),
           ],
         ),

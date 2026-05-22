@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/shared_widgets/glass_icon_button.dart';
@@ -30,31 +32,48 @@ class WishlistItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    const radius = 16.0;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.cardDark.withValues(alpha: 0.78)
+                  : Colors.white.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.14)
+                    : AppColors.primary.withValues(alpha: 0.18),
+                width: 1.4,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+                BoxShadow(
+                  color:
+                      AppColors.primary.withValues(alpha: isDark ? 0.08 : 0.06),
+                  blurRadius: 26,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.1 : 0.08),
-              blurRadius: 24,
-              spreadRadius: 2,
+            child: Column(
+              children: [
+                _buildMainContent(isDark),
+                _buildFooter(isDark),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            _buildMainContent(isDark),
-            _buildFooter(isDark),
-          ],
+          ),
         ),
       ),
     );
@@ -285,11 +304,15 @@ class WishlistItemCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.03) : AppColors.grey50,
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.white.withValues(alpha: 0.28),
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
         border: Border(
           top: BorderSide(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : AppColors.primary.withValues(alpha: 0.12),
             width: 1,
           ),
         ),

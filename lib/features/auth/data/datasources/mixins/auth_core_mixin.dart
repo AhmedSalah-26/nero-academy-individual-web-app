@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/errors/exceptions.dart' as app_exceptions;
@@ -66,6 +66,7 @@ mixin AuthCoreMixin {
         email: email,
         password: password,
         data: {'name': name, 'role': role.toJson(), 'phone': phone},
+        emailRedirectTo: kIsWeb ? Uri.base.toString() : null,
       );
 
       if (response.user == null) {

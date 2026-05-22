@@ -25,76 +25,89 @@ class AuthTabSwitcher extends StatelessWidget {
             : AppColors.grey200,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        children: [
-          // Login Tab
-          Expanded(
-            child: _TabButton(
-              label: 'تسجيل الدخول',
-              isSelected: isLogin,
-              onTap: () => onChanged(true),
-            ),
-          ),
-          // Sign Up Tab
-          Expanded(
-            child: _TabButton(
-              label: 'إنشاء حساب',
-              isSelected: !isLogin,
-              onTap: () => onChanged(false),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Subtracting padding to avoid overflow
+          final totalWidth = constraints.maxWidth;
+          final pillWidth = totalWidth / 2;
 
-class _TabButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _TabButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? AppColors.grey700 : AppColors.white)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+          return Stack(
+            children: [
+              // Sliding background pill
+              AnimatedAlign(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOutCubic,
+                alignment: isLogin
+                    ? AlignmentDirectional.centerStart
+                    : AlignmentDirectional.centerEnd,
+                child: Container(
+                  width: pillWidth,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.grey700 : AppColors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1.5),
+                      ),
+                    ],
                   ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isSelected
-                  ? AppColors.primary
-                  : (isDark ? AppColors.grey400 : AppColors.grey500),
-            ),
-          ),
-        ),
+                ),
+              ),
+              // Content (Interactive Tab Buttons)
+              Positioned.fill(
+                child: Row(
+                  children: [
+                    // Login Tab
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => onChanged(true),
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isLogin
+                                  ? AppColors.primary
+                                  : (isDark ? AppColors.grey400 : AppColors.grey500),
+                              fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                            ),
+                            child: const Text('تسجيل الدخول'),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Sign Up Tab
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => onChanged(false),
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: !isLogin
+                                  ? AppColors.primary
+                                  : (isDark ? AppColors.grey400 : AppColors.grey500),
+                              fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                            ),
+                            child: const Text('إنشاء حساب'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

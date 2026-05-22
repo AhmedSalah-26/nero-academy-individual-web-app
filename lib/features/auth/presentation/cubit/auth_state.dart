@@ -13,6 +13,7 @@ enum AuthStatus {
   phoneLinkOtpSent, // OTP تم إرسال رمز ربط الهاتف
   phoneLinked, // تم ربط الهاتف بنجاح
   needsPhoneLink, // يحتاج ربط الهاتف (بعد التسجيل)
+  awaitingEmailVerification, // بانتظار تأكيد البريد الإلكتروني
 }
 
 /// Auth State
@@ -62,6 +63,9 @@ class AuthState extends Equatable {
   const AuthState.needsPhoneLink(UserEntity user)
       : this(status: AuthStatus.needsPhoneLink, user: user);
 
+  const AuthState.awaitingEmailVerification()
+      : this(status: AuthStatus.awaitingEmailVerification);
+
   // ============ Getters ============
 
   bool get isInitial => status == AuthStatus.initial;
@@ -74,6 +78,7 @@ class AuthState extends Equatable {
   bool get isPhoneLinkOtpSent => status == AuthStatus.phoneLinkOtpSent;
   bool get isPhoneLinked => status == AuthStatus.phoneLinked;
   bool get needsPhoneLink => status == AuthStatus.needsPhoneLink;
+  bool get isAwaitingEmailVerification => status == AuthStatus.awaitingEmailVerification;
 
   bool get isLoggedIn =>
       status == AuthStatus.authenticated ||

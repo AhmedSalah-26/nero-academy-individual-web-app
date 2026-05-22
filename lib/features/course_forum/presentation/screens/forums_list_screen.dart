@@ -124,65 +124,111 @@ class _ForumsListViewState extends State<_ForumsListView> {
 
   Widget _buildFilterChips(
       BuildContext context, ForumsListState state, bool isArabic, bool isDark) {
+    final selectedIndex = state.typeFilter == null
+        ? 0
+        : (state.typeFilter == 'multi' ? 1 : 2);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _buildFilterChip(
-            label: isArabic ? '\u0627\u0644\u0643\u0644' : 'All',
-            isSelected: state.typeFilter == null,
-            isDark: isDark,
-            onTap: () => context.read<ForumsListCubit>().setTypeFilter(null),
-          ),
-          const SizedBox(width: 8),
-          _buildFilterChip(
-            label: isArabic ? '\u062c\u0645\u0627\u0639\u064a\u0629' : 'Groups',
-            isSelected: state.typeFilter == 'multi',
-            isDark: isDark,
-            onTap: () => context.read<ForumsListCubit>().setTypeFilter('multi'),
-          ),
-          const SizedBox(width: 8),
-          _buildFilterChip(
-            label: isArabic ? '\u062e\u0627\u0635\u0629' : 'Private',
-            isSelected: state.typeFilter == 'single',
-            isDark: isDark,
-            onTap: () =>
-                context.read<ForumsListCubit>().setTypeFilter('single'),
-          ),
-        ],
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 44,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.grey800.withValues(alpha: 0.5)
+            : AppColors.grey200,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final totalWidth = constraints.maxWidth;
+          final tabWidth = totalWidth / 3;
+
+          final AlignmentDirectional alignment;
+          if (selectedIndex == 0) {
+            alignment = AlignmentDirectional.centerStart;
+          } else if (selectedIndex == 1) {
+            alignment = const AlignmentDirectional(0.0, 0.0);
+          } else {
+            alignment = AlignmentDirectional.centerEnd;
+          }
+
+          return Stack(
+            children: [
+              // Sliding Indicator
+              AnimatedAlign(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOutCubic,
+                alignment: alignment,
+                child: Container(
+                  width: tabWidth,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Buttons
+              Positioned.fill(
+                child: Row(
+                  children: [
+                    _buildTabItem(
+                      label: isArabic ? 'الكل' : 'All',
+                      isSelected: selectedIndex == 0,
+                      isDark: isDark,
+                      onTap: () => context.read<ForumsListCubit>().setTypeFilter(null),
+                    ),
+                    _buildTabItem(
+                      label: isArabic ? 'جماعية' : 'Groups',
+                      isSelected: selectedIndex == 1,
+                      isDark: isDark,
+                      onTap: () => context.read<ForumsListCubit>().setTypeFilter('multi'),
+                    ),
+                    _buildTabItem(
+                      label: isArabic ? 'خاصة' : 'Private',
+                      isSelected: selectedIndex == 2,
+                      isDark: isDark,
+                      onTap: () => context.read<ForumsListCubit>().setTypeFilter('single'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildFilterChip({
+  Widget _buildTabItem({
     required String label,
     required bool isSelected,
     required bool isDark,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : (isDark ? AppColors.cardDark : AppColors.backgroundLight),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : (isDark ? AppColors.borderDark : AppColors.borderLight),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected
-                ? Colors.white
-                : (isDark ? AppColors.textMainDark : AppColors.textMainLight),
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark ? AppColors.grey400 : AppColors.grey600),
+              fontFamily: 'Tajawal', // Using the app's Arabic font if available
+            ),
+            child: Text(label),
           ),
         ),
       ),

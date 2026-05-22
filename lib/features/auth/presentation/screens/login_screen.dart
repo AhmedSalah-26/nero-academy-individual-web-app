@@ -43,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Uint8List? _avatarBytes;
   String _countryDialCode = '+20';
   bool _isSubmittingInstructorRequest = false;
+  bool _showAwaitingVerification = false;
 
   @override
   void dispose() {
@@ -87,6 +88,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ToastUtils.showError(state.errorMessage!);
             ctx.read<AuthCubit>().clearError();
           }
+          if (state.isAwaitingEmailVerification) {
+            setState(() {
+              _showAwaitingVerification = true;
+            });
+          }
           if (state.needsInterests) {
             _loadSettingsAndNavigate(ctx, '/interests');
           } else if (state.isLoggedIn && state.user != null) {
@@ -112,10 +118,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       constraints: const BoxConstraints(maxWidth: 520),
                       child: SizedBox(
                         width: double.infinity,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 32),
+                        child: _showAwaitingVerification
+                            ? _buildAwaitingVerificationView(isDark)
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 32),
                             FadeIn(
                               duration: const Duration(milliseconds: 600),
                               child: _titleSection(
@@ -202,7 +210,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                             const SizedBox(height: 24),
-                          ],
                         ),
                       ),
                     ),
@@ -583,5 +590,154 @@ class _LoginScreenState extends State<LoginScreen> {
     if (phone.isEmpty) return null;
     final cleanPhone = phone.startsWith('0') ? phone.substring(1) : phone;
     return '$_countryDialCode$cleanPhone';
+  }
+
+  Widget _buildAwaitingVerificationView(bool isDark) {
+    final email = _emailCtrl.text.trim();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      child: Card(
+        color: isDark ? AppColors.cardDark : AppColors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.1),
+        child: Padding(
+          padding: const EdgeInsets.all(28.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.mark_email_read_outlined,
+                  size: 44,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'تأكيد الحساب',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.white : AppColors.textMainLight,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'لقد أرسلنا رابط تفعيل إلى البريد الإلكتروني:',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.grey300 : AppColors.grey600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.grey800 : AppColors.grey100,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  email,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'يرجى فتح صندوق الوارد والضغط على الرابط لتأكيد حسابك وتفعيله.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? AppColors.grey400 : AppColors.grey500,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _showAwaitingVerification = false;
+                      _isLogin = true;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'تم، الانتقال لتسجيل الدخول',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              BlocBuilder<AuthCubit, AuthState>(
+                builder: (context, state) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: state.isLoading
+                          ? null
+                          : () async {
+                              final success = await context
+                                  .read<AuthCubit>()
+                                  .resendVerificationEmail(email);
+                              if (success) {
+                                ToastUtils.showSuccess(
+                                    'تم إعادة إرسال البريد الإلكتروني بنجاح!');
+                              }
+                            },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: state.isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                              ),
+                            )
+                          : const Text(
+                              'إعادة إرسال البريد الإلكتروني',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

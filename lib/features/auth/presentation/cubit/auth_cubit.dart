@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
@@ -112,8 +113,15 @@ class AuthCubit extends Cubit<AuthState> {
       (user) {
         debugPrint(
             '✅ [AuthCubit] Register successful: ${user.email}, id: ${user.id}');
-        debugPrint('✅ [AuthCubit] Emitting authenticated state after registration');
-        emit(AuthState.authenticated(user));
+        
+        final session = Supabase.instance.client.auth.currentSession;
+        if (session == null) {
+          debugPrint('📧 [AuthCubit] Session is null, user must confirm email');
+          emit(const AuthState.awaitingEmailVerification());
+        } else {
+          debugPrint('✅ [AuthCubit] Emitting authenticated state after registration');
+          emit(AuthState.authenticated(user));
+        }
       },
     );
   }
@@ -344,6 +352,23 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthState.phoneLinked(user));
       },
     );
+  }
+
+  /// Resend verification email
+  Future<bool> resendVerificationEmail(String email) async {
+    emit(const AuthState.loading());
+    try {
+      await Supabase.instance.client.auth.resend(
+        type: OtpType.signup,
+        email: email,
+        emailRedirectTo: kIsWeb ? Uri.base.toString() : null,
+      );
+      emit(const AuthState.awaitingEmailVerification());
+      return true;
+    } catch (e) {
+      emit(AuthState.error(e.toString()));
+      return false;
+    }
   }
 
   /// Clear error

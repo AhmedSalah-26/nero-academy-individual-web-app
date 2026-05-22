@@ -305,6 +305,7 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
                   builderContext.goNamed(
                     'instructor-profile',
                     pathParameters: {'instructorId': state.instructorId!},
+                    queryParameters: {'returnCourseId': widget.courseId},
                   );
                 }
               : () {

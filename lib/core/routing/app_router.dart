@@ -331,11 +331,17 @@ class AppRouter {
         name: 'instructor-profile',
         builder: (context, state) {
           final instructorId = state.pathParameters['instructorId']!;
+          final returnCourseId = state.uri.queryParameters['returnCourseId'];
+          final fallbackLocation =
+              returnCourseId == null ? '/home' : '/course/$returnCourseId';
           return BlocProvider(
             create: (_) => InstructorCubit(
               remoteDataSource: InstructorRemoteDataSourceImpl(sl()),
             )..loadInstructor(instructorId),
-            child: InstructorProfileScreen(instructorId: instructorId),
+            child: InstructorProfileScreen(
+              instructorId: instructorId,
+              fallbackLocation: fallbackLocation,
+            ),
           );
         },
       ),

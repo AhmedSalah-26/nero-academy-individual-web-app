@@ -17,8 +17,13 @@ import '../widgets/instructor_skeleton.dart';
 /// Instructor Profile Screen - Instagram-like bio page
 class InstructorProfileScreen extends StatefulWidget {
   final String instructorId;
+  final String fallbackLocation;
 
-  const InstructorProfileScreen({super.key, required this.instructorId});
+  const InstructorProfileScreen({
+    super.key,
+    required this.instructorId,
+    this.fallbackLocation = '/home',
+  });
 
   @override
   State<InstructorProfileScreen> createState() =>
@@ -98,7 +103,7 @@ class _InstructorProfileScreenState extends State<InstructorProfileScreen> {
               isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
-          leading: const AppBackButton(),
+          leading: AppBackButton(fallbackLocation: widget.fallbackLocation),
           title: AnimatedOpacity(
             duration: const Duration(milliseconds: 200),
             opacity: _showTitle ? 1.0 : 0.0,

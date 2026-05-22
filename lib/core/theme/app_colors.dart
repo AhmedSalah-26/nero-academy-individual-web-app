@@ -73,8 +73,8 @@ class AppColors {
   static const Color grey900 = Color(0xFF111827);
 
   // ============ Shimmer Colors ============
-  static const Color shimmerBase = Color(0xFFE0E0E0);
-  static const Color shimmerHighlight = Color(0xFFF5F5F5);
-  static const Color shimmerBaseDark = Color(0xFF251E3E);
-  static const Color shimmerHighlightDark = Color(0xFF302848);
+  static const Color shimmerBase = Color(0xFFE5D5FC);       // Soft light purple
+  static const Color shimmerHighlight = Color(0xFFF3EBFF);  // Glowing light purple
+  static const Color shimmerBaseDark = Color(0xFF221A3D);    // Deep purple base
+  static const Color shimmerHighlightDark = Color(0xFF322854); // Brighter purple highlight
 }

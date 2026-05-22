@@ -83,25 +83,32 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final locale = context.locale.languageCode;
 
-    return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      body: BlocBuilder<CourseDetailsCubit, CourseDetailsState>(
-        builder: (context, state) {
-          if (state.isLoading) {
-            return _buildLoading();
-          }
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        context.go('/home');
+      },
+      child: Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        body: BlocBuilder<CourseDetailsCubit, CourseDetailsState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return _buildLoading();
+            }
 
-          if (state.isError) {
-            return _buildError(state.errorMessage ?? '', isDark);
-          }
+            if (state.isError) {
+              return _buildError(state.errorMessage ?? '', isDark);
+            }
 
-          if (state.course == null) {
-            return _buildError('course_details.not_found'.tr(), isDark);
-          }
+            if (state.course == null) {
+              return _buildError('course_details.not_found'.tr(), isDark);
+            }
 
-          return _buildContent(state, locale, isDark);
-        },
+            return _buildContent(state, locale, isDark);
+          },
+        ),
       ),
     );
   }
@@ -250,7 +257,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_rounded),
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () => context.go('/home'),
       ),
       title: AnimatedOpacity(
         opacity: _showTitle ? 1.0 : 0.0,

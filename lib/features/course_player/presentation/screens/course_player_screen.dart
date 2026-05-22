@@ -152,11 +152,12 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) {
-          setState(() => _isPlaying = false);
-          _saveProgress();
-        }
+        if (didPop) return;
+        setState(() => _isPlaying = false);
+        _saveProgress();
+        context.go('/home');
       },
       child: Scaffold(
         backgroundColor:
@@ -320,19 +321,7 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
   void _handleBack() {
     setState(() => _isPlaying = false);
     _saveProgress();
-
-    if (context.canPop()) {
-      context.pop();
-      return;
-    }
-
-    final navigator = Navigator.maybeOf(context);
-    if (navigator != null && navigator.canPop()) {
-      navigator.pop();
-      return;
-    }
-
-    context.go('/course/${widget.courseId}');
+    context.go('/home');
   }
 
   Widget _buildTabContent(CoursePlayerState state, bool isDark) {

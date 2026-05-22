@@ -13,7 +13,7 @@ class AppColors {
   static const Color primaryOnDark = Color(0xFFB57BFF);
 
   // ============ Background Colors ============
-  static const Color backgroundLight = Color(0xFFF7F6F8);
+  static const Color backgroundLight = Color(0xFFEEE4FC);
   static const Color backgroundDark = Color(0xFF0D0A1E);
 
   // ============ Surface Colors ============

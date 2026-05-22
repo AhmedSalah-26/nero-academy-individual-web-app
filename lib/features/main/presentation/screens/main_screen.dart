@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,45 +91,67 @@ class _MainScreenState extends State<MainScreen> {
           value:
               isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
           child: Scaffold(
+            extendBody: true,
             body: widget.navigationShell,
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.backgroundDark : AppColors.white,
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.02,
-                    vertical: screenWidth * 0.012,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _NavItem(
-                        icon: Icons.home_outlined,
-                        activeIcon: Icons.home_rounded,
-                        isSelected: currentIndex == 0,
-                        onTap: () => _onTabTapped(0),
+            bottomNavigationBar: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: screenWidth * 0.08,
+                  right: screenWidth * 0.08,
+                  bottom: screenWidth * 0.04,
+                  top: screenWidth * 0.02,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(40),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.04,
+                        vertical: screenWidth * 0.028,
                       ),
-                      _NavItem(
-                        icon: Icons.play_circle_outline_rounded,
-                        activeIcon: Icons.play_circle_rounded,
-                        isSelected: currentIndex == 1,
-                        onTap: () => _onTabTapped(1),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.surfaceDark.withValues(alpha: 0.92)
+                            : Colors.white.withValues(alpha: 0.82),
+                        borderRadius: BorderRadius.circular(40),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : AppColors.primary.withValues(alpha: 0.25),
+                          width: 1.5,
+                        ),
                       ),
-                      _NavItem(
-                        icon: Icons.forum_outlined,
-                        activeIcon: Icons.forum_rounded,
-                        isSelected: currentIndex == 2,
-                        onTap: () => _onTabTapped(2),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _NavItem(
+                            icon: Icons.home_outlined,
+                            activeIcon: Icons.home_rounded,
+                            isSelected: currentIndex == 0,
+                            onTap: () => _onTabTapped(0),
+                          ),
+                          _NavItem(
+                            icon: Icons.play_circle_outline_rounded,
+                            activeIcon: Icons.play_circle_rounded,
+                            isSelected: currentIndex == 1,
+                            onTap: () => _onTabTapped(1),
+                          ),
+                          _NavItem(
+                            icon: Icons.forum_outlined,
+                            activeIcon: Icons.forum_rounded,
+                            isSelected: currentIndex == 2,
+                            onTap: () => _onTabTapped(2),
+                          ),
+                          _NavItem(
+                            icon: Icons.person_outline_rounded,
+                            activeIcon: Icons.person_rounded,
+                            isSelected: currentIndex == 3,
+                            onTap: () => _onTabTapped(3),
+                          ),
+                        ],
                       ),
-                      _NavItem(
-                        icon: Icons.person_outline_rounded,
-                        activeIcon: Icons.person_rounded,
-                        isSelected: currentIndex == 3,
-                        onTap: () => _onTabTapped(3),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

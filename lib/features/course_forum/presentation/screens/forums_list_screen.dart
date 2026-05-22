@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/animations/animations.dart';
@@ -48,7 +49,7 @@ class _ForumsListViewState extends State<_ForumsListView> {
             return Column(
               children: [
                 _buildHeader(context, state, isArabic, isDark),
-                _buildFilterChips(context, state, isArabic, isDark),
+                _buildForumFilterChips(context, state, isArabic, isDark),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () async {
@@ -90,6 +91,7 @@ class _ForumsListViewState extends State<_ForumsListView> {
                       refresh: true,
                     );
               },
+              showBorder: false,
             ),
           ),
           const SizedBox(width: 12),
@@ -122,11 +124,96 @@ class _ForumsListViewState extends State<_ForumsListView> {
     );
   }
 
+  Widget _buildForumFilterChips(
+      BuildContext context, ForumsListState state, bool isArabic, bool isDark) {
+    final selectedIndex =
+        state.typeFilter == null ? 0 : (state.typeFilter == 'multi' ? 1 : 2);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          _buildForumTabItem(
+            label: isArabic ? '\u0627\u0644\u0643\u0644' : 'All',
+            isSelected: selectedIndex == 0,
+            isDark: isDark,
+            onTap: () => _setTypeFilter(context, null),
+          ),
+          const SizedBox(width: 12),
+          _buildForumTabItem(
+            label: isArabic ? '\u062c\u0645\u0627\u0639\u064a\u0629' : 'Groups',
+            isSelected: selectedIndex == 1,
+            isDark: isDark,
+            onTap: () => _setTypeFilter(context, 'multi'),
+          ),
+          const SizedBox(width: 12),
+          _buildForumTabItem(
+            label: isArabic ? '\u062e\u0627\u0635\u0629' : 'Private',
+            isSelected: selectedIndex == 2,
+            isDark: isDark,
+            onTap: () => _setTypeFilter(context, 'single'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _setTypeFilter(BuildContext context, String? typeFilter) {
+    HapticFeedback.lightImpact();
+    context.read<ForumsListCubit>().setTypeFilter(typeFilter);
+  }
+
+  Widget _buildForumTabItem({
+    required String label,
+    required bool isSelected,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary
+              : (isDark ? AppColors.cardDark : AppColors.white),
+          borderRadius: BorderRadius.circular(24),
+          border: isSelected
+              ? null
+              : Border.all(
+                  color: isDark ? AppColors.grey700 : AppColors.grey200,
+                ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? AppColors.white
+                : (isDark ? AppColors.grey300 : AppColors.grey600),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ignore: unused_element
   Widget _buildFilterChips(
       BuildContext context, ForumsListState state, bool isArabic, bool isDark) {
-    final selectedIndex = state.typeFilter == null
-        ? 0
-        : (state.typeFilter == 'multi' ? 1 : 2);
+    final selectedIndex =
+        state.typeFilter == null ? 0 : (state.typeFilter == 'multi' ? 1 : 2);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -183,19 +270,24 @@ class _ForumsListViewState extends State<_ForumsListView> {
                       label: isArabic ? 'الكل' : 'All',
                       isSelected: selectedIndex == 0,
                       isDark: isDark,
-                      onTap: () => context.read<ForumsListCubit>().setTypeFilter(null),
+                      onTap: () =>
+                          context.read<ForumsListCubit>().setTypeFilter(null),
                     ),
                     _buildTabItem(
                       label: isArabic ? 'جماعية' : 'Groups',
                       isSelected: selectedIndex == 1,
                       isDark: isDark,
-                      onTap: () => context.read<ForumsListCubit>().setTypeFilter('multi'),
+                      onTap: () => context
+                          .read<ForumsListCubit>()
+                          .setTypeFilter('multi'),
                     ),
                     _buildTabItem(
                       label: isArabic ? 'خاصة' : 'Private',
                       isSelected: selectedIndex == 2,
                       isDark: isDark,
-                      onTap: () => context.read<ForumsListCubit>().setTypeFilter('single'),
+                      onTap: () => context
+                          .read<ForumsListCubit>()
+                          .setTypeFilter('single'),
                     ),
                   ],
                 ),
@@ -207,6 +299,7 @@ class _ForumsListViewState extends State<_ForumsListView> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildTabItem({
     required String label,
     required bool isSelected,

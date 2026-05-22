@@ -9,6 +9,7 @@ class DashboardSearchBar extends StatefulWidget {
   final ValueChanged<String> onSearch;
   final Duration debounceDuration;
   final String? initialValue;
+  final bool showBorder;
 
   const DashboardSearchBar({
     super.key,
@@ -17,6 +18,7 @@ class DashboardSearchBar extends StatefulWidget {
     required this.onSearch,
     this.debounceDuration = const Duration(milliseconds: 500),
     this.initialValue,
+    this.showBorder = true,
   });
 
   @override
@@ -65,12 +67,14 @@ class _DashboardSearchBarState extends State<DashboardSearchBar> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.grey50,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isDark
-              ? AppColors.primary.withValues(alpha: 0.7)
-              : AppColors.primary.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: widget.showBorder
+            ? Border.all(
+                color: isDark
+                    ? AppColors.primary.withValues(alpha: 0.7)
+                    : AppColors.primary.withValues(alpha: 0.3),
+                width: 1.5,
+              )
+            : null,
       ),
       child: TextField(
         controller: _controller,

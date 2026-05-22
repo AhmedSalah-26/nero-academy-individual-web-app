@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/animations/animations.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../../../core/shared_widgets/glass_icon_button.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/toast_utils.dart';
 import '../../../../core/shared_widgets/empty_state.dart';
@@ -137,28 +138,12 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                   color: isDark ? AppColors.white : AppColors.textMainLight,
                 ),
               ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _onSearch,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : AppColors.grey100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.search_rounded,
-                      size: 22,
-                      color: isDark
-                          ? AppColors.textMainDark
-                          : AppColors.textMainLight,
-                    ),
-                  ),
-                ),
+              GlassIconButton(
+                icon: Icons.search_rounded,
+                onTap: _onSearch,
+                size: 42,
+                iconSize: 22,
+                borderRadius: 12,
               ),
             ],
           ),

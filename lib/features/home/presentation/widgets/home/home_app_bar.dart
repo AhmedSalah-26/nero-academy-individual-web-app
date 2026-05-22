@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/routing/app_router.dart';
+import '../../../../../core/shared_widgets/glass_icon_button.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../cart/presentation/cubit/cart_cubit.dart';
@@ -71,14 +72,12 @@ class HomeAppBar extends StatelessWidget {
               _ActionButton(
                 icon: Icons.favorite_border_rounded,
                 onTap: () => AppRouter.goToWishlist(context),
-                isDark: isDark,
               ),
               SizedBox(width: screenWidth * 0.02),
               // History button
               _ActionButton(
                 icon: Icons.history_rounded,
                 onTap: () => AppRouter.goToHistory(context),
-                isDark: isDark,
               ),
               SizedBox(width: screenWidth * 0.02),
               // Cart button with badge from CartCubit
@@ -88,7 +87,6 @@ class HomeAppBar extends StatelessWidget {
                   return _ActionButton(
                     icon: Icons.shopping_cart_outlined,
                     onTap: () => AppRouter.goToCart(context),
-                    isDark: isDark,
                     badgeCount: state.itemsCount,
                     compactBadge: true,
                   );
@@ -103,7 +101,6 @@ class HomeAppBar extends StatelessWidget {
                   return _ActionButton(
                     icon: Icons.notifications_outlined,
                     onTap: () => AppRouter.goToNotifications(context),
-                    isDark: isDark,
                     hasNotification: hasUnread,
                   );
                 },
@@ -119,7 +116,6 @@ class HomeAppBar extends StatelessWidget {
 class _ActionButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  final bool isDark;
   final bool hasNotification;
   final int? badgeCount;
   final bool compactBadge;
@@ -127,7 +123,6 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.onTap,
-    required this.isDark,
     this.hasNotification = false,
     this.badgeCount,
     this.compactBadge = false,
@@ -136,70 +131,19 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final buttonPadding = (screenWidth * 0.018).clamp(6.0, 9.0);
+    final buttonSize = (screenWidth * 0.09).clamp(34.0, 40.0);
     final iconSize = (screenWidth * 0.045).clamp(17.0, 20.0);
     final borderRadius = (screenWidth * 0.025).clamp(8.0, 11.0);
-    final numberBadgeScale = compactBadge ? 0.78 : 1.0;
 
-    return Stack(
-      children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(borderRadius),
-            child: Container(
-              padding: EdgeInsets.all(buttonPadding),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : AppColors.grey100,
-                borderRadius: BorderRadius.circular(borderRadius),
-              ),
-              child: Icon(icon,
-                  size: iconSize,
-                  color: isDark
-                      ? AppColors.textMainDark
-                      : AppColors.textMainLight),
-            ),
-          ),
-        ),
-        if (hasNotification || (badgeCount != null && badgeCount! > 0))
-          Positioned(
-            right: screenWidth * 0.015,
-            top: screenWidth * 0.015,
-            child: Container(
-              padding: badgeCount != null
-                  ? EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.01 * numberBadgeScale,
-                      vertical: screenWidth * 0.002 * numberBadgeScale,
-                    )
-                  : EdgeInsets.zero,
-              constraints: BoxConstraints(
-                minWidth: screenWidth * 0.02 * numberBadgeScale,
-                minHeight: screenWidth * 0.02 * numberBadgeScale,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(
-                    screenWidth * 0.025 * numberBadgeScale),
-                border: Border.all(
-                    color: isDark
-                        ? AppColors.backgroundDark
-                        : AppColors.backgroundLight,
-                    width: compactBadge ? 1.2 : 1.5),
-              ),
-              child: badgeCount != null
-                  ? Text('$badgeCount',
-                      style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: (screenWidth * 0.022 * numberBadgeScale)
-                              .clamp(7.0, 10.0),
-                          fontWeight: FontWeight.w700))
-                  : null,
-            ),
-          ),
-      ],
+    return GlassIconButton(
+      icon: icon,
+      onTap: onTap,
+      size: buttonSize,
+      iconSize: iconSize,
+      borderRadius: borderRadius,
+      hasNotification: hasNotification,
+      badgeCount: badgeCount,
+      compactBadge: compactBadge,
     );
   }
 }

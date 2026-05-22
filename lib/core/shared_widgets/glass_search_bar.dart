@@ -59,52 +59,60 @@ class GlassSearchBar extends StatelessWidget {
           fontSize: 15,
           color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
         );
+    const borderWidth = 1.5;
+    final radius = BorderRadius.circular(borderRadius);
+    final innerRadius = BorderRadius.circular(borderRadius - borderWidth);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.15)
+        : AppColors.primary.withValues(alpha: 0.32);
+    final fillColor = isDark
+        ? AppColors.surfaceDark.withValues(alpha: 0.92)
+        : Colors.white.withValues(alpha: 0.82);
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          height: height,
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.surfaceDark.withValues(alpha: 0.92)
-                : Colors.white.withValues(alpha: 0.82),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.15)
-                  : AppColors.primary.withValues(alpha: 0.25),
-              width: 1.5,
+    return Container(
+      height: height,
+      padding: const EdgeInsets.all(borderWidth),
+      decoration: BoxDecoration(
+        color: borderColor,
+        borderRadius: radius,
+      ),
+      child: ClipRRect(
+        borderRadius: innerRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: fillColor,
+              borderRadius: innerRadius,
             ),
-          ),
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            onChanged: onChanged,
-            onSubmitted: onSubmitted,
-            onTap: onTap,
-            readOnly: readOnly,
-            autofocus: autofocus,
-            textInputAction: TextInputAction.search,
-            textDirection: textDirection,
-            textAlignVertical: TextAlignVertical.center,
-            cursorColor: isDark ? AppColors.grey400 : AppColors.primary,
-            style: fieldTextStyle,
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: fieldHintStyle,
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                color: isDark ? AppColors.grey400 : AppColors.primary,
-                size: iconSize,
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              onChanged: onChanged,
+              onSubmitted: onSubmitted,
+              onTap: onTap,
+              readOnly: readOnly,
+              autofocus: autofocus,
+              textInputAction: TextInputAction.search,
+              textDirection: textDirection,
+              textAlignVertical: TextAlignVertical.center,
+              cursorColor: isDark ? AppColors.grey400 : AppColors.primary,
+              style: fieldTextStyle,
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: fieldHintStyle,
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: isDark ? AppColors.grey400 : AppColors.primary,
+                  size: iconSize,
+                ),
+                suffixIcon: _buildSuffix(isDark),
+                suffixIconColor: isDark ? AppColors.grey400 : AppColors.primary,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: contentPadding,
               ),
-              suffixIcon: _buildSuffix(isDark),
-              suffixIconColor: isDark ? AppColors.grey400 : AppColors.primary,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: contentPadding,
             ),
           ),
         ),

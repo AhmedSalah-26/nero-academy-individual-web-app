@@ -42,20 +42,11 @@ class CourseCard extends StatelessWidget {
           color: isDark ? AppColors.cardDark : AppColors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.grey200,
+            color: isDark
+                ? AppColors.primary.withValues(alpha: 0.7)
+                : AppColors.primary.withValues(alpha: 0.25),
+            width: isDark ? 1.5 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.1 : 0.08),
-              blurRadius: 24,
-              spreadRadius: 2,
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

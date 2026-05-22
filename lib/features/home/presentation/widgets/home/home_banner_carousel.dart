@@ -97,12 +97,10 @@ class _BannerItem extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: padding),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                blurRadius: 16,
-                offset: const Offset(0, 6))
-          ],
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.5),
+            width: 1.2,
+          ),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),

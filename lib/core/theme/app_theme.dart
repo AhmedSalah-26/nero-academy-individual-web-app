@@ -153,6 +153,13 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.backgroundLight,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+      ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfaceLight,
         shape: RoundedRectangleBorder(
@@ -329,6 +336,13 @@ class AppTheme {
           fontSize: 10,
           fontWeight: FontWeight.w500,
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.backgroundDark,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surfaceDark,

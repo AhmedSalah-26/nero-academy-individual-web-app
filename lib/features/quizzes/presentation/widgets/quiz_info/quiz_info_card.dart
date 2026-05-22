@@ -26,14 +26,12 @@ class QuizInfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 20,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(
+          color: isDark
+              ? AppColors.primary.withValues(alpha: 0.5)
+              : AppColors.borderLight,
+          width: isDark ? 1.2 : 1,
+        ),
       ),
       child: Column(
         children: [

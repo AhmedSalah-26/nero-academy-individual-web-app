@@ -255,7 +255,10 @@ class _ForumsListViewState extends State<_ForumsListView> {
                 color: isDark ? AppColors.cardDark : AppColors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                  color: isDark
+                      ? AppColors.primary.withValues(alpha: 0.7)
+                      : AppColors.primary.withValues(alpha: 0.25),
+                  width: isDark ? 1.5 : 1.2,
                 ),
               ),
               child: Row(
@@ -368,21 +371,10 @@ class _ForumsListViewState extends State<_ForumsListView> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
-                ? AppColors.grey700.withValues(alpha: 0.5)
-                : AppColors.grey100,
+                ? AppColors.primary.withValues(alpha: 0.7)
+                : AppColors.primary.withValues(alpha: 0.25),
+            width: isDark ? 1.5 : 1.2,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.12),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.08 : 0.06),
-              blurRadius: 20,
-              spreadRadius: 2,
-            ),
-          ],
         ),
         child: Row(
           children: [

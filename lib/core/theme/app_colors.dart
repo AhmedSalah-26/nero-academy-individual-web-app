@@ -14,12 +14,12 @@ class AppColors {
 
   // ============ Background Colors ============
   static const Color backgroundLight = Color(0xFFF7F6F8);
-  static const Color backgroundDark = Color(0xFF191022);
+  static const Color backgroundDark = Color(0xFF0D0A1E);
 
   // ============ Surface Colors ============
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceDark = Color(0xFF251A30);
-  static const Color cardDark = Color(0xFF2D2438);
+  static const Color surfaceDark = Color(0xFF15122A);
+  static const Color cardDark = Color(0xFF1C1835);
 
   // ============ Text Colors ============
   static const Color textMainLight = Color(0xFF140D1B);
@@ -75,6 +75,6 @@ class AppColors {
   // ============ Shimmer Colors ============
   static const Color shimmerBase = Color(0xFFE0E0E0);
   static const Color shimmerHighlight = Color(0xFFF5F5F5);
-  static const Color shimmerBaseDark = Color(0xFF2D2438);
-  static const Color shimmerHighlightDark = Color(0xFF3D3448);
+  static const Color shimmerBaseDark = Color(0xFF251E3E);
+  static const Color shimmerHighlightDark = Color(0xFF302848);
 }

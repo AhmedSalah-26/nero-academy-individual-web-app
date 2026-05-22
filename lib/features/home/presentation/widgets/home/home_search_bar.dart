@@ -33,17 +33,10 @@ class HomeSearchBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : AppColors.grey100,
+                  ? AppColors.primary.withValues(alpha: 0.7)
+                  : AppColors.primary.withValues(alpha: 0.3),
+              width: 1.5,
             ),
-            boxShadow: [
-              if (!isDark)
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-            ],
           ),
           child: Row(
             children: [

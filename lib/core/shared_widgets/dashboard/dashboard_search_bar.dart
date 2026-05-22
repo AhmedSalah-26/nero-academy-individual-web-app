@@ -66,7 +66,10 @@ class _DashboardSearchBarState extends State<DashboardSearchBar> {
         color: isDark ? AppColors.surfaceDark : AppColors.grey50,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          color: isDark
+              ? AppColors.primary.withValues(alpha: 0.7)
+              : AppColors.primary.withValues(alpha: 0.3),
+          width: 1.5,
         ),
       ),
       child: TextField(

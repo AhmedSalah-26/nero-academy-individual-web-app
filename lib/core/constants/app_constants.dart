@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// App Constants - Central configuration
 class AppConstants {
   AppConstants._();
@@ -38,7 +40,26 @@ class AppConstants {
   static const String deepLinkScheme = 'io.supabase.lms';
   static const String deepLinkHost = 'login-callback';
 
+  // Dynamic Auth / Email Redirect URL
+  static String get authRedirectUrl {
+    if (kIsWeb) {
+      try {
+        final uri = Uri.parse(Uri.base.toString());
+        // Clean the URI from fragments (like #/login) and query params
+        return Uri(
+          scheme: uri.scheme,
+          host: uri.host,
+          port: uri.port,
+          path: uri.path,
+        ).toString();
+      } catch (_) {
+        return 'https://ahmedsalah-26.github.io/nero-academy-individual-web-app/';
+      }
+    }
+    return 'https://ahmedsalah-26.github.io/nero-academy-individual-web-app/';
+  }
+
   // Password Reset Web Page
-  static const String passwordResetRedirectUrl =
-      'https://ahmedsalah-26.github.io/yalla-course/reset-password/';
+  static String get passwordResetRedirectUrl => authRedirectUrl;
 }
+

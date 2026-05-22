@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import '../../../../core/constants/app_constants.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
@@ -361,7 +362,7 @@ class AuthCubit extends Cubit<AuthState> {
       await Supabase.instance.client.auth.resend(
         type: OtpType.signup,
         email: email,
-        emailRedirectTo: kIsWeb ? Uri.base.toString() : null,
+        emailRedirectTo: AppConstants.authRedirectUrl,
       );
       emit(const AuthState.awaitingEmailVerification());
       return true;

@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../../core/shared_widgets/glass_icon_button.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/course_entity.dart';
 
@@ -40,6 +41,8 @@ class EnhancedCourseCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = width ?? screenWidth * 0.44;
+    const radius = 12.0;
+    const borderWidth = 1.0;
 
     return GestureDetector(
       onTap: () {
@@ -50,9 +53,10 @@ class EnhancedCourseCard extends StatelessWidget {
         width: cardWidth,
         decoration: BoxDecoration(
           color: isDark ? AppColors.cardDark : AppColors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radius),
           border: Border.all(
             color: isDark ? AppColors.borderDark : AppColors.grey200,
+            width: borderWidth,
           ),
           boxShadow: [
             BoxShadow(
@@ -67,61 +71,67 @@ class EnhancedCourseCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildThumbnail(isDark),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    course.getTitle(locale),
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.textMainDark
-                          : AppColors.textMainLight,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+        child: Padding(
+          padding: const EdgeInsets.all(borderWidth),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius - borderWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildThumbnail(isDark),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        course.getTitle(locale),
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.textMainDark
+                              : AppColors.textMainLight,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // Instructor
+                      Text(
+                        course.instructorName ?? '',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.textMutedDark
+                              : AppColors.textMutedLight,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      // Course Info Row (Duration, Lessons, Level)
+                      _buildCourseInfoRow(isDark),
+                      const SizedBox(height: 8),
+                      // Stats Row
+                      _buildStatsRow(isDark),
+                      const SizedBox(height: 8),
+                      // Progress Bar (if enrolled)
+                      if (userProgress != null) ...[
+                        _buildProgressBar(isDark),
+                        const SizedBox(height: 8),
+                      ],
+                      // Price Row
+                      _buildPrice(isDark),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  // Instructor
-                  Text(
-                    course.instructorName ?? '',
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.textMutedDark
-                          : AppColors.textMutedLight,
-                      fontSize: 11,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  // Course Info Row (Duration, Lessons, Level)
-                  _buildCourseInfoRow(isDark),
-                  const SizedBox(height: 8),
-                  // Stats Row
-                  _buildStatsRow(isDark),
-                  const SizedBox(height: 8),
-                  // Progress Bar (if enrolled)
-                  if (userProgress != null) ...[
-                    _buildProgressBar(isDark),
-                    const SizedBox(height: 8),
-                  ],
-                  // Price Row
-                  _buildPrice(isDark),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -131,7 +141,7 @@ class EnhancedCourseCard extends StatelessWidget {
     return Stack(
       children: [
         ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          borderRadius: BorderRadius.circular(10),
           child: AspectRatio(
             aspectRatio: 16 / 9,
             child: (course.thumbnailUrl ?? '').isNotEmpty
@@ -266,44 +276,27 @@ class EnhancedCourseCard extends StatelessWidget {
           child: Column(
             children: [
               // Wishlist Button
-              GestureDetector(
+              GlassIconButton(
+                icon: isInWishlist
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
                 onTap: () {
                   HapticFeedback.lightImpact();
                   onWishlistTap?.call();
                 },
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isInWishlist
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    size: 18,
-                    color: isInWishlist ? AppColors.error : AppColors.grey600,
-                  ),
-                ),
+                size: 36,
+                iconSize: 18,
+                borderRadius: 18,
               ),
               // Certificate Badge
               if (hasCertificate) ...[
                 const SizedBox(height: 4),
-                Container(
-                  width: 36,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.workspace_premium_rounded,
-                    size: 18,
-                    color: Colors.white,
-                  ),
+                GlassIconButton(
+                  icon: Icons.workspace_premium_rounded,
+                  onTap: () {},
+                  size: 36,
+                  iconSize: 18,
+                  borderRadius: 18,
                 ),
               ],
             ],
@@ -314,32 +307,15 @@ class EnhancedCourseCard extends StatelessWidget {
           Positioned(
             bottom: 8,
             right: 8,
-            child: GestureDetector(
+            child: GlassIconButton(
+              icon: Icons.add_shopping_cart_rounded,
               onTap: () {
                 HapticFeedback.mediumImpact();
                 onAddToCart?.call();
               },
-              child: Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.add_shopping_cart_rounded,
-                  size: 18,
-                  color: Colors.white,
-                ),
-              ),
+              size: 40,
+              iconSize: 18,
+              borderRadius: 20,
             ),
           ),
       ],

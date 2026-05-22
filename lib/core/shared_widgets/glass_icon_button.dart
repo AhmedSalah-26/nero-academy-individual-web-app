@@ -6,7 +6,7 @@ import '../theme/app_colors.dart';
 
 class GlassIconButton extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final double size;
   final double iconSize;
   final double borderRadius;
@@ -17,7 +17,7 @@ class GlassIconButton extends StatelessWidget {
   const GlassIconButton({
     super.key,
     required this.icon,
-    required this.onTap,
+    this.onTap,
     this.size = 40,
     this.iconSize = 22,
     this.borderRadius = 14,

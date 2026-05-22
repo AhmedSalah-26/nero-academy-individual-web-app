@@ -91,7 +91,6 @@ class _ForumsListViewState extends State<_ForumsListView> {
                       refresh: true,
                     );
               },
-              showBorder: false,
             ),
           ),
           const SizedBox(width: 12),

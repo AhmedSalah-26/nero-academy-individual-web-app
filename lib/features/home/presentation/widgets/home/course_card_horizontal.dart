@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../../core/shared_widgets/glass_icon_button.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../domain/entities/course_entity.dart';
@@ -27,7 +28,9 @@ class CourseCardHorizontal extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final cardHeight = (screenWidth * 0.26).clamp(95.0, 120.0);
-    final imageSize = cardHeight;
+    final borderWidth = isDark ? 1.5 : 1.0;
+    final imageSize = cardHeight - (borderWidth * 2);
+    const radius = 14.0;
 
     return GestureDetector(
       onTap: onTap,
@@ -35,19 +38,25 @@ class CourseCardHorizontal extends StatelessWidget {
         height: cardHeight,
         decoration: BoxDecoration(
           color: isDark ? AppColors.cardDark : AppColors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(radius),
           border: Border.all(
             color: isDark
                 ? AppColors.primary.withValues(alpha: 0.7)
                 : AppColors.primary.withValues(alpha: 0.25),
-            width: isDark ? 1.5 : 1,
+            width: borderWidth,
           ),
         ),
-        child: Row(
-          children: [
-            _buildThumbnail(isDark, imageSize),
-            Expanded(child: _buildContent(isDark, screenWidth)),
-          ],
+        child: Padding(
+          padding: EdgeInsets.all(borderWidth),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius - borderWidth),
+            child: Row(
+              children: [
+                _buildThumbnail(isDark, imageSize),
+                Expanded(child: _buildContent(isDark, screenWidth)),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -57,8 +66,7 @@ class CourseCardHorizontal extends StatelessWidget {
     return Stack(
       children: [
         ClipRRect(
-          borderRadius:
-              const BorderRadius.horizontal(left: Radius.circular(14)),
+          borderRadius: BorderRadius.circular(12),
           child: SizedBox(
             width: size,
             height: size,
@@ -98,22 +106,14 @@ class CourseCardHorizontal extends StatelessWidget {
         Positioned(
           top: 6,
           right: 6,
-          child: GestureDetector(
+          child: GlassIconButton(
+            icon: isInWishlist
+                ? Icons.favorite_rounded
+                : Icons.favorite_border_rounded,
             onTap: onWishlistTap,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isInWishlist
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                size: 14,
-                color: AppColors.primary,
-              ),
-            ),
+            size: 32,
+            iconSize: 16,
+            borderRadius: 16,
           ),
         ),
       ],

@@ -28,7 +28,6 @@ import '../widgets/course_details/instructor_card.dart';
 import '../widgets/course_details/course_stats_grid.dart';
 import '../widgets/course_details/what_you_learn_section.dart';
 import '../widgets/course_details/curriculum_section.dart';
-import '../widgets/course_details/faq_section.dart';
 import '../widgets/course_details/reviews_section.dart';
 import '../widgets/course_details/bottom_price_bar.dart';
 import '../widgets/course_details/course_details_skeleton.dart';
@@ -201,17 +200,6 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   Divider(
                     color: isDark ? AppColors.borderDark : AppColors.grey200,
                   ),
-                  const SizedBox(height: 16),
-                  // FAQ Section with ExpandableCard
-                  SlideFadeIn.fromBottom(
-                    delay: Duration(milliseconds: 100 * sectionIndex++),
-                    child: const FAQSection(),
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(
-                    color: isDark ? AppColors.borderDark : AppColors.grey200,
-                  ),
-                  const SizedBox(height: 16),
                   // Reviews Section with animation
                   SlideFadeIn.fromBottom(
                     delay: Duration(milliseconds: 100 * sectionIndex++),

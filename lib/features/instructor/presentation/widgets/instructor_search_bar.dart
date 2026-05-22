@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/shared_widgets/glass_search_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Instructor Search Bar with Filter
@@ -28,84 +29,33 @@ class InstructorSearchBar extends StatelessWidget {
     return Column(
       children: [
         // Search Field
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GlassSearchBar(
+            controller: controller,
+            hintText: 'instructor.search_instructors'.tr(),
+            onChanged: onSearchChanged,
+            height: 48,
+            borderRadius: 12,
+            iconSize: 22,
+            showClearButton: true,
+            onClear: () {
+              controller.clear();
+              onSearchChanged('');
+            },
+            trailing: GestureDetector(
+              onTap: onFilterTap ?? () => _showFilterSheet(context, isDark),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Icon(
+                  Icons.tune_rounded,
+                  color: selectedExpertise != null
+                      ? AppColors.primary
+                      : (isDark ? AppColors.grey400 : AppColors.grey500),
+                  size: 20,
+                ),
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              const SizedBox(width: 12),
-              Icon(
-                Icons.search_rounded,
-                color: isDark ? AppColors.grey400 : AppColors.grey500,
-                size: 22,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  onChanged: onSearchChanged,
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textMainDark
-                        : AppColors.textMainLight,
-                    fontSize: 14,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'instructor.search_instructors'.tr(),
-                    hintStyle: TextStyle(
-                      color: isDark
-                          ? AppColors.textHintDark
-                          : AppColors.textHintLight,
-                      fontSize: 14,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-              if (controller.text.isNotEmpty)
-                GestureDetector(
-                  onTap: () {
-                    controller.clear();
-                    onSearchChanged('');
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.close_rounded,
-                      color: isDark ? AppColors.grey400 : AppColors.grey500,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              // Filter Button
-              GestureDetector(
-                onTap: onFilterTap ?? () => _showFilterSheet(context, isDark),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.only(right: 4),
-                  decoration: BoxDecoration(
-                    color: selectedExpertise != null
-                        ? AppColors.primary.withValues(alpha: 0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.tune_rounded,
-                    color: selectedExpertise != null
-                        ? AppColors.primary
-                        : (isDark ? AppColors.grey400 : AppColors.grey500),
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
         // Expertise Filter Chips

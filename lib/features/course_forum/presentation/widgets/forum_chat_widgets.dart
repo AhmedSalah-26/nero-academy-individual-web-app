@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/shared_widgets/glass_search_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/forum_entities.dart';
 
@@ -177,6 +178,45 @@ class ForumSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GlassSearchBar(
+              controller: controller,
+              hintText: isArabic
+                  ? '\u0628\u062d\u062b \u0641\u064a \u0627\u0644\u0631\u0633\u0627\u0626\u0644...'
+                  : 'Search messages...',
+              onChanged: onChanged,
+              autofocus: true,
+              textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+              height: 44,
+              borderRadius: 12,
+              iconSize: 20,
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: onClose,
+            color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildLegacySearch(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(

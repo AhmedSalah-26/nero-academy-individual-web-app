@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/shared_widgets/glass_search_bar.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 
 /// Home Search Bar Widget - Responsive
@@ -10,7 +10,6 @@ class HomeSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final horizontalPadding = screenWidth * 0.04;
@@ -24,56 +23,21 @@ class HomeSearchBar extends StatelessWidget {
         horizontal: horizontalPadding,
         vertical: verticalPadding,
       ),
-      child: GestureDetector(
+      child: GlassSearchBar(
+        hintText: 'home.search_placeholder'.tr(),
         onTap: () => _navigateToSearch(context),
-        child: Container(
-          height: searchHeight,
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : AppColors.white,
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.primary.withValues(alpha: 0.7)
-                  : AppColors.primary.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              // Search Icon
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
-                child: Icon(
-                  Icons.search_rounded,
-                  color:
-                      isDark ? AppColors.grey400 : AppColors.grey500, // رصاصي
-                  size: iconSize,
-                ),
-              ),
-              // Placeholder Text
-              Expanded(
-                child: Text(
-                  'home.search_placeholder'.tr(),
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: isDark
-                        ? AppColors.textMutedDark
-                        : AppColors.textMutedLight,
-                    fontSize: (screenWidth * 0.035).clamp(13.0, 15.0),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              // Filter Button
-              Container(
-                height: searchHeight,
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
-                child: Icon(
-                  Icons.tune_rounded,
-                  color: isDark ? AppColors.grey500 : AppColors.grey400,
-                  size: iconSize * 0.9,
-                ),
-              ),
-            ],
+        readOnly: true,
+        height: searchHeight,
+        borderRadius: borderRadius,
+        iconSize: iconSize,
+        hintStyle: AppTextStyles.bodyMedium.copyWith(
+          fontSize: (screenWidth * 0.035).clamp(13.0, 15.0),
+        ),
+        trailing: Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+          child: Icon(
+            Icons.tune_rounded,
+            size: iconSize * 0.9,
           ),
         ),
       ),

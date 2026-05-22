@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../../core/shared_widgets/glass_icon_button.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/course_entity.dart';
 
@@ -32,6 +33,8 @@ class CourseCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = width ?? screenWidth * 0.44;
+    final borderWidth = isDark ? 1.5 : 1.0;
+    const radius = 8.0;
 
     return GestureDetector(
       onTap: onTap,
@@ -40,62 +43,68 @@ class CourseCard extends StatelessWidget {
         height: double.infinity,
         decoration: BoxDecoration(
           color: isDark ? AppColors.cardDark : AppColors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(radius),
           border: Border.all(
             color: isDark
                 ? AppColors.primary.withValues(alpha: 0.7)
                 : AppColors.primary.withValues(alpha: 0.25),
-            width: isDark ? 1.5 : 1,
+            width: borderWidth,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildThumbnail(isDark),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      course.getTitle(locale),
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.textMainDark
-                            : AppColors.textMainLight,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+        child: Padding(
+          padding: EdgeInsets.all(borderWidth),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius - borderWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildThumbnail(isDark),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          course.getTitle(locale),
+                          style: TextStyle(
+                            color: isDark
+                                ? AppColors.textMainDark
+                                : AppColors.textMainLight,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        // Instructor
+                        Text(
+                          course.instructorName ?? '',
+                          style: TextStyle(
+                            color: isDark
+                                ? AppColors.textMutedDark
+                                : AppColors.textMutedLight,
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const Spacer(),
+                        // Stats Row
+                        _buildStatsRow(isDark),
+                        const SizedBox(height: 8),
+                        // Price Row
+                        _buildPrice(isDark),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    // Instructor
-                    Text(
-                      course.instructorName ?? '',
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.textMutedDark
-                            : AppColors.textMutedLight,
-                        fontSize: 11,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    // Stats Row
-                    _buildStatsRow(isDark),
-                    const SizedBox(height: 8),
-                    // Price Row
-                    _buildPrice(isDark),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -208,24 +217,14 @@ class CourseCard extends StatelessWidget {
         Positioned(
           top: 4,
           right: 4,
-          child: GestureDetector(
+          child: GlassIconButton(
+            icon: isInWishlist
+                ? Icons.favorite_rounded
+                : Icons.favorite_border_rounded,
             onTap: onWishlistTap,
-            child: Container(
-              width: 44, // Minimum touch target
-              height: 44, // Minimum touch target
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isInWishlist
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                size: 20,
-                color: AppColors.primary,
-              ),
-            ),
+            size: 40,
+            iconSize: 20,
+            borderRadius: 20,
           ),
         ),
         // Add to Cart Button (overlay) - Accessible touch target
@@ -233,29 +232,12 @@ class CourseCard extends StatelessWidget {
           Positioned(
             bottom: 4,
             right: 4,
-            child: GestureDetector(
+            child: GlassIconButton(
+              icon: Icons.add_shopping_cart_rounded,
               onTap: onAddToCart,
-              child: Container(
-                width: 44, // Minimum touch target
-                height: 44, // Minimum touch target
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.add_shopping_cart_rounded,
-                  size: 20,
-                  color: Colors.white,
-                ),
-              ),
+              size: 40,
+              iconSize: 20,
+              borderRadius: 20,
             ),
           ),
       ],

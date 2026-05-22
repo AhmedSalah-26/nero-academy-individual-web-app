@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../../core/shared_widgets/glass_icon_button.dart';
+import '../../../../../core/shared_widgets/glass_search_bar.dart';
 import '../../../../../core/theme/app_colors.dart';
 
-/// Search Header Widget - Simple TextField only
+/// Search Header Widget - Glass search field with filter action
 class SearchHeaderWidget extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback? onBackPressed;
@@ -52,71 +54,30 @@ class SearchHeaderWidget extends StatelessWidget {
                 ),
               SizedBox(width: showBackButton ? 12 : 0),
               Expanded(
-                child: TextField(
+                child: GlassSearchBar(
                   controller: controller,
+                  hintText: 'home.search_placeholder'.tr(),
                   onChanged: onChanged,
                   onSubmitted: (_) => onSubmitted(),
-                  textInputAction: TextInputAction.search,
                   autofocus: true,
-                  style: theme.textTheme.bodyLarge,
-                  cursorColor: isDark
-                      ? AppColors.grey400
-                      : AppColors.grey500, // cursor رصاصي
-                  decoration: InputDecoration(
-                    hintText: 'home.search_placeholder'.tr(),
-                    hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                      color: isDark
-                          ? AppColors.textMutedDark
-                          : AppColors.textMutedLight,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: isDark
-                          ? AppColors.grey400
-                          : AppColors.grey500, // أيقونة رصاصي
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
+                  height: 48,
+                  iconSize: iconSize,
+                  textStyle: theme.textTheme.bodyLarge,
+                  hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                    color: isDark
+                        ? AppColors.textMutedDark
+                        : AppColors.textMutedLight,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              GestureDetector(
+              GlassIconButton(
+                icon: Icons.tune_rounded,
                 onTap: onFilterPressed,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(
-                      Icons.tune_rounded,
-                      color: activeFilterCount > 0
-                          ? AppColors.primary
-                          : isDark
-                              ? AppColors.grey500
-                              : AppColors.grey400,
-                      size: iconSize,
-                    ),
-                    if (activeFilterCount > 0)
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '$activeFilterCount',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                size: 44,
+                iconSize: iconSize,
+                badgeCount: activeFilterCount > 0 ? activeFilterCount : null,
+                compactBadge: true,
               ),
             ],
           ),

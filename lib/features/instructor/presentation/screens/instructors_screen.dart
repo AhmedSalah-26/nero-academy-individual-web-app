@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/routing/app_router.dart';
+import '../../../../core/shared_widgets/glass_icon_button.dart';
+import '../../../../core/shared_widgets/glass_search_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/shared_widgets/empty_state.dart';
@@ -221,81 +223,36 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: GlassSearchBar(
                     controller: _searchController,
                     focusNode: _focusNode,
+                    hintText: 'instructor.search_instructors'.tr(),
                     onChanged: _filterInstructors,
-                    textInputAction: TextInputAction.search,
-                    style: theme.textTheme.bodyLarge,
-                    decoration: InputDecoration(
-                      hintText: 'instructor.search_instructors'.tr(),
-                      hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                        color: isDark
-                            ? AppColors.textMutedDark
-                            : AppColors.textMutedLight,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: AppColors.primary,
-                      ),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? GestureDetector(
-                              onTap: () {
-                                _searchController.clear();
-                                _filterInstructors('');
-                              },
-                              child: Icon(
-                                Icons.close_rounded,
-                                color: isDark
-                                    ? AppColors.grey400
-                                    : AppColors.grey500,
-                                size: 20,
-                              ),
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
+                    height: 48,
+                    iconSize: iconSize,
+                    textStyle: theme.textTheme.bodyLarge,
+                    hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                      color: isDark
+                          ? AppColors.textMutedDark
+                          : AppColors.textMutedLight,
                     ),
+                    showClearButton: true,
+                    onClear: () {
+                      _searchController.clear();
+                      _filterInstructors('');
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Filter Button - Same style as course search
-                GestureDetector(
-                  onTap: () => _showFilterSheet(),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Icon(
-                        Icons.tune_rounded,
-                        color: _filter.hasActiveFilters
-                            ? AppColors.primary
-                            : isDark
-                                ? AppColors.grey500
-                                : AppColors.grey400,
-                        size: iconSize,
-                      ),
-                      if (_filter.activeFilterCount > 0)
-                        Positioned(
-                          top: -4,
-                          right: -4,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${_filter.activeFilterCount}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                GlassIconButton(
+                  icon: Icons.tune_rounded,
+                  onTap: _showFilterSheet,
+                  size: 44,
+                  iconSize: iconSize,
+                  badgeCount: _filter.activeFilterCount > 0
+                      ? _filter.activeFilterCount
+                      : null,
+                  compactBadge: true,
                 ),
               ],
             ),

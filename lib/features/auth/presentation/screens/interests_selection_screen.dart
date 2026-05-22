@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/user_role_service.dart';
+import '../../../../core/shared_widgets/glass_search_bar.dart';
 import '../../../../core/shared_widgets/responsive_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/toast_utils.dart';
@@ -178,44 +179,15 @@ class _InterestsSelectionScreenState extends State<InterestsSelectionScreen> {
     );
   }
 
-  Widget _buildSearchBar(bool isDark) {
-    return TextField(
+  Widget _buildSearchBar(bool _) {
+    return GlassSearchBar(
       controller: _searchController,
+      hintText: 'interests.search_placeholder'.tr(),
       onChanged: (query) {
         context.read<InterestsCubit>().updateSearch(query);
       },
-      style: TextStyle(
-        fontSize: 16,
-        color: isDark ? AppColors.white : AppColors.textMainLight,
-      ),
-      decoration: InputDecoration(
-        hintText: 'interests.search_placeholder'.tr(),
-        hintStyle: TextStyle(
-          color: isDark ? AppColors.grey500 : AppColors.grey400,
-        ),
-        prefixIcon: Icon(
-          Icons.search_rounded,
-          color: isDark ? AppColors.grey500 : AppColors.grey400,
-        ),
-        filled: true,
-        fillColor: isDark ? AppColors.cardDark : Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark ? AppColors.grey700 : const Color(0xFFE2E8F0),
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark ? AppColors.grey700 : const Color(0xFFE2E8F0),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-      ),
+      height: 52,
+      borderRadius: 12,
     );
   }
 

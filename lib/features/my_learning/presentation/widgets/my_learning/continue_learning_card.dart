@@ -26,6 +26,8 @@ class ContinueLearningCard extends StatelessWidget {
     final title = enrollment.getTitle(locale);
     final progress = enrollment.progressPercentage.round();
     final remaining = _formatDuration(enrollment.remainingMinutes);
+    const radius = 16.0;
+    const borderWidth = 1.0;
 
     return GestureDetector(
       onTap: onTap,
@@ -33,11 +35,12 @@ class ContinueLearningCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: isDark ? AppColors.cardDark : AppColors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(radius),
           border: Border.all(
             color: isDark
                 ? AppColors.grey700.withValues(alpha: 0.5)
                 : AppColors.grey100,
+            width: borderWidth,
           ),
           boxShadow: [
             BoxShadow(
@@ -52,61 +55,62 @@ class ContinueLearningCard extends StatelessWidget {
             ),
           ],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Thumbnail with gradient overlay
-            _buildThumbnail(isDark),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Continue Learning label
-                  Text(
-                    'my_learning.continue_learning'.tr().toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Title
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.white : AppColors.textMainLight,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  // Instructor
-                  if (enrollment.instructorName != null)
-                    Text(
-                      '${'course.instructor'.tr()}: ${enrollment.instructorName}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? AppColors.grey400 : AppColors.grey500,
+        child: Padding(
+          padding: const EdgeInsets.all(borderWidth),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius - borderWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildThumbnail(isDark),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'my_learning.continue_learning'.tr().toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                          letterSpacing: 1,
+                        ),
                       ),
-                    ),
-                  const SizedBox(height: 16),
-                  // Progress section
-                  _buildProgressSection(progress, remaining, isDark),
-                  const SizedBox(height: 16),
-                  // Resume button
-                  _buildResumeButton(),
-                ],
-              ),
+                      const SizedBox(height: 8),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? AppColors.white
+                              : AppColors.textMainLight,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      if (enrollment.instructorName != null)
+                        Text(
+                          '${'course.instructor'.tr()}: ${enrollment.instructorName}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color:
+                                isDark ? AppColors.grey400 : AppColors.grey500,
+                          ),
+                        ),
+                      const SizedBox(height: 16),
+                      _buildProgressSection(progress, remaining, isDark),
+                      const SizedBox(height: 16),
+                      _buildResumeButton(),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -137,19 +141,21 @@ class ContinueLearningCard extends StatelessWidget {
 
     return Stack(
       children: [
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: enrollment.thumbnailUrl != null &&
-                  enrollment.thumbnailUrl!.isNotEmpty
-              ? CachedNetworkImage(
-                  imageUrl: enrollment.thumbnailUrl!,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => placeholderWidget,
-                  errorWidget: (_, __, ___) => placeholderWidget,
-                )
-              : placeholderWidget,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: enrollment.thumbnailUrl != null &&
+                    enrollment.thumbnailUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: enrollment.thumbnailUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => placeholderWidget,
+                    errorWidget: (_, __, ___) => placeholderWidget,
+                  )
+                : placeholderWidget,
+          ),
         ),
-        // Gradient overlay - only at bottom
         Positioned(
           left: 0,
           right: 0,
@@ -168,7 +174,6 @@ class ContinueLearningCard extends StatelessWidget {
             ),
           ),
         ),
-        // In Progress badge
         Positioned(
           left: 12,
           bottom: 12,
@@ -216,7 +221,6 @@ class ContinueLearningCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        // Progress bar
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../../core/shared_widgets/glass_icon_button.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/wishlist_item_entity.dart';
 
@@ -254,25 +255,29 @@ class WishlistItemCard extends StatelessWidget {
   }
 
   Widget _buildFavoriteButton(bool isDark) {
-    return GestureDetector(
-      onTap: isRemoving ? null : onRemove,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        child: isRemoving
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primary,
-                ),
-              )
-            : const Icon(
-                Icons.favorite_rounded,
-                size: 22,
-                color: AppColors.primary,
-              ),
-      ),
+    if (isRemoving) {
+      return const SizedBox(
+        width: 36,
+        height: 36,
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return GlassIconButton(
+      icon: Icons.favorite_rounded,
+      onTap: onRemove,
+      size: 36,
+      iconSize: 20,
+      borderRadius: 18,
     );
   }
 

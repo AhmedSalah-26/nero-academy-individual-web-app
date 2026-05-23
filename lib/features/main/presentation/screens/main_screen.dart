@@ -72,6 +72,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return MultiBlocProvider(
       providers: [
+        BlocProvider.value(value: sl<AuthCubit>()),
         BlocProvider.value(value: _homeCubit),
         BlocProvider.value(value: _myLearningCubit),
         BlocProvider.value(value: _wishlistCubit),

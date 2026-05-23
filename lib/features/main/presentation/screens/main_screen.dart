@@ -44,9 +44,10 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _initCubits() {
+    _homeCubit.loadHomeData();
+
     final user = sl<AuthCubit>().state.user;
     if (user != null) {
-      _homeCubit.loadHomeData();
       _myLearningCubit.loadMyLearning(user.id);
 
       if (_wishlistCubit.currentUserId == null) {
@@ -171,12 +172,14 @@ class _MainScreenState extends State<MainScreen> {
     );
 
     // Refresh data when entering each tab
+    if (index == 0) {
+      _homeCubit.loadHomeData();
+      return;
+    }
+
     final user = sl<AuthCubit>().state.user;
     if (user != null) {
       switch (index) {
-        case 0:
-          _homeCubit.loadHomeData();
-          break;
         case 1:
           _myLearningCubit.loadMyLearning(user.id);
           break;

@@ -3,8 +3,8 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../network/network_info.dart';
+import '../network/api_client.dart';
 import '../services/lesson_history_service.dart';
-import '../services/supabase_service.dart';
 // Auth Feature
 import '../../features/auth/data/datasources/auth_local_data_source.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
@@ -138,6 +138,9 @@ import '../../features/payments_history/domain/repositories/payments_repository.
 import '../../features/payments_history/domain/usecases/get_user_payments_usecase.dart';
 import '../../features/payments_history/presentation/cubit/payments_history_cubit.dart';
 
+// Instructor Feature
+import '../../features/instructor/data/datasources/instructor_remote_data_source.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
@@ -146,8 +149,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => sharedPreferences);
   sl.registerLazySingleton(() => Connectivity());
 
-  // Register Supabase client - use SupabaseServiceImpl to handle initialization
-  sl.registerLazySingleton(() => SupabaseServiceImpl.instance.client);
+  // Register ApiClient
+  final apiClient = ApiClient();
+  await apiClient.init();
+  sl.registerLazySingleton(() => apiClient);
 
   // ============ Core ============
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
@@ -185,6 +190,9 @@ Future<void> initDependencies() async {
 
   // ============ Instructor Dashboard Feature ============
   _initInstructorDashboard();
+
+  // ============ Instructor Feature ============
+  _initInstructor();
 
   // ============ Notifications Feature ============
   _initNotifications();
@@ -319,14 +327,14 @@ void _initCourseDetails() {
 
   // Data Sources
   sl.registerLazySingleton<CourseDetailsRemoteDataSource>(
-      () => CourseDetailsRemoteDataSourceImpl(supabaseClient: sl()));
+      () => CourseDetailsRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<CourseDetailsLocalDataSource>(
       () => CourseDetailsLocalDataSourceImpl(sharedPreferences: sl()));
 }
 
 void _initCart() {
   // Services
-  sl.registerLazySingleton(() => EnrollmentPaymentService(supabase: sl()));
+  sl.registerLazySingleton(() => EnrollmentPaymentService(apiClient: sl()));
 
   // Cubits - CartCubit is singleton to share state across screens
   sl.registerLazySingleton(() => CartCubit(
@@ -361,7 +369,7 @@ void _initCart() {
 
   // Data Sources
   sl.registerLazySingleton<CartRemoteDataSource>(
-      () => CartRemoteDataSourceImpl(supabase: sl()));
+      () => CartRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<CartLocalDataSource>(
       () => CartLocalDataSourceImpl(sharedPreferences: sl()));
 }
@@ -432,7 +440,7 @@ void _initCoursePlayer() {
 
   // Data Sources
   sl.registerLazySingleton<CoursePlayerRemoteDataSource>(
-      () => CoursePlayerRemoteDataSourceImpl(sl()));
+      () => CoursePlayerRemoteDataSourceImpl(sl<ApiClient>()));
   sl.registerLazySingleton<CoursePlayerLocalDataSource>(
       () => CoursePlayerLocalDataSourceImpl(sl()));
 }
@@ -466,7 +474,7 @@ void _initQuizzes() {
 
   // Data Sources
   sl.registerLazySingleton<QuizzesRemoteDataSource>(
-      () => QuizzesRemoteDataSourceImpl(supabaseClient: sl()));
+      () => QuizzesRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<QuizzesLocalDataSource>(
       () => QuizzesLocalDataSourceImpl(sharedPreferences: sl()));
 }
@@ -496,7 +504,7 @@ void _initWishlist() {
 
   // Data Sources
   sl.registerLazySingleton<WishlistRemoteDataSource>(
-      () => WishlistRemoteDataSourceImpl(supabase: sl()));
+      () => WishlistRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<WishlistLocalDataSource>(
       () => WishlistLocalDataSourceImpl(sharedPreferences: sl()));
 }
@@ -514,12 +522,10 @@ void _initSettings() {
 
   // Data Sources
   sl.registerLazySingleton<SettingsRemoteDataSource>(
-      () => SettingsRemoteDataSourceImpl(client: sl()));
+      () => SettingsRemoteDataSourceImpl(apiClient: sl()));
   sl.registerLazySingleton<SettingsLocalDataSource>(
       () => SettingsLocalDataSourceImpl(prefs: sl()));
 }
-
-
 
 void _initInstructorDashboard() {
   // Data Sources - Register first as repository depends on them
@@ -544,7 +550,7 @@ void _initInstructorDashboard() {
 
   // Repository - Uses multiple data sources
   sl.registerLazySingleton<InstructorRepository>(() => InstructorRepositoryImpl(
-        client: sl(),
+        apiClient: sl(),
         statsDataSource: sl(),
         coursesDataSource: sl(),
         studentsDataSource: sl(),
@@ -565,8 +571,8 @@ void _initInstructorDashboard() {
   sl.registerFactory(() => InstructorQACubit(sl()));
   sl.registerFactory(() => InstructorReviewsCubit(sl()));
   sl.registerFactory(() => CourseEditorCubit(sl()));
-  sl.registerFactory(() => InstructorCouponsCubit(sl()));
-  sl.registerFactory(() => InstructorQuizzesCubit(sl()));
+  sl.registerFactory(() => InstructorCouponsCubit(sl<ApiClient>()));
+  sl.registerFactory(() => InstructorQuizzesCubit(sl<ApiClient>()));
   sl.registerFactory(() => InstructorAnnouncementsCubit(sl()));
   sl.registerFactory(() => InstructorCategoriesCubit(sl()));
   sl.registerFactory(() => InstructorBannersCubit(sl()));
@@ -585,12 +591,10 @@ void _initNotifications() {
   sl.registerLazySingleton(() => NotificationsCubit(sl()));
 }
 
-
-
 void _initPaymentsHistory() {
   // Data Source
   sl.registerLazySingleton<PaymentsRemoteDataSource>(
-      () => PaymentsRemoteDataSourceImpl(supabase: sl()));
+      () => PaymentsRemoteDataSourceImpl(apiClient: sl()));
 
   // Repository
   sl.registerLazySingleton<PaymentsRepository>(
@@ -603,4 +607,9 @@ void _initPaymentsHistory() {
   sl.registerFactory(() => PaymentsHistoryCubit(
         getUserPaymentsUseCase: sl(),
       ));
+}
+
+void _initInstructor() {
+  sl.registerLazySingleton<InstructorRemoteDataSource>(
+      () => InstructorRemoteDataSourceImpl(sl()));
 }

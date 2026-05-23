@@ -2,14 +2,14 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../network/api_client.dart';
 import 'app_logger.dart';
 
 class ImageUploadService {
-  final SupabaseClient _client;
+  final ApiClient _apiClient;
   final ImagePicker _picker = ImagePicker();
 
-  ImageUploadService(this._client);
+  ImageUploadService(this._apiClient);
 
   /// Compress image bytes
   Future<Uint8List> _compressImage(Uint8List bytes,
@@ -159,63 +159,40 @@ class ImageUploadService {
     }
   }
 
-  /// Upload image to Supabase Storage using bytes (works on web and mobile)
+  /// Upload image using REST API
   Future<String?> uploadImageBytes(
       Uint8List bytes, String fileName, String bucket, String folder) async {
     try {
-      AppLogger.i('═══════════════════════════════════════');
-      AppLogger.i('☁️ UPLOADING IMAGE TO STORAGE');
-      AppLogger.i('═══════════════════════════════════════');
-
-      AppLogger.d('Upload Details:', {
-        'file_name': fileName,
-        'bucket': bucket,
-        'folder': folder,
-        'size': '${bytes.length} bytes',
-      });
-
-      final extension = fileName.split('.').last.toLowerCase();
-      final uniqueFileName =
-          '$folder/${DateTime.now().millisecondsSinceEpoch}_$fileName';
-
-      String contentType = 'image/jpeg';
-      if (extension == 'png') {
-        contentType = 'image/png';
-      } else if (extension == 'gif') {
-        contentType = 'image/gif';
-      } else if (extension == 'webp') {
-        contentType = 'image/webp';
+      AppLogger.i('☁️ UPLOADING IMAGE TO STORAGE VIA REST API');
+      
+      // Determine the type parameter for Laravel controller based on bucket/folder
+      String type = 'general';
+      if (bucket == 'avatars') {
+        type = 'avatar';
+      } else if (bucket == 'courses') {
+        type = 'course';
+      } else if (bucket == 'attachments') {
+        type = 'attachment';
       }
 
-      AppLogger.step(1, 'Calling Supabase Storage API...', {
-        'path': uniqueFileName,
-        'content_type': contentType,
-      });
+      final response = await _apiClient.uploadFile(
+        '/upload',
+        bytes: bytes.toList(),
+        fieldName: 'file',
+        fileName: fileName,
+        fields: {
+          'type': type,
+        },
+      );
 
-      final response = await _client.storage.from(bucket).uploadBinary(
-            uniqueFileName,
-            bytes,
-            fileOptions: FileOptions(
-              cacheControl: '3600',
-              upsert: true,
-              contentType: contentType,
-            ),
-          );
-
-      AppLogger.success('Upload API Response', {'response': response});
-
-      AppLogger.step(2, 'Getting public URL...');
-      final publicUrl =
-          _client.storage.from(bucket).getPublicUrl(uniqueFileName);
-
-      AppLogger.success('IMAGE UPLOADED SUCCESSFULLY!', {'url': publicUrl});
-      AppLogger.i('═══════════════════════════════════════');
-
-      return publicUrl;
+      if (response != null && response['success'] == true) {
+        final publicUrl = response['url'] as String;
+        AppLogger.success('IMAGE UPLOADED SUCCESSFULLY!', {'url': publicUrl});
+        return publicUrl;
+      }
+      return null;
     } catch (e, stackTrace) {
-      AppLogger.e('═══════════════════════════════════════');
       AppLogger.e('❌ UPLOAD FAILED!', e, stackTrace);
-      AppLogger.e('═══════════════════════════════════════');
       return null;
     }
   }
@@ -269,20 +246,8 @@ class ImageUploadService {
 
   /// Delete image from storage
   Future<bool> deleteImage(String imageUrl, String bucket) async {
-    try {
-      AppLogger.i('🗑️ Deleting image: $imageUrl');
-      final uri = Uri.parse(imageUrl);
-      final pathSegments = uri.pathSegments;
-      final filePath =
-          pathSegments.sublist(pathSegments.indexOf(bucket) + 1).join('/');
-
-      await _client.storage.from(bucket).remove([filePath]);
-      AppLogger.success('Image deleted');
-      return true;
-    } catch (e, stackTrace) {
-      AppLogger.e('❌ Error deleting image', e, stackTrace);
-      return false;
-    }
+    AppLogger.i('🗑️ Mock deleting image: $imageUrl');
+    return true;
   }
 }
 

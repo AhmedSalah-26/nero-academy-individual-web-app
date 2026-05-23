@@ -5,7 +5,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import '../../../../core/animations/animations.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -42,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
   UserRole _role = UserRole.student;
   Uint8List? _avatarBytes;
   String _countryDialCode = '+20';
-  bool _isSubmittingInstructorRequest = false;
+  final bool _isSubmittingInstructorRequest = false;
   bool _showAwaitingVerification = false;
 
   @override
@@ -65,8 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loadSettingsAndNavigate(
-      BuildContext context, String route) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+      BuildContext context, String route, String? userId) async {
     if (userId != null) {
       await sl<SettingsCubit>().loadSettings(userId);
     }
@@ -94,15 +92,15 @@ class _LoginScreenState extends State<LoginScreen> {
             });
           }
           if (state.needsInterests) {
-            _loadSettingsAndNavigate(ctx, '/interests');
+            _loadSettingsAndNavigate(ctx, '/interests', state.user?.id);
           } else if (state.isLoggedIn && state.user != null) {
             final user = state.user!;
             if (user.isAdmin) {
-              _loadSettingsAndNavigate(ctx, '/admin');
+              _loadSettingsAndNavigate(ctx, '/admin', user.id);
             } else if (user.isInstructor) {
-              _loadSettingsAndNavigate(ctx, '/instructor');
+              _loadSettingsAndNavigate(ctx, '/instructor', user.id);
             } else {
-              _loadSettingsAndNavigate(ctx, '/home');
+              _loadSettingsAndNavigate(ctx, '/home', user.id);
             }
           }
         },
@@ -455,8 +453,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final c = context.read<AuthCubit>();
     if (_isLogin) {
       c.login(email: _emailCtrl.text.trim(), password: _passCtrl.text);
-    } else if (_role == UserRole.instructor) {
-      _submitInstructorApplication();
     } else {
       c.register(
         email: _emailCtrl.text.trim(),
@@ -474,116 +470,6 @@ class _LoginScreenState extends State<LoginScreen> {
         avatarBytes: _avatarBytes,
       );
     }
-  }
-
-  Future<void> _submitInstructorApplication() async {
-    if (_isSubmittingInstructorRequest) return;
-
-    final isArabic = context.locale.languageCode == 'ar';
-    final name = _nameCtrl.text.trim();
-    final email = _emailCtrl.text.trim().toLowerCase();
-    final phone = _getFullPhoneNumber();
-
-    final nameError = Validators.required(
-      name,
-      message: isArabic ? 'الاسم مطلوب' : 'Name is required',
-    );
-    if (nameError != null) {
-      ToastUtils.showError(nameError);
-      return;
-    }
-
-    final emailError = Validators.email(
-      email,
-      emptyMessage: isArabic ? 'البريد الإلكتروني مطلوب' : 'Email is required',
-      invalidMessage:
-          isArabic ? 'البريد الإلكتروني غير صالح' : 'Invalid email address',
-    );
-    if (emailError != null) {
-      ToastUtils.showError(emailError);
-      return;
-    }
-
-    if (phone == null || phone.isEmpty) {
-      ToastUtils.showError(
-          isArabic ? 'رقم التواصل مطلوب' : 'Phone number is required');
-      return;
-    }
-
-    setState(() => _isSubmittingInstructorRequest = true);
-
-    try {
-      final client = Supabase.instance.client;
-      final existing = await client
-          .from('instructor_applications')
-          .select('id, status')
-          .eq('email', email)
-          .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      if (existing != null && existing['status'] == 'pending') {
-        ToastUtils.showInfo(
-          isArabic
-              ? 'تم إرسال طلب سابق لنفس البريد وهو قيد المراجعة'
-              : 'A request with this email is already pending review',
-        );
-        return;
-      }
-
-      await client.from('instructor_applications').insert({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'status': 'pending',
-      });
-
-      if (!mounted) return;
-      ToastUtils.showSuccess(
-        isArabic
-            ? 'تم إرسال طلب التدريس بنجاح. سيتواصل معك الأدمن بعد المراجعة.'
-            : 'Instructor request submitted successfully. Admin will contact you after review.',
-      );
-
-      _clearRegisterFields();
-      setState(() {
-        _isLogin = true;
-        _role = UserRole.student;
-      });
-    } on PostgrestException catch (e) {
-      final message = e.message.toLowerCase();
-      if (message.contains('relation') &&
-          message.contains('instructor_applications')) {
-        ToastUtils.showError(
-          isArabic
-              ? 'جدول طلبات المدرسين غير موجود. نفّذ سكربت قاعدة البيانات أولاً.'
-              : 'Instructor applications table is missing. Run the database script first.',
-        );
-      } else {
-        ToastUtils.showError(
-          isArabic ? 'تعذر إرسال الطلب حالياً' : 'Failed to submit request',
-        );
-      }
-    } catch (_) {
-      ToastUtils.showError(
-        isArabic ? 'حدث خطأ أثناء إرسال الطلب' : 'Unexpected error occurred',
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmittingInstructorRequest = false);
-      }
-    }
-  }
-
-  void _clearRegisterFields() {
-    _nameCtrl.clear();
-    _phoneCtrl.clear();
-    _emailCtrl.clear();
-    _passCtrl.clear();
-    _confirmPassCtrl.clear();
-    _headlineCtrl.clear();
-    _bioCtrl.clear();
-    _avatarBytes = null;
   }
 
   String? _getFullPhoneNumber() {

@@ -33,5 +33,4 @@ export 'extensions/extensions.dart';
 export 'constants/app_constants.dart';
 
 // ============ Services ============
-export 'services/supabase_service.dart';
 export 'services/connectivity_service.dart';

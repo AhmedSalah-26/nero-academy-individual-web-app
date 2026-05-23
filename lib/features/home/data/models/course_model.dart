@@ -37,7 +37,7 @@ class CourseModel extends CourseEntity {
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {
     // Handle nested instructor profile
-    final instructor = json['profiles'] as Map<String, dynamic>?;
+    final instructor = (json['profiles'] ?? json['instructor']) as Map<String, dynamic>?;
 
     return CourseModel(
       id: json['id'] as String,
@@ -53,8 +53,8 @@ class CourseModel extends CourseEntity {
       categoryId: json['category_id'] as String?,
       level: CourseLevel.fromString(json['level'] as String?),
       language: json['language'] as String? ?? 'ar',
-      price: (json['price'] as num?)?.toDouble() ?? 0,
-      discountPrice: (json['discount_price'] as num?)?.toDouble(),
+      price: _parseDouble(json['price']),
+      discountPrice: _parseOptionalDouble(json['discount_price']),
       currency: json['currency'] as String? ?? 'EGP',
       isFree: json['is_free'] as bool? ?? false,
       isFlashSale: json['is_flash_sale'] as bool? ?? false,
@@ -64,7 +64,7 @@ class CourseModel extends CourseEntity {
       flashSaleEnd: json['flash_sale_end'] != null
           ? DateTime.parse(json['flash_sale_end'] as String)
           : null,
-      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      rating: _parseDouble(json['rating']),
       ratingCount: json['rating_count'] as int? ?? 0,
       enrolledCount: json['enrolled_count'] as int? ?? 0,
       totalDuration: json['total_duration'] as int? ?? 0,
@@ -77,6 +77,20 @@ class CourseModel extends CourseEntity {
       createdAt: DateTime.parse(json['created_at'] as String),
       badge: json['badge'] as String?,
     );
+  }
+
+  static double _parseDouble(dynamic value, {double defaultValue = 0.0}) {
+    if (value == null) return defaultValue;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? defaultValue;
+    return defaultValue;
+  }
+
+  static double? _parseOptionalDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 
   Map<String, dynamic> toJson() {

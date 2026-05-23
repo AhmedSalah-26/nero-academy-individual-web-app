@@ -11,6 +11,10 @@ library instructor_data_sources;
 /// - instructor_qa_data_source.dart - Q&A management
 /// - instructor_reviews_data_source.dart - Reviews
 /// - instructor_course_editor_data_source.dart - Course editor methods
+/// - instructor_announcements_data_source.dart - Announcements
+///
+/// These data sources now target the Laravel API layer and accept either
+/// direct list/map payloads or wrapped responses when needed.
 
 export 'instructor_stats_data_source.dart';
 export 'instructor_courses_data_source.dart';

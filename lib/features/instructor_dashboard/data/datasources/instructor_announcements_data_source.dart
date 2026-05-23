@@ -1,14 +1,25 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_logger.dart';
 
 /// Instructor Announcements Data Source
 class InstructorAnnouncementsDataSource {
-  final SupabaseClient _client;
+  final ApiClient _apiClient;
   static const _tag = 'InstructorAnnouncementsDS';
 
-  InstructorAnnouncementsDataSource(this._client);
+  InstructorAnnouncementsDataSource(this._apiClient);
 
-  String get _userId => _client.auth.currentUser!.id;
+  List<dynamic> _asList(dynamic response) {
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      final data = response['data'];
+      if (data is List) return data;
+      final announcements = response['announcements'];
+      if (announcements is List) return announcements;
+      final courses = response['courses'];
+      if (courses is List) return courses;
+    }
+    return const [];
+  }
 
   /// Get announcements for a course
   Future<List<Map<String, dynamic>>> getAnnouncements({
@@ -18,36 +29,27 @@ class InstructorAnnouncementsDataSource {
   }) async {
     AppLogger.d('[$_tag] getAnnouncements: courseId=$courseId, page=$page');
     try {
-      final response = await _client
-          .from('course_announcements')
-          .select('*, user:profiles(name, avatar_url)')
-          .eq('course_id', courseId)
-          .order('created_at', ascending: false)
-          .range((page - 1) * limit, page * limit - 1);
+      final response = await _apiClient.get(
+        '/instructor/announcements?course_id=$courseId&page=$page&limit=$limit',
+      );
 
-      AppLogger.success(
-          '[$_tag] getAnnouncements: ${(response as List).length} items');
-      return List<Map<String, dynamic>>.from(response);
+      final list = _asList(response);
+      AppLogger.success('[$_tag] getAnnouncements: ${list.length} items');
+      return List<Map<String, dynamic>>.from(list);
     } catch (e, s) {
       AppLogger.e('[$_tag] getAnnouncements error', e, s);
       rethrow;
     }
   }
 
-  /// Get all courses owned by the instructor (for selecting which course to announce to)
+  /// Get all courses owned by the instructor
   Future<List<Map<String, dynamic>>> getMyCourses() async {
     AppLogger.d('[$_tag] getMyCourses');
     try {
-      final response = await _client
-          .from('courses')
-          .select('id, title_ar, title_en')
-          .eq('instructor_id', _userId)
-          .eq('is_published', true)
-          .order('title_ar');
-
-      AppLogger.success(
-          '[$_tag] getMyCourses: ${(response as List).length} courses');
-      return List<Map<String, dynamic>>.from(response);
+      final response = await _apiClient.get('/instructor/announcements/courses');
+      final list = _asList(response);
+      AppLogger.success('[$_tag] getMyCourses: ${list.length} courses');
+      return List<Map<String, dynamic>>.from(list);
     } catch (e, s) {
       AppLogger.e('[$_tag] getMyCourses error', e, s);
       rethrow;
@@ -64,14 +66,16 @@ class InstructorAnnouncementsDataSource {
   }) async {
     AppLogger.d('[$_tag] createAnnouncement: courseId=$courseId');
     try {
-      await _client.from('course_announcements').insert({
-        'course_id': courseId,
-        'user_id': _userId,
-        'title_ar': titleAr,
-        'title_en': titleEn,
-        'content_ar': contentAr,
-        'content_en': contentEn,
-      });
+      await _apiClient.post(
+        '/instructor/announcements',
+        body: {
+          'course_id': courseId,
+          'title_ar': titleAr,
+          'title_en': titleEn,
+          'content_ar': contentAr,
+          'content_en': contentEn,
+        },
+      );
       AppLogger.success('[$_tag] createAnnouncement success');
       return true;
     } catch (e, s) {
@@ -85,12 +89,10 @@ class InstructorAnnouncementsDataSource {
       String announcementId, Map<String, dynamic> data) async {
     AppLogger.d('[$_tag] updateAnnouncement: $announcementId');
     try {
-      data['updated_at'] = DateTime.now().toIso8601String();
-      await _client
-          .from('course_announcements')
-          .update(data)
-          .eq('id', announcementId)
-          .eq('user_id', _userId);
+      await _apiClient.put(
+        '/instructor/announcements/$announcementId',
+        body: data,
+      );
       AppLogger.success('[$_tag] updateAnnouncement success');
       return true;
     } catch (e, s) {
@@ -103,11 +105,7 @@ class InstructorAnnouncementsDataSource {
   Future<bool> deleteAnnouncement(String announcementId) async {
     AppLogger.d('[$_tag] deleteAnnouncement: $announcementId');
     try {
-      await _client
-          .from('course_announcements')
-          .delete()
-          .eq('id', announcementId)
-          .eq('user_id', _userId);
+      await _apiClient.delete('/instructor/announcements/$announcementId');
       AppLogger.success('[$_tag] deleteAnnouncement success');
       return true;
     } catch (e, s) {

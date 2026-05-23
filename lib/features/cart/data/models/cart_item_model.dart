@@ -45,20 +45,17 @@ class CartItemModel extends CartItemEntity {
       thumbnailUrl: course?['thumbnail_url'] as String? ??
           json['thumbnail_url'] as String?,
       instructorName: instructorName,
-      rating: (course?['rating'] as num?)?.toDouble() ??
-          (json['rating'] as num?)?.toDouble() ??
+      rating: _toDouble(course?['rating']) ?? _toDouble(json['rating']) ?? 0,
+      ratingCount: _toInt(course?['rating_count']) ??
+          _toInt(json['rating_count']) ??
           0,
-      ratingCount:
-          course?['rating_count'] as int? ?? json['rating_count'] as int? ?? 0,
-      price: (course?['price'] as num?)?.toDouble() ??
-          (json['price'] as num?)?.toDouble() ??
-          0,
+      price: _toDouble(course?['price']) ?? _toDouble(json['price']) ?? 0,
       discountPrice: _resolveEffectiveDiscountPrice(course, json),
-      priceAtAdd: (json['price_at_add'] as num?)?.toDouble() ?? 0,
+      priceAtAdd: _toDouble(json['price_at_add']) ?? 0,
       currency: course?['currency'] as String? ??
           json['currency'] as String? ??
           'EGP',
-      isFree: course?['is_free'] as bool? ?? json['is_free'] as bool? ?? false,
+      isFree: _toBool(course?['is_free']) ?? _toBool(json['is_free']) ?? false,
       addedAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -88,12 +85,11 @@ class CartItemModel extends CartItemEntity {
     Map<String, dynamic>? course,
     Map<String, dynamic> json,
   ) {
-    final baseDiscountPrice = (course?['discount_price'] as num?)?.toDouble() ??
-        (json['discount_price'] as num?)?.toDouble();
+    final baseDiscountPrice =
+        _toDouble(course?['discount_price']) ?? _toDouble(json['discount_price']);
 
-    final isFlashSale = (course?['is_flash_sale'] as bool?) ??
-        (json['is_flash_sale'] as bool?) ??
-        false;
+    final isFlashSale =
+        _toBool(course?['is_flash_sale']) ?? _toBool(json['is_flash_sale']) ?? false;
 
     if (!isFlashSale) {
       // Regular permanent discount
@@ -117,6 +113,29 @@ class CartItemModel extends CartItemEntity {
     if (value == null) return null;
     if (value is DateTime) return value;
     if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  static int? _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static bool? _toBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      if (value == '1' || value.toLowerCase() == 'true') return true;
+      if (value == '0' || value.toLowerCase() == 'false') return false;
+    }
     return null;
   }
 }

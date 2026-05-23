@@ -2,12 +2,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/animations/animations.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/shared_widgets/responsive_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/app_logger.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../cubit/cart_cubit.dart';
 import '../cubit/cart_state.dart';
 import '../widgets/cart/cart_content.dart';
@@ -31,7 +32,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _loadCart() {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = sl<AuthCubit>().state.user?.id;
     AppLogger.i('🛒 [CartScreen] Loading cart for user: $userId');
 
     if (userId != null) {

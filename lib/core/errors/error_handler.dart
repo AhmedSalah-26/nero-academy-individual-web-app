@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-
 import 'exceptions.dart';
 import 'failures.dart';
 
@@ -17,24 +15,6 @@ class ErrorHandler implements Exception {
     // Network Errors
     if (error is SocketException) {
       return const NetworkFailure('لا يوجد اتصال بالإنترنت');
-    }
-
-    // Supabase Auth Errors
-    if (error is supabase.AuthException) {
-      return _handleAuthException(error);
-    }
-
-    // Supabase PostgrestException (Database errors)
-    if (error is supabase.PostgrestException) {
-      return _handlePostgrestException(error);
-    }
-
-    // Supabase Storage Errors
-    if (error is supabase.StorageException) {
-      return ServerFailure(
-        error.message,
-        code: 'storage_error',
-      );
     }
 
     // Custom Exceptions
@@ -86,113 +66,6 @@ class ErrorHandler implements Exception {
     return const ServerFailure(
       'حدث خطأ غير متوقع',
       code: 'unknown_error',
-    );
-  }
-
-  AuthFailure _handleAuthException(supabase.AuthException error) {
-    final message = error.message.toLowerCase();
-
-    if (message.contains('invalid login credentials')) {
-      return const AuthFailure(
-        'البريد الإلكتروني أو كلمة المرور غير صحيحة',
-        code: 'invalid_credentials',
-      );
-    }
-
-    if (message.contains('email already registered') ||
-        message.contains('already registered')) {
-      return const AuthFailure(
-        'البريد الإلكتروني مستخدم بالفعل',
-        code: 'email_already_in_use',
-      );
-    }
-
-    if (message.contains('weak password')) {
-      return const AuthFailure(
-        'كلمة المرور ضعيفة جداً',
-        code: 'weak_password',
-      );
-    }
-
-    if (message.contains('user not found')) {
-      return const AuthFailure(
-        'لا يوجد حساب بهذا البريد الإلكتروني',
-        code: 'user_not_found',
-      );
-    }
-
-    if (message.contains('email not confirmed')) {
-      return const AuthFailure(
-        'يرجى تأكيد بريدك الإلكتروني أولاً',
-        code: 'email_not_confirmed',
-      );
-    }
-
-    if (message.contains('session expired') ||
-        message.contains('jwt expired')) {
-      return const AuthFailure(
-        'انتهت صلاحية الجلسة، سجل دخولك مرة أخرى',
-        code: 'session_expired',
-      );
-    }
-
-    return AuthFailure(error.message, code: 'auth_error');
-  }
-
-  ServerFailure _handlePostgrestException(supabase.PostgrestException error) {
-    final code = error.code;
-
-    // Foreign Key Violation
-    if (code == '23503') {
-      return const ServerFailure(
-        'لا يمكن حذف هذا العنصر لارتباطه ببيانات أخرى',
-        code: 'foreign_key_violation',
-      );
-    }
-
-    // Unique Violation
-    if (code == '23505') {
-      return const ServerFailure(
-        'هذه البيانات موجودة بالفعل',
-        code: 'unique_violation',
-      );
-    }
-
-    // Not Null Violation
-    if (code == '23502') {
-      return const ServerFailure(
-        'بعض الحقول المطلوبة فارغة',
-        code: 'not_null_violation',
-      );
-    }
-
-    // Check Violation
-    if (code == '23514') {
-      return const ServerFailure(
-        'البيانات المدخلة غير صالحة',
-        code: 'check_violation',
-      );
-    }
-
-    // Permission Denied (RLS)
-    if (code == '42501' || error.message.contains('permission denied')) {
-      return const ServerFailure(
-        'ليس لديك صلاحية لهذا الإجراء',
-        code: 'permission_denied',
-      );
-    }
-
-    // No rows returned (PGRST116)
-    if (code == 'PGRST116') {
-      return const ServerFailure(
-        'لم يتم العثور على البيانات',
-        code: 'not_found',
-      );
-    }
-
-    return ServerFailure(
-      error.message,
-      code: code ?? 'database_error',
     );
   }
 

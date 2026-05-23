@@ -43,17 +43,20 @@ class AppBackButton extends StatelessWidget {
   }
 
   void _handleBack(BuildContext context) {
-    if (context.canPop()) {
-      context.pop();
-      return;
-    }
-
     final navigator = Navigator.maybeOf(context);
     if (navigator != null && navigator.canPop()) {
       navigator.pop();
       return;
     }
 
-    context.go(fallbackLocation);
+    final router = GoRouter.maybeOf(context);
+    if (router != null) {
+      if (router.canPop()) {
+        router.pop();
+        return;
+      }
+
+      router.go(fallbackLocation);
+    }
   }
 }

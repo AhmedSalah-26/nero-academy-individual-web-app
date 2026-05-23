@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../cart/presentation/cubit/cart_cubit.dart';
@@ -44,7 +44,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _initCubits() {
-    final user = Supabase.instance.client.auth.currentUser;
+    final user = sl<AuthCubit>().state.user;
     if (user != null) {
       _homeCubit.loadHomeData();
       _myLearningCubit.loadMyLearning(user.id);
@@ -170,7 +170,7 @@ class _MainScreenState extends State<MainScreen> {
     );
 
     // Refresh data when entering each tab
-    final user = Supabase.instance.client.auth.currentUser;
+    final user = sl<AuthCubit>().state.user;
     if (user != null) {
       switch (index) {
         case 0:

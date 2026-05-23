@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/animations/animations.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -27,7 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _loadSettings() {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = context.read<AuthCubit>().state.user?.id;
     if (userId != null) {
       context.read<SettingsCubit>().loadSettings(userId);
     } else {
@@ -35,7 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  bool get _isGuest => Supabase.instance.client.auth.currentUser == null;
+  bool get _isGuest => context.read<AuthCubit>().state.user == null;
 
   /// Get current language from EasyLocalization (source of truth)
   String get _currentLanguageCode => context.locale.languageCode;

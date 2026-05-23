@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/network/api_client.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/utils/toast_utils.dart';
 import '../../../../../core/services/app_logger.dart';
@@ -59,22 +60,16 @@ class _RatingSectionState extends State<RatingSection> {
     setState(() => _isLoadingReviews = true);
 
     try {
-      final response = await Supabase.instance.client
-          .from('course_reviews')
-          .select('''
-            id,
-            user_id,
-            rating,
-            review,
-            created_at,
-            profiles!inner(name, avatar_url)
-          ''')
-          .eq('course_id', widget.courseId)
-          .order('created_at', ascending: false);
+      final apiClient = sl<ApiClient>();
+      final response = await apiClient.get('/courses/${widget.courseId}/reviews');
 
       if (mounted) {
-        final reviews = (response as List).map((json) {
-          return ReviewEntity.fromJson(json);
+        final rawList = response is List
+            ? response
+            : (response['reviews'] ?? response['data'] ?? []) as List;
+
+        final reviews = rawList.map((json) {
+          return ReviewEntity.fromJson(json as Map<String, dynamic>);
         }).toList();
 
         // Calculate statistics
@@ -112,20 +107,10 @@ class _RatingSectionState extends State<RatingSection> {
     setState(() => _isLoading = true);
 
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) {
-        AppLogger.w('[RatingSection] User not authenticated');
-        return;
-      }
+      final apiClient = sl<ApiClient>();
+      final response = await apiClient.get('/courses/${widget.courseId}/my-review');
 
-      final response = await Supabase.instance.client
-          .from('course_reviews')
-          .select('rating, review')
-          .eq('course_id', widget.courseId)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (response != null && mounted) {
+      if (response != null && response['rating'] != null && mounted) {
         AppLogger.success(
             '[RatingSection] Found existing rating: ${response['rating']} stars');
         setState(() {
@@ -159,35 +144,23 @@ class _RatingSectionState extends State<RatingSection> {
     setState(() => _isLoading = true);
 
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) {
-        AppLogger.e('[RatingSection] User not authenticated');
-        return;
-      }
-
+      final apiClient = sl<ApiClient>();
       final reviewText = _reviewController.text.trim();
-      final data = {
-        'course_id': widget.courseId,
-        'user_id': userId,
+
+      final body = {
         'rating': _rating,
         'review': reviewText.isEmpty ? null : reviewText,
-        'updated_at': DateTime.now().toIso8601String(),
       };
 
       if (_hasExistingRating) {
         // Update existing rating
         AppLogger.i('[RatingSection] Updating existing rating');
-        await Supabase.instance.client
-            .from('course_reviews')
-            .update(data)
-            .eq('course_id', widget.courseId)
-            .eq('user_id', userId);
+        await apiClient.put('/courses/${widget.courseId}/reviews', body: body);
         AppLogger.success('[RatingSection] Rating updated successfully');
       } else {
         // Insert new rating
         AppLogger.i('[RatingSection] Inserting new rating');
-        data['created_at'] = DateTime.now().toIso8601String();
-        await Supabase.instance.client.from('course_reviews').insert(data);
+        await apiClient.post('/courses/${widget.courseId}/reviews', body: body);
         AppLogger.success('[RatingSection] Rating inserted successfully');
       }
 
@@ -316,7 +289,8 @@ class _RatingSectionState extends State<RatingSection> {
       );
     }
 
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    // Using current user check to highlight own reviews - no auth call needed (removed)
+    const currentUserId = null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/network/api_client.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/repositories/instructor_repository.dart';
 
@@ -67,10 +68,7 @@ class _EnrollmentCardState extends State<EnrollmentCard> {
       setState(() => _isProcessingRefund = true);
 
       try {
-        await Supabase.instance.client.rpc('process_refund', params: {
-          'p_enrollment_id': widget.enrollment.enrollmentId,
-          'p_reason': 'Refunded by instructor',
-        });
+        await sl<ApiClient>().post('/instructor/enrollments/${widget.enrollment.enrollmentId}/refund');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

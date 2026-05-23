@@ -423,6 +423,16 @@ class SectionDto {
     this.isPublished = true,
     this.lessons = const [],
   });
+
+  Map<String, dynamic> toJson() => {
+        if (id != null) 'id': id,
+        'title_ar': titleAr,
+        'title_en': titleEn,
+        'order': order,
+        'sort_order': order,
+        'is_published': isPublished,
+        'lessons': lessons.map((lesson) => lesson.toJson()).toList(),
+      };
 }
 
 /// Lesson DTO
@@ -458,6 +468,25 @@ class LessonDto {
     this.fileSize,
     this.fileType,
   });
+
+  Map<String, dynamic> toJson() => {
+        if (id != null) 'id': id,
+        'title_ar': titleAr,
+        'title_en': titleEn,
+        'type': type,
+        'order': order,
+        'sort_order': order,
+        'video_duration': durationMinutes * 60,
+        'is_free': isFree,
+        'is_preview': isFree,
+        'is_published': isPublished,
+        if (videoUrl != null) 'video_url': videoUrl,
+        if (articleContent != null) 'article_content_ar': articleContent,
+        if (fileUrl != null) 'file_url': fileUrl,
+        if (fileName != null) 'file_name': fileName,
+        if (fileSize != null) 'file_size': fileSize,
+        if (fileType != null) 'file_type': fileType,
+      };
 }
 
 // ============ INDEPENDENT CRUD DTOs ============

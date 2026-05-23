@@ -1,10 +1,11 @@
 import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_colors.dart';
 import '../services/reports_service.dart';
 import '../routing/app_router.dart';
+import '../di/injection_container.dart';
+import '../network/api_client.dart';
 
 /// Report Dialog - Allows users to report courses or reviews
 /// @deprecated Use ReportScreen (full page) instead via AppRouter.goToReport()
@@ -103,7 +104,7 @@ class _ReportDialogState extends State<ReportDialog> {
 
   Future<void> _checkPendingReport() async {
     try {
-      final service = ReportsRemoteDataSource(Supabase.instance.client);
+      final service = ReportsRemoteDataSource(sl<ApiClient>());
 
       bool hasPending;
       if (widget.targetType == ReportTargetType.course) {
@@ -145,7 +146,7 @@ class _ReportDialogState extends State<ReportDialog> {
     });
 
     try {
-      final service = ReportsRemoteDataSource(Supabase.instance.client);
+      final service = ReportsRemoteDataSource(sl<ApiClient>());
 
       bool success;
       if (widget.targetType == ReportTargetType.course) {

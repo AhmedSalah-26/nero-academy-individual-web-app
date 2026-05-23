@@ -1,19 +1,19 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_logger.dart';
 
 part 'instructor_quizzes_state.dart';
 
-/// Instructor Quizzes Cubit
+/// Instructor Quizzes Cubit - uses ApiClient (Laravel backend)
 class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
-  final SupabaseClient _supabase;
+  final ApiClient _apiClient;
   int _currentPage = 1;
   static const int _pageSize = 20;
   static const _tag = 'InstructorQuizzesCubit';
 
-  InstructorQuizzesCubit(this._supabase)
+  InstructorQuizzesCubit(this._apiClient)
       : super(const InstructorQuizzesState());
 
   /// Load quizzes
@@ -32,54 +32,19 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
     }
 
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) {
-        AppLogger.e('[$_tag] User not authenticated');
-        throw Exception('User not authenticated');
-      }
+      AppLogger.d('[$_tag] Loading quizzes for instructor (page=$_currentPage)');
 
-      AppLogger.d('[$_tag] Loading quizzes for instructor: $userId');
+      final url = '/instructor/quizzes?page=$_currentPage&per_page=$_pageSize';
+      final response = await _apiClient.get(url);
 
-      // Get instructor's courses first
-      final coursesResponse = await _supabase
-          .from('courses')
-          .select('id')
-          .eq('instructor_id', userId);
+      final rawList = response is List
+          ? response
+          : (response['quizzes'] ?? response['data'] ?? []) as List;
 
-      final courseIds =
-          (coursesResponse as List).map((c) => c['id'] as String).toList();
-
-      AppLogger.d('[$_tag] Found ${courseIds.length} courses');
-
-      if (courseIds.isEmpty) {
-        AppLogger.w('[$_tag] No courses found for instructor');
-        emit(state.copyWith(
-          status: InstructorQuizzesStatus.success,
-          quizzes: [],
-          hasMore: false,
-        ));
-        return;
-      }
-
-      // Get quizzes for instructor's courses (course-level quizzes)
-      final response = await _supabase
-          .from('quizzes')
-          .select('''
-            *,
-            course:courses!inner(id, title_ar, title_en, instructor_id)
-          ''')
-          .inFilter('course_id', courseIds)
-          .order('created_at', ascending: false)
-          .range(
-            (_currentPage - 1) * _pageSize,
-            _currentPage * _pageSize - 1,
-          );
-
-      AppLogger.d(
-          '[$_tag] Raw quizzes response: ${(response as List).length} quizzes');
+      AppLogger.d('[$_tag] Raw quizzes response: ${rawList.length} quizzes');
 
       final quizzes =
-          response.map((q) => InstructorQuizModel.fromJson(q)).toList();
+          rawList.map((q) => InstructorQuizModel.fromJson(q as Map<String, dynamic>)).toList();
 
       AppLogger.success('[$_tag] Loaded ${quizzes.length} quizzes');
 
@@ -130,25 +95,21 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
     AppLogger.i('📝 [$_tag] createQuiz: courseId=$courseId, title=$titleAr');
 
     try {
-      final response = await _supabase
-          .from('quizzes')
-          .insert({
-            'course_id': courseId,
-            'lesson_id': null, // Course-level quiz
-            'title_ar': titleAr,
-            'title_en': titleEn,
-            'description_ar': descriptionAr,
-            'description_en': descriptionEn,
-            'passing_score': passingScore,
-            'time_limit': timeLimitMinutes,
-            'max_attempts': maxAttempts,
-            'shuffle_questions': shuffleQuestions,
-            'shuffle_answers': shuffleAnswers,
-            'show_correct_answers': showCorrectAnswers,
-          })
-          .select()
-          .single();
+      final body = {
+        'course_id': courseId,
+        'title_ar': titleAr,
+        'title_en': titleEn,
+        if (descriptionAr != null) 'description_ar': descriptionAr,
+        if (descriptionEn != null) 'description_en': descriptionEn,
+        'passing_score': passingScore,
+        if (timeLimitMinutes != null) 'time_limit': timeLimitMinutes,
+        if (maxAttempts != null) 'max_attempts': maxAttempts,
+        'shuffle_questions': shuffleQuestions,
+        'shuffle_answers': shuffleAnswers,
+        'show_correct_answers': showCorrectAnswers,
+      };
 
+      final response = await _apiClient.post('/instructor/quizzes', body: body);
       AppLogger.success('[$_tag] Quiz created: ${response['id']}');
       await loadQuizzes(refresh: true);
       return true;
@@ -191,9 +152,8 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
       if (showCorrectAnswers != null) {
         updates['show_correct_answers'] = showCorrectAnswers;
       }
-      updates['updated_at'] = DateTime.now().toIso8601String();
 
-      await _supabase.from('quizzes').update(updates).eq('id', quizId);
+      await _apiClient.put('/instructor/quizzes/$quizId', body: updates);
 
       AppLogger.success('[$_tag] Quiz updated');
       await loadQuizzes(refresh: true);
@@ -210,7 +170,7 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
     AppLogger.i('📝 [$_tag] deleteQuiz: quizId=$quizId');
 
     try {
-      await _supabase.from('quizzes').delete().eq('id', quizId);
+      await _apiClient.delete('/instructor/quizzes/$quizId');
 
       final updatedQuizzes =
           state.quizzes.where((q) => q.id != quizId).toList();
@@ -230,14 +190,13 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
     AppLogger.i('📝 [$_tag] getQuizQuestions: quizId=$quizId');
 
     try {
-      final response = await _supabase
-          .from('quiz_questions')
-          .select()
-          .eq('quiz_id', quizId)
-          .order('sort_order');
+      final response = await _apiClient.get('/instructor/quizzes/$quizId/questions');
+      final rawList = response is List
+          ? response
+          : (response['questions'] ?? response['data'] ?? []) as List;
 
       final questions =
-          (response as List).map((q) => QuizQuestionModel.fromJson(q)).toList();
+          rawList.map((q) => QuizQuestionModel.fromJson(q as Map<String, dynamic>)).toList();
 
       AppLogger.success('[$_tag] Loaded ${questions.length} questions');
       return questions;
@@ -259,26 +218,8 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
     String? correctAnswer,
   }) async {
     AppLogger.i('📝 [$_tag] addQuestion: quizId=$quizId, type=$type');
-    AppLogger.d('📝 [$_tag] addQuestion: questionAr=$questionAr');
-    AppLogger.d('📝 [$_tag] addQuestion: questionEn=$questionEn');
-    AppLogger.d('📝 [$_tag] addQuestion: imageUrl=$imageUrl');
-    AppLogger.d('📝 [$_tag] addQuestion: options count=${options.length}');
 
     try {
-      // Get current max order
-      AppLogger.d('📝 [$_tag] Getting max sort_order...');
-      final existingQuestions = await _supabase
-          .from('quiz_questions')
-          .select('sort_order')
-          .eq('quiz_id', quizId)
-          .order('sort_order', ascending: false)
-          .limit(1);
-
-      final maxOrder = existingQuestions.isNotEmpty
-          ? (existingQuestions[0]['sort_order'] as int) + 1
-          : 0;
-      AppLogger.d('📝 [$_tag] New sort_order: $maxOrder');
-
       // Generate UUIDs for options that don't have IDs
       const uuid = Uuid();
       final optionsWithIds = options.map((opt) {
@@ -288,38 +229,18 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
         return opt;
       }).toList();
 
-      // Insert question with options as JSONB
-      final insertData = {
-        'quiz_id': quizId,
+      final body = {
         'question_ar': questionAr,
         'question_en': questionEn,
-        'image_url': imageUrl,
+        if (imageUrl != null) 'image_url': imageUrl,
         'question_type': type,
         'points': points,
-        'sort_order': maxOrder,
         'options': optionsWithIds,
-        'correct_answer': correctAnswer,
+        if (correctAnswer != null) 'correct_answer': correctAnswer,
       };
-      AppLogger.d('📝 [$_tag] Inserting: $insertData');
 
-      final response = await _supabase
-          .from('quiz_questions')
-          .insert(insertData)
-          .select()
-          .single();
-      AppLogger.d('📝 [$_tag] Insert response: $response');
-
-      // Update quiz total_questions count
-      AppLogger.d('📝 [$_tag] Updating quiz count...');
-      try {
-        await _supabase.rpc('increment_quiz_questions', params: {
-          'p_quiz_id': quizId,
-          'p_points': points,
-        });
-      } catch (rpcError) {
-        AppLogger.w(
-            '📝 [$_tag] RPC failed (function may not exist): $rpcError');
-      }
+      AppLogger.d('📝 [$_tag] Posting question: $body');
+      await _apiClient.post('/instructor/quizzes/$quizId/questions', body: body);
 
       AppLogger.success('[$_tag] Question added successfully');
       return true;
@@ -366,10 +287,7 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
       if (correctAnswer != null) updates['correct_answer'] = correctAnswer;
 
       if (updates.isNotEmpty) {
-        await _supabase
-            .from('quiz_questions')
-            .update(updates)
-            .eq('id', questionId);
+        await _apiClient.put('/instructor/quiz-questions/$questionId', body: updates);
       }
 
       AppLogger.success('[$_tag] Question updated');
@@ -386,21 +304,7 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
     AppLogger.i('📝 [$_tag] deleteQuestion: questionId=$questionId');
 
     try {
-      // Get question points before deleting
-      final question = await _supabase
-          .from('quiz_questions')
-          .select('points')
-          .eq('id', questionId)
-          .single();
-      final points = question['points'] as int? ?? 1;
-
-      await _supabase.from('quiz_questions').delete().eq('id', questionId);
-
-      // Update quiz total_questions count
-      await _supabase.rpc('decrement_quiz_questions', params: {
-        'p_quiz_id': quizId,
-        'p_points': points,
-      });
+      await _apiClient.delete('/instructor/quiz-questions/$questionId');
 
       AppLogger.success('[$_tag] Question deleted');
       return true;
@@ -417,12 +321,9 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
         '📝 [$_tag] reorderQuestions: quizId=$quizId, count=${questionIds.length}');
 
     try {
-      // Update sort_order for each question
-      for (int i = 0; i < questionIds.length; i++) {
-        await _supabase
-            .from('quiz_questions')
-            .update({'sort_order': i}).eq('id', questionIds[i]);
-      }
+      await _apiClient.post('/instructor/quizzes/$quizId/reorder-questions', body: {
+        'question_ids': questionIds,
+      });
 
       AppLogger.success('[$_tag] Questions reordered');
       return true;
@@ -438,43 +339,31 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
     AppLogger.i('📝 [$_tag] getQuizAttempts: quizId=$quizId');
 
     try {
-      // Get attempts with user profile info
-      final response = await _supabase
-          .from('quiz_attempts')
-          .select('''
-            id,
-            user_id,
-            quiz_id,
-            score,
-            percentage,
-            passed,
-            answers,
-            started_at,
-            completed_at,
-            time_spent,
-            user:profiles!quiz_attempts_user_id_fkey(id, name, email, phone, avatar_url)
-          ''')
-          .eq('quiz_id', quizId)
-          .not('completed_at', 'is', null)
-          .order('completed_at', ascending: false);
+      final response =
+          await _apiClient.get('/instructor/quizzes/$quizId/attempts');
 
-      AppLogger.d('[$_tag] Raw attempts: ${(response as List).length}');
+      final rawList = response is List
+          ? response
+          : (response['attempts'] ?? response['data'] ?? []) as List;
+
+      AppLogger.d('[$_tag] Raw attempts: ${rawList.length}');
 
       // Get quiz questions for answer details
       final questions = await getQuizQuestions(quizId);
       final questionsMap = {for (var q in questions) q.id: q};
 
       // Process attempts with detailed answers
-      final attempts = response.map((attempt) {
-        // Handle user - could be Map or List (when using FK reference)
-        final userData = attempt['user'];
+      final attempts = rawList.map((attempt) {
+        final attemptMap = attempt as Map<String, dynamic>;
+
+        // Handle user - could be Map or nested object
+        final userData = attemptMap['user'];
         Map<String, dynamic>? user;
         if (userData is Map<String, dynamic>) {
           user = userData;
         } else if (userData is Map) {
           user = Map<String, dynamic>.from(userData);
         } else if (userData is List && userData.isNotEmpty) {
-          // Sometimes Supabase returns a list with one item
           final firstItem = userData.first;
           if (firstItem is Map<String, dynamic>) {
             user = firstItem;
@@ -483,27 +372,25 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
           }
         }
 
-        // Calculate time taken - prefer time_spent from DB, fallback to calculation
-        final timeSpent = attempt['time_spent'] as int?;
+        // Calculate time taken
+        final timeSpent = attemptMap['time_spent'] as int?;
         int timeTaken;
         if (timeSpent != null && timeSpent > 0) {
           timeTaken = timeSpent;
         } else {
-          final startedAt = attempt['started_at'] != null
-              ? DateTime.tryParse(attempt['started_at'].toString())
+          final startedAt = attemptMap['started_at'] != null
+              ? DateTime.tryParse(attemptMap['started_at'].toString())
               : null;
-          final completedAt = attempt['completed_at'] != null
-              ? DateTime.tryParse(attempt['completed_at'].toString())
+          final completedAt = attemptMap['completed_at'] != null
+              ? DateTime.tryParse(attemptMap['completed_at'].toString())
               : null;
           timeTaken = (startedAt != null && completedAt != null)
               ? completedAt.difference(startedAt).inSeconds.abs()
               : 0;
         }
 
-        // Handle answers - can be two formats:
-        // New format: { "question_id": { "selected_option_ids": [...], "is_correct": bool, "points_earned": int } }
-        // Old format: { "question_id": ["option_id1", "option_id2"], ... }
-        final answersData = attempt['answers'];
+        // Handle answers
+        final answersData = attemptMap['answers'];
         final List<Map<String, dynamic>> detailedAnswers = [];
 
         if (answersData is Map) {
@@ -514,12 +401,10 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
             final answerValue = entry.value;
             final question = questionsMap[questionId];
 
-            // Parse answer based on format
             List<String> selectedOptionIds = [];
             bool? storedIsCorrect;
 
             if (answerValue is Map) {
-              // New format with is_correct
               final answerMap = Map<String, dynamic>.from(answerValue);
               final selectedIds = answerMap['selected_option_ids'];
               if (selectedIds is List) {
@@ -528,7 +413,6 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
               }
               storedIsCorrect = answerMap['is_correct'] as bool?;
             } else if (answerValue is List) {
-              // Old format - just array of option IDs
               selectedOptionIds = answerValue.map((e) => e.toString()).toList();
             }
 
@@ -549,22 +433,18 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
               continue;
             }
 
-            // Find correct option(s) from QuizOptionModel list
-            final options = question.options;
+            final opts = question.options;
             final correctOptionIds = <String>[];
-            for (final opt in options) {
+            for (final opt in opts) {
               if (opt.isCorrect) {
                 correctOptionIds.add(opt.id);
               }
             }
 
-            // Use stored is_correct if available (new format), otherwise calculate
             bool isCorrect;
             if (storedIsCorrect != null) {
-              // New format - use stored value (more reliable)
               isCorrect = storedIsCorrect;
             } else {
-              // Old format - calculate from options (may be wrong if options changed)
               final selectedSet = selectedOptionIds.toSet();
               final correctSet = correctOptionIds.toSet();
               isCorrect = selectedSet.isNotEmpty &&
@@ -572,15 +452,12 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
                   selectedSet.containsAll(correctSet);
             }
 
-            AppLogger.d(
-                '[$_tag] Q: $questionId, selected: $selectedOptionIds, storedIsCorrect: $storedIsCorrect, isCorrect: $isCorrect');
-
             detailedAnswers.add({
               'question_id': questionId,
               'question_text_ar': question.questionAr,
               'question_text_en': question.questionEn,
               'image_url': question.imageUrl,
-              'options': options
+              'options': opts
                   .map((o) => {
                         'id': o.id,
                         'text_ar': o.textAr,
@@ -599,7 +476,6 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
             });
           }
         } else if (answersData is List) {
-          // Legacy format: [{ "question_id": "...", "selected_option_id": "..." }, ...]
           for (final ans in answersData) {
             if (ans is! Map) continue;
             final ansMap = Map<String, dynamic>.from(ans);
@@ -621,9 +497,9 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
               continue;
             }
 
-            final options = question.options;
+            final opts = question.options;
             String? correctOptionId;
-            for (final opt in options) {
+            for (final opt in opts) {
               if (opt.isCorrect) {
                 correctOptionId = opt.id;
                 break;
@@ -634,7 +510,7 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
               'question_id': questionId,
               'question_text_ar': question.questionAr,
               'question_text_en': question.questionEn,
-              'options': options
+              'options': opts
                   .map((o) => {
                         'id': o.id,
                         'text_ar': o.textAr,
@@ -651,15 +527,15 @@ class InstructorQuizzesCubit extends Cubit<InstructorQuizzesState> {
         }
 
         return {
-          'id': attempt['id'],
+          'id': attemptMap['id'],
           'student_name': user?['name'] ?? 'Unknown',
           'student_email': user?['email'],
           'student_phone': user?['phone'],
           'avatar_url': user?['avatar_url'],
-          'score': attempt['percentage'] ?? 0, // Use percentage, not raw score
-          'passed': attempt['passed'] ?? false,
-          'started_at': attempt['started_at'],
-          'completed_at': attempt['completed_at'],
+          'score': attemptMap['percentage'] ?? 0,
+          'passed': attemptMap['passed'] ?? false,
+          'started_at': attemptMap['started_at'],
+          'completed_at': attemptMap['completed_at'],
           'time_taken': timeTaken,
           'answers': detailedAnswers,
         };

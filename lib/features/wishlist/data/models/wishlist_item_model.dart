@@ -44,14 +44,10 @@ class WishlistItemModel extends WishlistItemEntity {
       thumbnailUrl: course?['thumbnail_url'] as String? ??
           json['thumbnail_url'] as String?,
       instructorName: instructorName,
-      rating: (course?['rating'] as num?)?.toDouble() ??
-          (json['rating'] as num?)?.toDouble() ??
-          0,
+      rating: _parseDouble(course?['rating'] ?? json['rating']),
       ratingCount:
           course?['rating_count'] as int? ?? json['rating_count'] as int? ?? 0,
-      price: (course?['price'] as num?)?.toDouble() ??
-          (json['price'] as num?)?.toDouble() ??
-          0,
+      price: _parseDouble(course?['price'] ?? json['price']),
       discountPrice: _resolveEffectiveDiscountPrice(course, json),
       currency: course?['currency'] as String? ??
           json['currency'] as String? ??
@@ -63,6 +59,20 @@ class WishlistItemModel extends WishlistItemEntity {
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
     );
+  }
+
+  static double _parseDouble(dynamic value, {double defaultValue = 0.0}) {
+    if (value == null) return defaultValue;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? defaultValue;
+    return defaultValue;
+  }
+
+  static double? _parseOptionalDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -89,8 +99,7 @@ class WishlistItemModel extends WishlistItemEntity {
     Map<String, dynamic>? course,
     Map<String, dynamic> json,
   ) {
-    final baseDiscountPrice = (course?['discount_price'] as num?)?.toDouble() ??
-        (json['discount_price'] as num?)?.toDouble();
+    final baseDiscountPrice = _parseOptionalDouble(course?['discount_price'] ?? json['discount_price']);
 
     final isFlashSale = (course?['is_flash_sale'] as bool?) ??
         (json['is_flash_sale'] as bool?) ??

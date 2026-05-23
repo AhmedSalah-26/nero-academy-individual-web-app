@@ -2,11 +2,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/animations/animations.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/shared_widgets/back_button.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../payment/presentation/widgets/payment_webview.dart';
 import '../../domain/entities/cart_entity.dart';
 import '../../domain/entities/payment_method_entity.dart';
@@ -43,7 +45,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _initCheckout() {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = sl<AuthCubit>().state.user?.id;
     if (userId != null && mounted) {
       context.read<CheckoutCubit>().initCheckout(userId, widget.cart);
     }
@@ -527,23 +529,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final state = cubit.state;
     if (state.hasOrder && !state.isOrderSuccessful) {
       // Order created with pending status, now get payment URL
-      final user = Supabase.instance.client.auth.currentUser;
+      final authUser = sl<AuthCubit>().state.user;
 
       // Get user profile data including phone number
-      String? phoneNumber = user?.phone;
-      String? userName = user?.userMetadata?['full_name'];
+      String? phoneNumber = authUser?.phone;
+      String? userName = authUser?.name;
 
       try {
-        final profile = await Supabase.instance.client
-            .from('profiles')
-            .select('phone, name')
-            .eq('id', user!.id)
-            .maybeSingle();
-
-        if (profile != null) {
-          phoneNumber = profile['phone'] as String?;
-          userName = profile['name'] as String? ?? userName;
-        }
+        final profile = await sl<ApiClient>().get('/auth/profile');
+        phoneNumber = profile['phone'] as String? ?? phoneNumber;
+        userName = profile['name'] as String? ?? userName;
       } catch (e) {
         // Use default values if profile fetch fails
       }
@@ -551,7 +546,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final paymentUrl = await cubit.getPaymentUrl(
         amount: state.order!.total,
         customerName: userName,
-        customerEmail: user?.email,
+        customerEmail: authUser?.email,
         customerPhone: phoneNumber,
       );
 
@@ -590,19 +585,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final state = cubit.state;
     if (state.hasOrder && !state.isOrderSuccessful) {
       // Order created with pending status, now get wallet payment URL
-      final user = Supabase.instance.client.auth.currentUser;
-      String? userName = user?.userMetadata?['full_name'];
+      final authUser = sl<AuthCubit>().state.user;
+      String? userName = authUser?.name;
 
       try {
-        final profile = await Supabase.instance.client
-            .from('profiles')
-            .select('name')
-            .eq('id', user!.id)
-            .maybeSingle();
-
-        if (profile != null) {
-          userName = profile['name'] as String? ?? userName;
-        }
+        final profile = await sl<ApiClient>().get('/auth/profile');
+        userName = profile['name'] as String? ?? userName;
       } catch (e) {
         // Use default values if profile fetch fails
       }
@@ -610,7 +598,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final paymentUrl = await cubit.getWalletPaymentUrl(
         amount: state.order!.total,
         customerName: userName,
-        customerEmail: user?.email,
+        customerEmail: authUser?.email,
         customerPhone: walletPhone,
       );
 

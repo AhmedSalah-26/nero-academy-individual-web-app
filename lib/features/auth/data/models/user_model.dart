@@ -54,7 +54,9 @@ class UserModel extends UserEntity {
       bioAr: json['bio_ar'] as String?,
       bioEn: json['bio_en'] as String?,
       expertise: (json['expertise'] as List<dynamic>?)?.cast<String>() ?? [],
-      socialLinks: (json['social_links'] as Map<String, dynamic>?) ?? {},
+      socialLinks: (json['social_links'] is Map<String, dynamic>)
+          ? (json['social_links'] as Map<String, dynamic>)
+          : {},
       isVerifiedInstructor: json['is_verified_instructor'] as bool? ?? false,
       linkedStudentIds:
           (json['linked_student_ids'] as List<dynamic>?)?.cast<String>() ?? [],

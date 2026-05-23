@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/animations/animations.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routing/app_router.dart';
@@ -44,7 +44,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
   }
 
   void _loadData() {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = context.read<AuthCubit>().state.user?.id;
     if (userId != null) {
       context.read<MyLearningCubit>().loadMyLearning(userId);
     }

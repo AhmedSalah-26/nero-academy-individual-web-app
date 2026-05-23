@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../cubit/instructor_quizzes_cubit.dart';
@@ -343,7 +345,8 @@ class _BulkImageQuestionsScreenState extends State<BulkImageQuestionsScreen> {
     });
 
     try {
-      final supabase = Supabase.instance.client;
+      final apiClient = sl<ApiClient>();
+      final token = await apiClient.getToken();
       final labels = _answerLabels;
 
       for (int i = 0; i < _questions.length; i++) {
@@ -353,16 +356,24 @@ class _BulkImageQuestionsScreenState extends State<BulkImageQuestionsScreen> {
         if (question.imageFile != null) {
           final fileName =
               'quiz_${widget.quizId}_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
-          final path = 'quiz_questions/$fileName';
           final bytes = await question.imageFile!.readAsBytes();
 
-          await supabase.storage.from('courses').uploadBinary(
-                path,
-                bytes,
-                fileOptions: const FileOptions(contentType: 'image/jpeg'),
-              );
+          final request = http.MultipartRequest(
+            'POST',
+            Uri.parse('${apiClient.baseUrl}/upload/image'),
+          );
+          request.headers['Authorization'] = 'Bearer $token';
+          request.headers['Accept'] = 'application/json';
+          request.files.add(http.MultipartFile.fromBytes(
+            'image',
+            bytes,
+            filename: fileName,
+          ));
 
-          imageUrl = supabase.storage.from('courses').getPublicUrl(path);
+          final streamedResponse = await request.send();
+          final responseBody = await streamedResponse.stream.bytesToString();
+          final decoded = apiClient.parseJson(responseBody);
+          imageUrl = (decoded['url'] ?? decoded['path'] ?? decoded['image_url']) as String?;
         }
 
         final options = List.generate(labels.length, (optIndex) {

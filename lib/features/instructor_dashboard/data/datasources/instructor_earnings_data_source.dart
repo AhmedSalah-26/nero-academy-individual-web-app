@@ -1,55 +1,45 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_logger.dart';
 import '../models/instructor_earning_model.dart';
 import '../models/instructor_balance_model.dart';
 import '../models/instructor_payout_model.dart';
 
 /// Instructor Earnings Data Source — reads from instructor_earnings
-/// Tables used: instructor_earnings, withdraw_requests (history only)
 class InstructorEarningsDataSource {
-  final SupabaseClient _client;
+  final ApiClient _apiClient;
   static const _tag = 'InstructorEarningsDS';
 
-  InstructorEarningsDataSource(this._client);
+  InstructorEarningsDataSource(this._apiClient);
 
-  String get _userId => _client.auth.currentUser!.id;
+  Map<String, dynamic> _asMap(dynamic response) {
+    if (response is Map<String, dynamic>) return response;
+    return <String, dynamic>{};
+  }
+
+  List<dynamic> _asList(dynamic response) {
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      final data = response['data'];
+      if (data is List) return data;
+      final transactions = response['transactions'];
+      if (transactions is List) return transactions;
+      final history = response['history'];
+      if (history is List) return history;
+    }
+    return const [];
+  }
 
   // ─────────────────────────────────────────────────────
   // WALLET SUMMARY
   // ─────────────────────────────────────────────────────
 
-  /// Get wallet summary — computed live from instructor_earnings
+  /// Get wallet summary
   Future<WalletSummaryModel> getWalletSummary() async {
-    AppLogger.d('[$_tag] getWalletSummary: userId=$_userId');
+    AppLogger.d('[$_tag] getWalletSummary');
     try {
-      final response = await _client
-          .from('instructor_earnings')
-          .select('net_amount, status')
-          .eq('instructor_id', _userId);
-
-      final rows = response as List;
-      double totalEarnings = 0;
-      double available = 0;
-
-      for (final row in rows) {
-        final amount = (row['net_amount'] as num?)?.toDouble() ?? 0;
-        totalEarnings += amount;
-        if (row['status'] == 'available' || row['status'] == 'paid') {
-          available += amount;
-        }
-      }
-
-      AppLogger.success(
-          '[$_tag] getWalletSummary: totalEarnings=$totalEarnings, available=$available');
-
-      return WalletSummaryModel(
-        instructorId: _userId,
-        availableBalance: available,
-        pendingBalance: 0,
-        totalEarnings: totalEarnings,
-        totalWithdrawn: 0,
-        updatedAt: DateTime.now(),
-      );
+      final response = await _apiClient.get('/instructor/wallet/summary');
+      AppLogger.success('[$_tag] getWalletSummary success');
+      return WalletSummaryModel.fromJson(_asMap(response));
     } catch (e, s) {
       AppLogger.e('[$_tag] getWalletSummary error', e, s);
       return WalletSummaryModel.empty;
@@ -60,7 +50,7 @@ class InstructorEarningsDataSource {
   // EARNINGS TRANSACTIONS
   // ─────────────────────────────────────────────────────
 
-  /// Get earnings from instructor_earnings (real data source)
+  /// Get earnings from instructor_earnings
   Future<List<EarningsTransactionModel>> getTransactions({
     String? courseId,
     String? status,
@@ -69,48 +59,22 @@ class InstructorEarningsDataSource {
     int page = 1,
     int limit = 20,
   }) async {
-    AppLogger.d(
-        '[$_tag] getTransactions: courseId=$courseId, status=$status, page=$page');
+    AppLogger.d('[$_tag] getTransactions: courseId=$courseId, status=$status, page=$page');
     try {
-      var query = _client
-          .from('instructor_earnings')
-          .select('id, instructor_id, course_id, net_amount, gross_amount, platform_fee, status, created_at, courses(title_ar, title_en)')
-          .eq('instructor_id', _userId);
+      final queryParams = <String>[];
+      if (courseId != null) queryParams.add('courseId=$courseId');
+      if (status != null) queryParams.add('status=$status');
+      if (startDate != null) queryParams.add('startDate=${startDate.toIso8601String()}');
+      if (endDate != null) queryParams.add('endDate=${endDate.toIso8601String()}');
+      queryParams.add('page=$page');
+      queryParams.add('limit=$limit');
 
-      if (courseId != null) query = query.eq('course_id', courseId);
-      if (status != null) query = query.eq('status', status);
-      if (startDate != null) {
-        query = query.gte('created_at', startDate.toIso8601String());
-      }
-      if (endDate != null) {
-        query = query.lte('created_at', endDate.toIso8601String());
-      }
+      final url = '/instructor/wallet/transactions?${queryParams.join('&')}';
+      final response = await _apiClient.get(url);
 
-      final response = await query
-          .order('created_at', ascending: false)
-          .range((page - 1) * limit, page * limit - 1);
-
-      final transactions = (response as List).map((e) {
-        final courseData = e['courses'] as Map<String, dynamic>?;
-        final courseName = courseData?['title_ar'] as String? ??
-            courseData?['title_en'] as String? ??
-            '';
-        return EarningsTransactionModel(
-          id: e['id'] as String,
-          userId: e['instructor_id'] as String,
-          courseId: e['course_id'] as String?,
-          courseName: courseName,
-          amount: (e['gross_amount'] as num?)?.toDouble() ?? 0,
-          commission: (e['platform_fee'] as num?)?.toDouble() ?? 0,
-          status: EarningStatus.fromString(e['status'] as String?),
-          sourceType: EarningSourceType.courseSale,
-          createdAt: DateTime.parse(e['created_at'] as String),
-        );
-      }).toList();
-
-      AppLogger.success(
-          '[$_tag] getTransactions: ${transactions.length} transactions');
-      return transactions;
+      final list = _asList(response);
+      AppLogger.success('[$_tag] getTransactions: ${list.length} transactions');
+      return list.map((e) => EarningsTransactionModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e, s) {
       AppLogger.e('[$_tag] getTransactions error', e, s);
       rethrow;
@@ -128,16 +92,10 @@ class InstructorEarningsDataSource {
   }) async {
     AppLogger.d('[$_tag] getWithdrawHistory: page=$page');
     try {
-      final response = await _client
-          .from('withdraw_requests')
-          .select()
-          .eq('user_id', _userId)
-          .order('requested_at', ascending: false)
-          .range((page - 1) * limit, page * limit - 1);
-
-      AppLogger.success(
-          '[$_tag] getWithdrawHistory: ${(response as List).length} requests');
-      return response.map((e) => WithdrawRequestModel.fromJson(e)).toList();
+      final response = await _apiClient.get('/instructor/wallet/withdraw-history?page=$page&limit=$limit');
+      final list = _asList(response);
+      AppLogger.success('[$_tag] getWithdrawHistory: ${list.length} requests');
+      return list.map((e) => WithdrawRequestModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e, s) {
       AppLogger.e('[$_tag] getWithdrawHistory error', e, s);
       rethrow;
@@ -145,32 +103,23 @@ class InstructorEarningsDataSource {
   }
 
   /// Submit a withdraw request
-  /// Calls RPC: submit_withdraw_request
-  /// Flow:
-  ///   IF available_balance >= amount
-  ///     - Deduct from available_balance
-  ///     - Add to pending_balance
-  ///     - Create withdraw_request status=pending
   Future<Map<String, dynamic>> submitWithdrawRequest({
     required double amount,
     required String method,
     required Map<String, String> accountDetails,
   }) async {
-    AppLogger.d(
-        '[$_tag] submitWithdrawRequest: amount=$amount, method=$method');
+    AppLogger.d('[$_tag] submitWithdrawRequest: amount=$amount, method=$method');
     try {
-      final response = await _client.rpc('submit_withdraw_request', params: {
-        'p_user_id': _userId,
+      final response = await _apiClient.post('/instructor/wallet/withdraw', body: {
         'p_amount': amount,
         'p_method': method,
         'p_account_details': accountDetails,
       });
 
-      final result = response as Map<String, dynamic>;
+      final result = _asMap(response);
 
       if (result['success'] == true) {
-        AppLogger.success(
-            '[$_tag] submitWithdrawRequest success: ${result['request_id']}');
+        AppLogger.success('[$_tag] submitWithdrawRequest success: ${result['request_id']}');
         return result;
       } else {
         final error = result['error'] ?? 'Unknown error';

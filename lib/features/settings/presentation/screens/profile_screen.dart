@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/extensions/string_extensions.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/services/logout_service.dart';
@@ -30,7 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _loadProfile() {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = context.read<AuthCubit>().state.user?.id;
     if (userId != null) {
       context.read<ProfileCubit>().loadProfile(userId);
     }

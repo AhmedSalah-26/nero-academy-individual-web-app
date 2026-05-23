@@ -1,9 +1,10 @@
 import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_colors.dart';
 import '../services/reports_service.dart';
+import '../di/injection_container.dart';
+import '../network/api_client.dart';
 
 /// Report Screen - Full page replacement for ReportDialog
 class ReportScreen extends StatefulWidget {
@@ -46,7 +47,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   Future<void> _checkPendingReport() async {
     try {
-      final service = ReportsRemoteDataSource(Supabase.instance.client);
+      final service = ReportsRemoteDataSource(sl<ApiClient>());
 
       bool hasPending;
       if (widget.targetType == ReportTargetType.course) {
@@ -88,7 +89,7 @@ class _ReportScreenState extends State<ReportScreen> {
     });
 
     try {
-      final service = ReportsRemoteDataSource(Supabase.instance.client);
+      final service = ReportsRemoteDataSource(sl<ApiClient>());
 
       bool success;
       if (widget.targetType == ReportTargetType.course) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/course_forums_management_models.dart';
 
@@ -21,7 +22,7 @@ class CourseGroupMembersScreen extends StatefulWidget {
 }
 
 class _CourseGroupMembersScreenState extends State<CourseGroupMembersScreen> {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  late final ApiClient _apiClient;
   final TextEditingController _titleController = TextEditingController();
   bool _isLoading = true;
   bool _isSavingTitle = false;
@@ -32,6 +33,7 @@ class _CourseGroupMembersScreenState extends State<CourseGroupMembersScreen> {
   @override
   void initState() {
     super.initState();
+    _apiClient = sl<ApiClient>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _loadMembers();
@@ -53,11 +55,14 @@ class _CourseGroupMembersScreenState extends State<CourseGroupMembersScreen> {
     try {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final unknownName = isArabic ? 'غير معروف' : 'Unknown';
-      final response = await _supabase.rpc('get_course_group_members',
-          params: {'p_course_id': widget.courseId});
+      final response = await _apiClient.get(
+          '/instructor/forum-courses/${widget.courseId}/members');
 
-      final rows = response as List;
-      final members = rows
+      final rawList = response is List
+          ? response
+          : (response['members'] ?? response['data'] ?? []) as List;
+
+      final members = rawList
           .map((row) => ManagedMember.fromJson(
                 row as Map<String, dynamic>,
                 unknownName: unknownName,
@@ -65,8 +70,8 @@ class _CourseGroupMembersScreenState extends State<CourseGroupMembersScreen> {
           .toList();
 
       String? groupTitle;
-      if (rows.isNotEmpty) {
-        groupTitle = (rows.first as Map<String, dynamic>)['conversation_title']
+      if (rawList.isNotEmpty) {
+        groupTitle = (rawList.first as Map<String, dynamic>)['conversation_title']
             as String?;
       }
 
@@ -96,10 +101,10 @@ class _CourseGroupMembersScreenState extends State<CourseGroupMembersScreen> {
 
     setState(() => _isSavingTitle = true);
     try {
-      await _supabase.rpc('update_course_group_title', params: {
-        'p_course_id': widget.courseId,
-        'p_title': value,
-      });
+      await _apiClient.put(
+        '/instructor/forum-courses/${widget.courseId}/title',
+        body: {'title': value},
+      );
       if (!mounted) return;
       setState(() => _groupTitle = value);
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -124,12 +129,13 @@ class _CourseGroupMembersScreenState extends State<CourseGroupMembersScreen> {
   Future<void> _applyAction(ManagedMember member, String action,
       {String? reason}) async {
     try {
-      await _supabase.rpc('manage_course_group_member', params: {
-        'p_course_id': widget.courseId,
-        'p_target_user_id': member.userId,
-        'p_action': action,
-        'p_reason': reason,
-      });
+      await _apiClient.post(
+        '/instructor/forum-courses/${widget.courseId}/members/${member.userId}/action',
+        body: {
+          'action': action,
+          if (reason != null) 'reason': reason,
+        },
+      );
       if (!mounted) return;
       await _loadMembers();
     } catch (e) {

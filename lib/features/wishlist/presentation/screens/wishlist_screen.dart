@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/shared_widgets/responsive_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -38,7 +38,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 
   void _loadWishlist() {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = context.read<AuthCubit>().state.user?.id;
     AppLogger.i('❤️ [WishlistScreen] Loading wishlist for user: $userId');
 
     if (userId != null) {

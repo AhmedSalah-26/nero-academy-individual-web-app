@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../../core/di/injection_container.dart';
+import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/shared_widgets/dashboard/dashboard_widgets.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../auth/presentation/cubit/auth_cubit.dart';
@@ -27,15 +27,11 @@ class InstructorHomeMobileLayout extends StatelessWidget {
 
     final stats = state.stats;
     final authUser = sl<AuthCubit>().state.user;
-    final supabaseUser = Supabase.instance.client.auth.currentUser;
 
     final fallbackName = isArabic ? 'المدرس' : 'Instructor';
-    final rawName = authUser?.name ??
-        supabaseUser?.userMetadata?['name']?.toString() ??
-        supabaseUser?.email?.split('@').first;
+    final rawName = authUser?.name;
 
-    final avatarUrl = authUser?.avatarUrl ??
-        supabaseUser?.userMetadata?['avatar_url']?.toString();
+    final avatarUrl = authUser?.avatarUrl;
 
     final topGradient = isDark
         ? const [Color(0xFF2D2438), Color(0xFF191022)]
@@ -563,42 +559,11 @@ class _DashboardDisplayNameState extends State<_DashboardDisplayName> {
     _isResolving = true;
 
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-      if (userId == null) return;
-
-      final byInstructorId = await Supabase.instance.client
-          .from('instructor_profiles')
-          .select('display_name')
-          .eq('instructor_id', userId)
-          .maybeSingle();
-      final instructorDisplayName =
-          _sanitize(byInstructorId?['display_name'] as String?);
-      if (instructorDisplayName != null) {
-        if (!mounted) return;
-        setState(() => _resolvedName = instructorDisplayName);
-        return;
-      }
-
-      final byId = await Supabase.instance.client
-          .from('instructor_profiles')
-          .select('display_name')
-          .eq('id', userId)
-          .maybeSingle();
-      final instructorDisplayNameById =
-          _sanitize(byId?['display_name'] as String?);
-      if (instructorDisplayNameById != null && mounted) {
-        setState(() => _resolvedName = instructorDisplayNameById);
-        return;
-      }
-
-      final profile = await Supabase.instance.client
-          .from('profiles')
-          .select('name')
-          .eq('id', userId)
-          .maybeSingle();
-      final profileName = _sanitize(profile?['name'] as String?);
-      if (profileName != null && mounted) {
-        setState(() => _resolvedName = profileName);
+      final apiClient = sl<ApiClient>();
+      final response = await apiClient.get('/auth/profile');
+      final name = _sanitize(response['name'] as String?);
+      if (name != null && mounted) {
+        setState(() => _resolvedName = name);
       }
     } catch (_) {
       // Keep best known local name.
@@ -662,46 +627,12 @@ class _DashboardAvatarState extends State<_DashboardAvatar> {
   }
 
   Future<void> _loadFallbackAvatar() async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return;
-
     try {
-      final profile = await Supabase.instance.client
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', userId)
-          .maybeSingle();
-
-      final profileAvatar = _sanitize(profile?['avatar_url'] as String?);
-      if (profileAvatar != null) {
-        if (!mounted) return;
-        setState(() => _resolvedAvatarUrl = profileAvatar);
-        return;
-      }
-
-      final byInstructorId = await Supabase.instance.client
-          .from('instructor_profiles')
-          .select('avatar_url')
-          .eq('instructor_id', userId)
-          .maybeSingle();
-
-      final instructorAvatar =
-          _sanitize(byInstructorId?['avatar_url'] as String?);
-      if (instructorAvatar != null) {
-        if (!mounted) return;
-        setState(() => _resolvedAvatarUrl = instructorAvatar);
-        return;
-      }
-
-      final byId = await Supabase.instance.client
-          .from('instructor_profiles')
-          .select('avatar_url')
-          .eq('id', userId)
-          .maybeSingle();
-
-      final instructorIdAvatar = _sanitize(byId?['avatar_url'] as String?);
-      if (instructorIdAvatar != null && mounted) {
-        setState(() => _resolvedAvatarUrl = instructorIdAvatar);
+      final apiClient = sl<ApiClient>();
+      final response = await apiClient.get('/auth/profile');
+      final avatarUrl = _sanitize(response['avatar_url'] as String?);
+      if (avatarUrl != null && mounted) {
+        setState(() => _resolvedAvatarUrl = avatarUrl);
       }
     } catch (_) {
       // Keep placeholder avatar if profile image lookup fails.

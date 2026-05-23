@@ -2,9 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/animations/animations.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/toast_utils.dart';
@@ -48,26 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadUserData() async {
     try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        // Load user name with timeout
-        final profile = await Supabase.instance.client
-            .from('profiles')
-            .select('name')
-            .eq('id', user.id)
-            .single()
-            .timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            debugPrint('⚠️ [HomeScreen] Profile load timeout');
-            return {'name': null};
-          },
-        );
-        if (mounted) {
-          setState(() {
-            _userName = profile['name'] as String?;
-          });
-        }
+      final profile = await di.sl<ApiClient>().get('/auth/profile');
+      if (mounted) {
+        setState(() {
+          _userName = profile['name'] as String?;
+        });
       }
     } catch (e) {
       debugPrint('⚠️ [HomeScreen] Failed to load user data: $e');
@@ -101,7 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           },
           builder: (context, state) {
-            final topPadding = MediaQuery.of(context).padding.top;
             return RefreshIndicator(
               onRefresh: _onRefresh,
               color: AppColors.primary,

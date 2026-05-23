@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/shared_widgets/user_avatar.dart';
 import '../../../../core/shared_widgets/error_state.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -27,10 +29,14 @@ class DirectChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
+    final currentUserId = authState.user?.id ?? '';
+
     return BlocProvider(
       create: (context) => DirectChatCubit(
-        Supabase.instance.client,
-        otherUserId,
+        apiClient: sl<ApiClient>(),
+        currentUserId: currentUserId,
+        otherUserId: otherUserId,
       )..loadMessages(),
       child: _DirectChatView(
         otherUserName: otherUserName,
@@ -64,7 +70,7 @@ class _DirectChatViewState extends State<_DirectChatView> {
   @override
   void initState() {
     super.initState();
-    _currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    _currentUserId = context.read<DirectChatCubit>().currentUserId;
   }
 
   @override

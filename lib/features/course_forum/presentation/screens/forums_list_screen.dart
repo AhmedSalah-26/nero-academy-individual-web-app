@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/animations/animations.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/shared_widgets/empty_state.dart';
 import '../../../../core/shared_widgets/error_state.dart';
@@ -20,7 +21,7 @@ class ForumsListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ForumsListCubit(Supabase.instance.client)
+      create: (context) => ForumsListCubit(sl<ApiClient>())
         ..loadConversations(refresh: true),
       child: const _ForumsListView(),
     );

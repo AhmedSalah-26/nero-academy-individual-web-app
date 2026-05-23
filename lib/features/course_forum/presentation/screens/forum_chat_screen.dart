@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/animations/animations.dart';
 import '../../../../core/shared_widgets/empty_state.dart';
@@ -26,10 +28,14 @@ class ForumChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
+    final currentUserId = authState.user?.id ?? '';
+
     return BlocProvider(
       create: (context) => ForumChatCubit(
-        Supabase.instance.client,
-        conversationId,
+        apiClient: sl<ApiClient>(),
+        currentUserId: currentUserId,
+        conversationId: conversationId,
       )..loadMessages(),
       child: _ForumChatView(
         conversationTitle: conversationTitle,
@@ -63,7 +69,7 @@ class _ForumChatViewState extends State<_ForumChatView> {
   @override
   void initState() {
     super.initState();
-    _currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    _currentUserId = context.read<ForumChatCubit>().currentUserId;
   }
 
   @override

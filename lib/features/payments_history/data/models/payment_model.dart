@@ -21,11 +21,11 @@ class PaymentModel extends PaymentEntity {
     return PaymentModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      total: (json['total'] as num).toDouble(),
-      subtotal: (json['subtotal'] as num).toDouble(),
-      discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
+      total: _parseDouble(json['total']),
+      subtotal: _parseDouble(json['subtotal']),
+      discount: _parseDouble(json['discount']),
       couponCode: json['coupon_code'] as String?,
-      couponDiscount: (json['coupon_discount'] as num?)?.toDouble() ?? 0.0,
+      couponDiscount: _parseDouble(json['coupon_discount']),
       paymentMethod: json['payment_method'] as String? ?? 'card',
       paymentStatus: json['payment_status'] as String? ?? 'pending',
       transactionId: json['payment_transaction_id'] as String?,
@@ -39,6 +39,13 @@ class PaymentModel extends PaymentEntity {
               .toList() ??
           [],
     );
+  }
+
+  static double _parseDouble(dynamic value, {double defaultValue = 0.0}) {
+    if (value == null) return defaultValue;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? defaultValue;
+    return defaultValue;
   }
 
   Map<String, dynamic> toJson() {
@@ -72,7 +79,7 @@ class PaymentCourseModel extends PaymentCourseEntity {
       courseId: json['course_id'] as String,
       title: json['title'] as String,
       thumbnailUrl: json['thumbnail_url'] as String?,
-      price: (json['price'] as num).toDouble(),
+      price: PaymentModel._parseDouble(json['price']),
     );
   }
 }

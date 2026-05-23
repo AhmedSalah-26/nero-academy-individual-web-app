@@ -1,16 +1,25 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_logger.dart';
 import '../../domain/entities/instructor_entities.dart';
 import '../models/instructor_models.dart';
 
 /// Instructor Courses Data Source - Course management
 class InstructorCoursesDataSource {
-  final SupabaseClient _client;
+  final ApiClient _apiClient;
   static const _tag = 'InstructorCoursesDS';
 
-  InstructorCoursesDataSource(this._client);
+  InstructorCoursesDataSource(this._apiClient);
 
-  String get _userId => _client.auth.currentUser!.id;
+  List<dynamic> _extractCourses(dynamic response) {
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      final courses = response['courses'];
+      if (courses is List) return courses;
+      final data = response['data'];
+      if (data is List) return data;
+    }
+    return const [];
+  }
 
   /// Get my courses
   Future<List<InstructorCourseModel>> getMyCourses({
@@ -20,36 +29,14 @@ class InstructorCoursesDataSource {
   }) async {
     AppLogger.d('[$_tag] getMyCourses: status=$status, page=$page');
     try {
-      var query = _client.from('courses').select('''
-        id, title_ar, title_en, thumbnail_url, price, discount_price,
-        is_published, is_suspended, suspension_reason, created_at, published_at,
-        rating, rating_count, enrolled_count,
-        lesson_count, section_count, total_revenue
-      ''').eq('instructor_id', _userId);
+      final statusVal = status?.name ?? 'all';
+      final response = await _apiClient.get(
+        '/instructor/courses?status=$statusVal&page=$page&limit=$limit',
+      );
 
-      if (status != null && status != InstructorCourseStatus.all) {
-        switch (status) {
-          case InstructorCourseStatus.published:
-            query = query.eq('is_published', true).eq('is_suspended', false);
-            break;
-          case InstructorCourseStatus.draft:
-            query = query.eq('is_published', false);
-            break;
-          case InstructorCourseStatus.suspended:
-            query = query.eq('is_suspended', true);
-            break;
-          default:
-            break;
-        }
-      }
-
-      final response = await query
-          .order('created_at', ascending: false)
-          .range((page - 1) * limit, page * limit - 1);
-
-      AppLogger.success(
-          '[$_tag] getMyCourses: ${(response as List).length} courses');
-      return response.map((e) => InstructorCourseModel.fromJson(e)).toList();
+      final list = _extractCourses(response);
+      AppLogger.success('[$_tag] getMyCourses: ${list.length} courses');
+      return list.map((e) => InstructorCourseModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e, s) {
       AppLogger.e('[$_tag] getMyCourses error', e, s);
       rethrow;
@@ -60,14 +47,7 @@ class InstructorCoursesDataSource {
   Future<bool> publishCourse(String courseId) async {
     AppLogger.d('[$_tag] publishCourse: $courseId');
     try {
-      await _client
-          .from('courses')
-          .update({
-            'is_published': true,
-            'published_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', courseId)
-          .eq('instructor_id', _userId);
+      await _apiClient.post('/instructor/courses/$courseId/publish');
       AppLogger.success('[$_tag] publishCourse success');
       return true;
     } catch (e, s) {
@@ -80,11 +60,7 @@ class InstructorCoursesDataSource {
   Future<bool> unpublishCourse(String courseId) async {
     AppLogger.d('[$_tag] unpublishCourse: $courseId');
     try {
-      await _client
-          .from('courses')
-          .update({'is_published': false})
-          .eq('id', courseId)
-          .eq('instructor_id', _userId);
+      await _apiClient.post('/instructor/courses/$courseId/unpublish');
       AppLogger.success('[$_tag] unpublishCourse success');
       return true;
     } catch (e, s) {
@@ -97,11 +73,7 @@ class InstructorCoursesDataSource {
   Future<bool> deleteCourse(String courseId) async {
     AppLogger.d('[$_tag] deleteCourse: $courseId');
     try {
-      await _client
-          .from('courses')
-          .delete()
-          .eq('id', courseId)
-          .eq('instructor_id', _userId);
+      await _apiClient.delete('/instructor/courses/$courseId');
       AppLogger.success('[$_tag] deleteCourse success');
       return true;
     } catch (e, s) {

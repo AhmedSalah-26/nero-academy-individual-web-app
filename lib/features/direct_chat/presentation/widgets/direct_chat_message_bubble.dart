@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/user_role_service.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../domain/entities/direct_message_entity.dart';
 
 /// Message bubble widget for direct chat.
@@ -29,7 +30,7 @@ class DirectChatMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final currentUserId = context.read<AuthCubit>().state.user?.id;
     final bubbleColor = isMe
         ? AppColors.primary.withValues(alpha: isDark ? 0.24 : 0.04)
         : (isDark ? AppColors.cardDark : AppColors.white);
@@ -204,7 +205,7 @@ class DirectChatMessageBubble extends StatelessWidget {
   }
 
   void _showReactionPickerSheet(BuildContext context) {
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final currentUserId = context.read<AuthCubit>().state.user?.id;
     final userReaction = message.reactions
         .where((r) => r.userId == currentUserId)
         .firstOrNull

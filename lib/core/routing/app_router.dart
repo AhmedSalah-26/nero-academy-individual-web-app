@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../di/injection_container.dart';
 import '../services/app_logger.dart';
@@ -352,7 +351,7 @@ class AppRouter {
         name: 'course-details',
         pageBuilder: (context, state) {
           final courseId = state.pathParameters['courseId']!;
-          final userId = Supabase.instance.client.auth.currentUser?.id;
+          final userId = sl<AuthCubit>().state.user?.id;
           return AnimatedPageTransitions.sharedAxis<void>(
             key: state.pageKey,
             name: 'course-details',
@@ -1012,12 +1011,12 @@ class AppRouter {
       ),
     ],
     redirect: (context, state) async {
-      final user = Supabase.instance.client.auth.currentUser;
+      final isLoggedIn = sl<AuthCubit>().state.isLoggedIn;
       final path = state.uri.path;
 
       // Instructor dashboard access control (only /instructor route, not /instructor/:id profiles)
       if (path == '/instructor' || path == '/instructor/') {
-        if (user == null) {
+        if (!isLoggedIn) {
           return '/login';
         }
         // Check if user is instructor or admin from database

@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/di/injection_container.dart';
+import 'package:lms_platform/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:video_player/video_player.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -91,7 +92,7 @@ class _SplashScreenState extends State<SplashScreen> {
     _hasNavigated = true;
 
     try {
-      final user = Supabase.instance.client.auth.currentUser;
+      final user = await sl<AuthLocalDataSource>().getCachedUser();
       if (user != null) {
         if (mounted) context.go('/home');
       } else {

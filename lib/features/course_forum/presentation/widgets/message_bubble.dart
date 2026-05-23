@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/shared_widgets/app_card.dart';
 import '../../../../core/services/user_role_service.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../domain/entities/forum_entities.dart';
 
 /// Message Bubble Widget - Displays a single message in the chat
@@ -321,7 +322,7 @@ class MessageBubble extends StatelessWidget {
   }
 
   String? _currentUserReaction() {
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final currentUserId = sl<AuthCubit>().state.user?.id;
     return message.reactions
         .where((r) => r.userId == currentUserId)
         .firstOrNull

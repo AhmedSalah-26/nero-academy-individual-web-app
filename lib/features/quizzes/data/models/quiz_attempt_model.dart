@@ -56,7 +56,7 @@ class QuizAttemptModel extends QuizAttemptEntity {
       enrollmentId: json['enrollment_id'] as String,
       score: json['score'] as int? ?? 0,
       totalPoints: json['total_points'] as int? ?? 0,
-      percentage: (json['percentage'] as num?)?.toDouble() ?? 0.0,
+      percentage: json['percentage'] != null ? (double.tryParse(json['percentage'].toString()) ?? 0.0) : 0.0,
       passed: json['passed'] as bool? ?? false,
       timeSpentSeconds: json['time_spent'] as int?,
       answers: answers,

@@ -14,6 +14,9 @@ class AppConstants {
   static const String supabaseAnonKey =
       'sb_publishable_wJvu57s6WvTFFi9JTZhBbg_mS3tYCE7';
 
+  // Laravel Backend Configuration
+  static const String apiBaseUrl = 'http://127.0.0.1:8000/api';
+
   // Storage Buckets
   static const String avatarsBucket = 'avatars';
   static const String coursesBucket = 'courses';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/routing/app_router.dart';
@@ -60,20 +61,17 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   Future<void> _loadCourses() async {
     AppLogger.i('📝 [CreateQuizScreen] Loading courses...');
     try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      final apiClient = sl<ApiClient>();
+      final response = await apiClient.get('/instructor/courses?per_page=100');
 
-      final response = await supabase
-          .from('courses')
-          .select('id, title_ar, title_en')
-          .eq('instructor_id', userId)
-          .order('created_at', ascending: false);
+      final rawList = response is List
+          ? response
+          : (response['courses'] ?? response['data'] ?? []) as List;
 
       AppLogger.d(
-          '📝 [CreateQuizScreen] Loaded ${(response as List).length} courses');
+          '📝 [CreateQuizScreen] Loaded ${rawList.length} courses');
       setState(() {
-        _courses = List<Map<String, dynamic>>.from(response);
+        _courses = rawList.map((c) => c as Map<String, dynamic>).toList();
         _isLoadingCourses = false;
       });
     } catch (e) {

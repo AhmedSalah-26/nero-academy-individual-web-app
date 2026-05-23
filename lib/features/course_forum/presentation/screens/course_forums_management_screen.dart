@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/course_forums_management_models.dart';
 import 'course_group_members_screen.dart';
@@ -14,7 +15,7 @@ class CourseForumsManagementScreen extends StatefulWidget {
 
 class _CourseForumsManagementScreenState
     extends State<CourseForumsManagementScreen> {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  late final ApiClient _apiClient;
   bool _isLoading = true;
   String? _error;
   String? _busyCourseId;
@@ -23,6 +24,7 @@ class _CourseForumsManagementScreenState
   @override
   void initState() {
     super.initState();
+    _apiClient = sl<ApiClient>();
     _loadCourses();
   }
 
@@ -33,15 +35,13 @@ class _CourseForumsManagementScreenState
     });
 
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
+      final response = await _apiClient.get('/instructor/forum-courses');
 
-      final response = await _supabase
-          .rpc('get_instructor_forum_courses', params: {'p_user_id': userId});
+      final rawList = response is List
+          ? response
+          : (response['courses'] ?? response['data'] ?? []) as List;
 
-      final rows = (response as List)
+      final rows = rawList
           .map((row) => ManagedCourse.fromJson(row as Map<String, dynamic>))
           .toList();
 
@@ -69,9 +69,8 @@ class _CourseForumsManagementScreenState
     });
 
     try {
-      await _supabase.rpc('set_course_group_enabled', params: {
-        'p_course_id': course.id,
-        'p_enabled': enabled,
+      await _apiClient.post('/instructor/forum-courses/${course.id}/toggle', body: {
+        'enabled': enabled,
       });
 
       if (!mounted) return;

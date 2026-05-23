@@ -25,14 +25,7 @@ void main() async {
   // Initialize EasyLocalization
   await EasyLocalization.ensureInitialized();
 
-  // Initialize Supabase with error handling
-  try {
-    await SupabaseServiceImpl.instance.initialize();
-  } catch (e) {
-    debugPrint('⚠️ [Main] Failed to initialize Supabase: $e');
-    // Continue app initialization even if Supabase fails
-    // User will see error when trying to use features that need Supabase
-  }
+
 
   // Initialize Dependencies
   await initDependencies();

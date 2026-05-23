@@ -1,15 +1,24 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_logger.dart';
 import '../models/instructor_models.dart';
 
 /// Instructor Reviews Data Source - Reviews management
 class InstructorReviewsDataSource {
-  final SupabaseClient _client;
+  final ApiClient _apiClient;
   static const _tag = 'InstructorReviewsDS';
 
-  InstructorReviewsDataSource(this._client);
+  InstructorReviewsDataSource(this._apiClient);
 
-  String get _userId => _client.auth.currentUser!.id;
+  List<dynamic> _asList(dynamic response) {
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      final data = response['data'];
+      if (data is List) return data;
+      final reviews = response['reviews'];
+      if (reviews is List) return reviews;
+    }
+    return const [];
+  }
 
   /// Get reviews
   Future<List<InstructorReviewModel>> getReviews({
@@ -21,22 +30,19 @@ class InstructorReviewsDataSource {
   }) async {
     AppLogger.d('[$_tag] getReviews: courseId=$courseId, page=$page');
     try {
-      var query = _client
-          .from('course_reviews')
-          .select('''*, course:courses!inner(title_ar, instructor_id), 
-            user:profiles(name, avatar_url)''').eq('course.instructor_id', _userId);
+      final queryParams = <String>[];
+      if (courseId != null) queryParams.add('courseId=$courseId');
+      if (minRating != null) queryParams.add('minRating=$minRating');
+      if (maxRating != null) queryParams.add('maxRating=$maxRating');
+      queryParams.add('page=$page');
+      queryParams.add('limit=$limit');
 
-      if (courseId != null) query = query.eq('course_id', courseId);
-      if (minRating != null) query = query.gte('rating', minRating);
-      if (maxRating != null) query = query.lte('rating', maxRating);
+      final url = '/instructor/reviews?${queryParams.join('&')}';
+      final response = await _apiClient.get(url);
 
-      final response = await query
-          .order('created_at', ascending: false)
-          .range((page - 1) * limit, page * limit - 1);
-
-      AppLogger.success(
-          '[$_tag] getReviews: ${(response as List).length} reviews');
-      return response.map((e) => InstructorReviewModel.fromJson(e)).toList();
+      final list = _asList(response);
+      AppLogger.success('[$_tag] getReviews: ${list.length} reviews');
+      return list.map((e) => InstructorReviewModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e, s) {
       AppLogger.e('[$_tag] getReviews error', e, s);
       rethrow;
@@ -47,10 +53,10 @@ class InstructorReviewsDataSource {
   Future<bool> replyToReview(String reviewId, String reply) async {
     AppLogger.d('[$_tag] replyToReview: reviewId=$reviewId');
     try {
-      await _client.from('course_reviews').update({
-        'instructor_reply': reply,
-        'replied_at': DateTime.now().toIso8601String(),
-      }).eq('id', reviewId);
+      await _apiClient.post(
+        '/instructor/reviews/$reviewId/reply',
+        body: {'reply': reply},
+      );
       AppLogger.success('[$_tag] replyToReview success');
       return true;
     } catch (e, s) {

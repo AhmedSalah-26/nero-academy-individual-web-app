@@ -1,11 +1,10 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/errors/exceptions.dart';
-import '../../../../core/services/app_logger.dart';
+import '../../../../core/network/api_client.dart';
 import '../models/quiz_model.dart';
 import '../models/quiz_question_model.dart';
 import '../models/quiz_attempt_model.dart';
 
-/// Quizzes Remote Data Source - Handles API calls
+/// Quizzes Remote Data Source - Handles API calls to Laravel backend
 abstract class QuizzesRemoteDataSource {
   Future<List<QuizModel>> getCourseQuizzes({required String courseId});
   Future<QuizModel> getQuiz({required String quizId});
@@ -36,28 +35,24 @@ abstract class QuizzesRemoteDataSource {
 
 /// Quizzes Remote Data Source Implementation
 class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
-  final SupabaseClient supabaseClient;
+  final ApiClient apiClient;
 
-  QuizzesRemoteDataSourceImpl({required this.supabaseClient});
+  QuizzesRemoteDataSourceImpl({required this.apiClient});
 
   @override
   Future<List<QuizModel>> getCourseQuizzes({required String courseId}) async {
     try {
-      final response = await supabaseClient
-          .from('quizzes')
-          .select('*, quiz_questions(count)')
-          .eq('course_id', courseId)
-          .eq('is_published', true)
-          .order('created_at');
-
-      return (response as List).map((q) {
-        final questionsCount = q['quiz_questions'] as List?;
-        final count = questionsCount?.isNotEmpty == true
-            ? questionsCount!.first['count'] as int? ?? 0
-            : 0;
-        return QuizModel.fromJson({...q, 'total_questions': count});
+      final response = await apiClient.get('/courses/$courseId/quizzes');
+      final list = response['quizzes'] as List;
+      return list.map((q) {
+        final count = q['questions_count'] as int? ?? q['total_questions'] as int? ?? 0;
+        return QuizModel.fromJson({
+          ...q as Map<String, dynamic>,
+          'total_questions': count,
+        });
       }).toList();
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw ServerException('فشل في تحميل اختبارات الكورس: $e');
     }
   }
@@ -65,22 +60,15 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
   @override
   Future<QuizModel> getQuiz({required String quizId}) async {
     try {
-      final response = await supabaseClient
-          .from('quizzes')
-          .select('*, quiz_questions(count)')
-          .eq('id', quizId)
-          .single();
-
-      final questionsCount = response['quiz_questions'] as List?;
-      final count = questionsCount?.isNotEmpty == true
-          ? questionsCount!.first['count'] as int? ?? 0
-          : 0;
-
+      final response = await apiClient.get('/quizzes/$quizId');
+      final q = response['quiz'] as Map<String, dynamic>;
+      final count = q['questions_count'] as int? ?? q['total_questions'] as int? ?? 0;
       return QuizModel.fromJson({
-        ...response,
+        ...q,
         'total_questions': count,
       });
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw ServerException('فشل في تحميل بيانات الاختبار: $e');
     }
   }
@@ -88,24 +76,16 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
   @override
   Future<QuizModel?> getQuizByLessonId({required String lessonId}) async {
     try {
-      final response = await supabaseClient
-          .from('quizzes')
-          .select('*, quiz_questions(count)')
-          .eq('lesson_id', lessonId)
-          .maybeSingle();
-
-      if (response == null) return null;
-
-      final questionsCount = response['quiz_questions'] as List?;
-      final count = questionsCount?.isNotEmpty == true
-          ? questionsCount!.first['count'] as int? ?? 0
-          : 0;
-
+      final response = await apiClient.get('/quizzes/lesson/$lessonId');
+      if (response == null || response['quiz'] == null) return null;
+      final q = response['quiz'] as Map<String, dynamic>;
+      final count = q['questions_count'] as int? ?? q['total_questions'] as int? ?? 0;
       return QuizModel.fromJson({
-        ...response,
+        ...q,
         'total_questions': count,
       });
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw ServerException('فشل في تحميل بيانات الاختبار: $e');
     }
   }
@@ -116,13 +96,9 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
     bool shuffle = false,
   }) async {
     try {
-      final response = await supabaseClient
-          .from('quiz_questions')
-          .select()
-          .eq('quiz_id', quizId)
-          .order('sort_order');
-
-      var questions = (response as List)
+      final response = await apiClient.get('/quizzes/$quizId/questions');
+      final list = response['questions'] as List;
+      var questions = list
           .map((q) => QuizQuestionModel.fromJson(q as Map<String, dynamic>))
           .toList();
 
@@ -132,6 +108,7 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
 
       return questions;
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw ServerException('فشل في تحميل أسئلة الاختبار: $e');
     }
   }
@@ -142,17 +119,13 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
     required String enrollmentId,
   }) async {
     try {
-      final response = await supabaseClient
-          .from('quiz_attempts')
-          .select()
-          .eq('quiz_id', quizId)
-          .eq('enrollment_id', enrollmentId)
-          .order('started_at', ascending: false);
-
-      return (response as List)
-          .map((a) => QuizAttemptModel.fromJson(a))
-          .toList();
+      final response = await apiClient.get(
+        '/quizzes/$quizId/attempts?enrollment_id=$enrollmentId',
+      );
+      final list = response['attempts'] as List;
+      return list.map((a) => QuizAttemptModel.fromJson(a as Map<String, dynamic>)).toList();
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw ServerException('فشل في تحميل محاولات الاختبار: $e');
     }
   }
@@ -163,23 +136,14 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
     required String enrollmentId,
   }) async {
     try {
-      final userId = supabaseClient.auth.currentUser?.id;
-      if (userId == null) {
-        throw const ServerException('المستخدم غير مسجل الدخول');
-      }
-
-      final response = await supabaseClient.from('quiz_attempts').insert({
-        'quiz_id': quizId,
-        'enrollment_id': enrollmentId,
-        'user_id': userId,
-        'started_at': DateTime.now().toIso8601String(),
-      }).select();
-
-      if (response.isEmpty) {
-        throw const ServerException('فشل في إنشاء محاولة الاختبار');
-      }
-
-      return QuizAttemptModel.fromJson(response.first);
+      final response = await apiClient.post(
+        '/quizzes/$quizId/attempt',
+        body: {
+          'enrollment_id': enrollmentId,
+        },
+      );
+      final attemptId = response['attempt_id'] as String;
+      return getAttemptDetails(attemptId: attemptId);
     } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException('فشل في بدء الاختبار: $e');
@@ -193,35 +157,18 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
     required int timeSpentSeconds,
   }) async {
     try {
-      AppLogger.i('📝 [QuizDataSource] submitQuiz: attemptId=$attemptId');
-      AppLogger.d('📝 [QuizDataSource] answers: $answers');
-      AppLogger.d('📝 [QuizDataSource] timeSpent: $timeSpentSeconds seconds');
-
-      // Call RPC function to calculate and save results
-      final response = await supabaseClient.rpc(
-        'submit_quiz_attempt',
-        params: {
-          'p_attempt_id': attemptId,
-          'p_answers': answers,
-          'p_time_spent': timeSpentSeconds,
+      final response = await apiClient.post(
+        '/quizzes/attempts/$attemptId/submit',
+        body: {
+          'answers': answers,
+          'time_spent': timeSpentSeconds,
         },
       );
-
-      AppLogger.d('📝 [QuizDataSource] submitQuiz response: $response');
-
       if (response == null || response['success'] != true) {
-        AppLogger.e(
-            '📝 [QuizDataSource] submitQuiz failed: ${response?['error']}');
-        throw ServerException(response?['error'] ?? 'فشل في إرسال الاختبار');
+        throw ServerException(response?['message'] ?? 'فشل في إرسال الاختبار');
       }
-
-      AppLogger.success(
-          '📝 [QuizDataSource] submitQuiz success - score: ${response['score']}/${response['total_points']} (${response['percentage']}%)');
-
-      // Get the updated attempt details
       return getAttemptDetails(attemptId: attemptId);
     } catch (e) {
-      AppLogger.e('📝 [QuizDataSource] submitQuiz error: $e');
       if (e is ServerException) rethrow;
       throw ServerException('فشل في إرسال الاختبار: $e');
     }
@@ -232,14 +179,10 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
     required String attemptId,
   }) async {
     try {
-      final response = await supabaseClient
-          .from('quiz_attempts')
-          .select()
-          .eq('id', attemptId)
-          .single();
-
-      return QuizAttemptModel.fromJson(response);
+      final response = await apiClient.get('/quizzes/attempts/$attemptId');
+      return QuizAttemptModel.fromJson(response['attempt'] as Map<String, dynamic>);
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw ServerException('فشل في تحميل تفاصيل المحاولة: $e');
     }
   }
@@ -250,21 +193,18 @@ class QuizzesRemoteDataSourceImpl implements QuizzesRemoteDataSource {
     required String enrollmentId,
   }) async {
     try {
-      // Get quiz max attempts
       final quiz = await getQuiz(quizId: quizId);
-      if (!quiz.hasAttemptLimit) return -1; // Unlimited
+      if (quiz.maxAttempts == null) return -1; // Unlimited
 
-      // Get completed attempts count
-      final response = await supabaseClient
-          .from('quiz_attempts')
-          .select('id')
-          .eq('quiz_id', quizId)
-          .eq('enrollment_id', enrollmentId)
-          .not('completed_at', 'is', null);
+      final attempts = await getQuizAttempts(
+        quizId: quizId,
+        enrollmentId: enrollmentId,
+      );
 
-      final completedCount = (response as List).length;
+      final completedCount = attempts.where((a) => a.completedAt != null).length;
       return quiz.maxAttempts! - completedCount;
     } catch (e) {
+      if (e is ServerException) rethrow;
       throw ServerException('فشل في حساب المحاولات المتبقية: $e');
     }
   }

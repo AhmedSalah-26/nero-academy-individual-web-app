@@ -3,8 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../../data/models/instructor_enrollment_model.dart';
 import '../../domain/repositories/instructor_repository.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 part 'instructor_enrollments_state.dart';
 
 /// Instructor Enrollments Cubit
@@ -39,14 +37,9 @@ class InstructorEnrollmentsCubit extends Cubit<InstructorEnrollmentsState> {
         hasMore: enrollments.length >= 20,
       ));
     } catch (e) {
-      String message = e.toString();
-      if (e is PostgrestException) {
-        message = 'Error Code: ${e.code}';
-      }
-
       emit(state.copyWith(
         status: InstructorEnrollmentsStatus.error,
-        errorMessage: message,
+        errorMessage: e.toString(),
       ));
     }
   }

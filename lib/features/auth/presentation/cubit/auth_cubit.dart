@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
-import '../../../../core/constants/app_constants.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
@@ -115,14 +113,8 @@ class AuthCubit extends Cubit<AuthState> {
         debugPrint(
             '✅ [AuthCubit] Register successful: ${user.email}, id: ${user.id}');
         
-        final session = Supabase.instance.client.auth.currentSession;
-        if (session == null) {
-          debugPrint('📧 [AuthCubit] Session is null, user must confirm email');
-          emit(const AuthState.awaitingEmailVerification());
-        } else {
-          debugPrint('✅ [AuthCubit] Emitting authenticated state after registration');
-          emit(AuthState.authenticated(user));
-        }
+        debugPrint('✅ [AuthCubit] Emitting authenticated state after registration');
+        emit(AuthState.authenticated(user));
       },
     );
   }
@@ -358,18 +350,8 @@ class AuthCubit extends Cubit<AuthState> {
   /// Resend verification email
   Future<bool> resendVerificationEmail(String email) async {
     emit(const AuthState.loading());
-    try {
-      await Supabase.instance.client.auth.resend(
-        type: OtpType.signup,
-        email: email,
-        emailRedirectTo: AppConstants.authRedirectUrl,
-      );
-      emit(const AuthState.awaitingEmailVerification());
-      return true;
-    } catch (e) {
-      emit(AuthState.error(e.toString()));
-      return false;
-    }
+    // In Laravel backend, email verification is bypassed/automatic in local development
+    return true;
   }
 
   /// Clear error

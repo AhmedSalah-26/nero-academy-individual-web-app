@@ -54,7 +54,7 @@ class EnrollmentModel extends EnrollmentEntity {
 
     // Calculate remaining minutes
     final totalDuration = course?['total_duration'] as int? ?? 0;
-    final progress = (json['progress_percentage'] as num?)?.toDouble() ?? 0;
+    final progress = _parseDouble(json['progress_percentage']);
     final remaining = (totalDuration * (100 - progress) / 100).round();
 
     return EnrollmentModel(
@@ -80,9 +80,16 @@ class EnrollmentModel extends EnrollmentEntity {
       completedAt: json['completed_at'] != null
           ? DateTime.parse(json['completed_at'] as String)
           : null,
-      rating: (course?['rating'] as num?)?.toDouble() ?? 0,
+      rating: _parseDouble(course?['rating'] ?? json['rating']),
       ratingCount: course?['rating_count'] as int? ?? 0,
     );
+  }
+
+  static double _parseDouble(dynamic value, {double defaultValue = 0.0}) {
+    if (value == null) return defaultValue;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? defaultValue;
+    return defaultValue;
   }
 
   Map<String, dynamic> toJson() {

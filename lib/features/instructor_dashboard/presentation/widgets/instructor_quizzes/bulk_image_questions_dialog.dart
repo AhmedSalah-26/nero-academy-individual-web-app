@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/network/api_client.dart';
 import '../../../../../core/services/app_logger.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../cubit/instructor_quizzes_cubit.dart';
@@ -397,7 +398,6 @@ class _BulkImageQuestionsDialogState extends State<BulkImageQuestionsDialog> {
       _uploadProgress = 0;
     });
     try {
-      final supabase = Supabase.instance.client;
       final labels = _answerLabels;
 
       for (int i = 0; i < _questions.length; i++) {
@@ -406,11 +406,14 @@ class _BulkImageQuestionsDialogState extends State<BulkImageQuestionsDialog> {
         if (question.imageFile != null) {
           final fileName =
               'quiz_${widget.quizId}_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
-          final path = 'quiz_questions/$fileName';
-          await supabase.storage.from('courses').uploadBinary(
-              path, await question.imageFile!.readAsBytes(),
-              fileOptions: const FileOptions(contentType: 'image/jpeg'));
-          imageUrl = supabase.storage.from('courses').getPublicUrl(path);
+          final response = await sl<ApiClient>().uploadFile(
+            '/upload',
+            bytes: await question.imageFile!.readAsBytes(),
+            fieldName: 'file',
+            fileName: fileName,
+            fields: {'type': 'course'},
+          );
+          imageUrl = response['url'] as String?;
         }
 
         final options = List.generate(

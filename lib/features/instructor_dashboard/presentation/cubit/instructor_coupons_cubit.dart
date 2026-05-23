@@ -1,18 +1,18 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/app_logger.dart';
 
 part 'instructor_coupons_state.dart';
 
-/// Instructor Coupons Cubit
+/// Instructor Coupons Cubit - uses ApiClient (Laravel backend)
 class InstructorCouponsCubit extends Cubit<InstructorCouponsState> {
-  final SupabaseClient _supabase;
+  final ApiClient _apiClient;
   int _currentPage = 1;
   static const int _pageSize = 20;
   static const _tag = 'InstructorCouponsCubit';
 
-  InstructorCouponsCubit(this._supabase)
+  InstructorCouponsCubit(this._apiClient)
       : super(const InstructorCouponsState());
 
   /// Load coupons
@@ -31,34 +31,22 @@ class InstructorCouponsCubit extends Cubit<InstructorCouponsState> {
     }
 
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      AppLogger.d('[$_tag] loadCoupons: userId=$userId');
+      AppLogger.d('[$_tag] loadCoupons: Querying coupons (page=$_currentPage)');
 
-      if (userId == null) {
-        AppLogger.e('[$_tag] loadCoupons: User not authenticated');
-        throw Exception('User not authenticated');
-      }
+      final response = await _apiClient.get(
+        '/instructor/coupons?page=$_currentPage&per_page=$_pageSize',
+      );
 
-      AppLogger.d(
-          '[$_tag] loadCoupons: Querying coupons for instructor $userId');
+      final rawList = response is List
+          ? response
+          : (response['coupons'] ?? response['data'] ?? []) as List;
 
-      final response = await _supabase
-          .from('coupons')
-          .select()
-          .eq('instructor_id', userId)
-          .order('created_at', ascending: false)
-          .range(
-            (_currentPage - 1) * _pageSize,
-            _currentPage * _pageSize - 1,
-          );
-
-      AppLogger.d('[$_tag] loadCoupons: Raw response: $response');
       AppLogger.success(
-          '[$_tag] loadCoupons: Received ${(response as List).length} coupons');
+          '[$_tag] loadCoupons: Received ${rawList.length} coupons');
 
-      final coupons = response.map((c) {
+      final coupons = rawList.map((c) {
         AppLogger.d('[$_tag] loadCoupons: Parsing coupon: $c');
-        return InstructorCouponModel.fromJson(c);
+        return InstructorCouponModel.fromJson(c as Map<String, dynamic>);
       }).toList();
 
       emit(state.copyWith(
@@ -114,34 +102,29 @@ class InstructorCouponsCubit extends Cubit<InstructorCouponsState> {
         '📋 [$_tag] createCoupon: code=$code, nameAr=$nameAr, discountType=$discountType, discountValue=$discountValue');
 
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) {
-        AppLogger.e('[$_tag] createCoupon: User not authenticated');
-        throw Exception('User not authenticated');
-      }
-
-      final insertData = {
-        'instructor_id': userId,
+      final body = {
         'code': code.toUpperCase(),
         'name_ar': nameAr,
-        'name_en': nameEn,
-        'description_ar': descriptionAr,
-        'description_en': descriptionEn,
+        if (nameEn != null) 'name_en': nameEn,
+        if (descriptionAr != null) 'description_ar': descriptionAr,
+        if (descriptionEn != null) 'description_en': descriptionEn,
         'discount_type': discountType,
         'discount_value': discountValue,
-        'max_discount_amount': maxDiscountAmount,
+        if (maxDiscountAmount != null)
+          'max_discount_amount': maxDiscountAmount,
         'min_order_amount': minOrderAmount ?? 0,
-        'usage_limit': usageLimit,
+        if (usageLimit != null) 'usage_limit': usageLimit,
         'usage_limit_per_user': usageLimitPerUser ?? 1,
-        'start_date': (startDate ?? DateTime.now()).toUtc().toIso8601String(),
-        'end_date': endDate?.toUtc().toIso8601String(),
+        'start_date':
+            (startDate ?? DateTime.now()).toUtc().toIso8601String(),
+        if (endDate != null)
+          'end_date': endDate.toUtc().toIso8601String(),
         'scope': scope,
         'is_active': true,
       };
 
-      AppLogger.d('[$_tag] createCoupon: Inserting: $insertData');
-
-      await _supabase.from('coupons').insert(insertData);
+      AppLogger.d('[$_tag] createCoupon: Posting: $body');
+      await _apiClient.post('/instructor/coupons', body: body);
 
       AppLogger.success('[$_tag] createCoupon: Coupon created successfully');
       await loadCoupons(refresh: true);
@@ -201,8 +184,7 @@ class InstructorCouponsCubit extends Cubit<InstructorCouponsState> {
       if (isActive != null) updates['is_active'] = isActive;
 
       AppLogger.d('[$_tag] updateCoupon: Updates: $updates');
-
-      await _supabase.from('coupons').update(updates).eq('id', couponId);
+      await _apiClient.put('/instructor/coupons/$couponId', body: updates);
 
       AppLogger.success('[$_tag] updateCoupon: Coupon updated successfully');
       await loadCoupons(refresh: true);
@@ -220,9 +202,10 @@ class InstructorCouponsCubit extends Cubit<InstructorCouponsState> {
         '📋 [$_tag] toggleCouponStatus: couponId=$couponId, isActive=$isActive');
 
     try {
-      await _supabase
-          .from('coupons')
-          .update({'is_active': isActive}).eq('id', couponId);
+      await _apiClient.put(
+        '/instructor/coupons/$couponId',
+        body: {'is_active': isActive},
+      );
 
       final updatedCoupons = state.coupons.map((c) {
         if (c.id == couponId) {
@@ -267,7 +250,7 @@ class InstructorCouponsCubit extends Cubit<InstructorCouponsState> {
     AppLogger.i('📋 [$_tag] deleteCoupon: couponId=$couponId');
 
     try {
-      await _supabase.from('coupons').delete().eq('id', couponId);
+      await _apiClient.delete('/instructor/coupons/$couponId');
 
       final updatedCoupons =
           state.coupons.where((c) => c.id != couponId).toList();

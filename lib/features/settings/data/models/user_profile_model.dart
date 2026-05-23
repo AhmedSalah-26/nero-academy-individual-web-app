@@ -59,7 +59,9 @@ class UserProfileModel extends UserProfileEntity {
       expertise: (json['expertise'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
-      socialLinks: json['social_links'] as Map<String, dynamic>?,
+      socialLinks: json['social_links'] is Map
+          ? Map<String, dynamic>.from(json['social_links'] as Map)
+          : null,
       websiteUrl: json['website_url'] as String?,
       coverImageUrl: json['cover_image_url'] as String?,
       parentPhone: json['parent_phone'] as String?,

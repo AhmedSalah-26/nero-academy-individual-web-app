@@ -1,4 +1,6 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
+import '../../../../core/errors/exceptions.dart';
+import '../../../../core/network/api_client.dart';
 import '../models/payment_model.dart';
 
 abstract class PaymentsRemoteDataSource {
@@ -7,114 +9,33 @@ abstract class PaymentsRemoteDataSource {
 }
 
 class PaymentsRemoteDataSourceImpl implements PaymentsRemoteDataSource {
-  final SupabaseClient supabase;
+  final ApiClient apiClient;
 
-  PaymentsRemoteDataSourceImpl({required this.supabase});
+  PaymentsRemoteDataSourceImpl({required this.apiClient});
 
   @override
   Future<List<PaymentModel>> getUserPayments(String userId) async {
+    debugPrint('💰 [PaymentsRemote] Getting user payments');
     try {
-      // Get parent enrollments with courses
-      final response = await supabase.from('parent_enrollments').select('''
-            *,
-            enrollments!parent_enrollment_id(
-              course_id,
-              courses!inner(
-                id,
-                title,
-                thumbnail_url,
-                price
-              )
-            )
-          ''').eq('user_id', userId).order('created_at', ascending: false);
-
-      final List<PaymentModel> payments = [];
-
-      for (final item in response as List<dynamic>) {
-        final enrollments = item['enrollments'] as List<dynamic>?;
-        final courses = <PaymentCourseModel>[];
-
-        if (enrollments != null) {
-          for (final enrollment in enrollments) {
-            final course = enrollment['courses'];
-            if (course != null) {
-              courses.add(PaymentCourseModel(
-                courseId: course['id'] as String,
-                title: course['title'] as String,
-                thumbnailUrl: course['thumbnail_url'] as String?,
-                price: (course['price'] as num).toDouble(),
-              ));
-            }
-          }
-        }
-
-        payments.add(PaymentModel.fromJson({
-          ...item as Map<String, dynamic>,
-          'courses': courses
-              .map((c) => {
-                    'course_id': c.courseId,
-                    'title': c.title,
-                    'thumbnail_url': c.thumbnailUrl,
-                    'price': c.price,
-                  })
-              .toList(),
-        }));
-      }
-
-      return payments;
+      final response = await apiClient.get('/payments/history');
+      final list = response['payments'] as List;
+      return list.map((e) => PaymentModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
-      throw Exception('Failed to fetch payments: $e');
+      debugPrint('⚠️ [PaymentsRemote] getUserPayments failed: $e');
+      throw ServerException(e.toString());
     }
   }
 
   @override
   Future<PaymentModel?> getPaymentById(String paymentId) async {
+    debugPrint('💰 [PaymentsRemote] Getting payment details: $paymentId');
     try {
-      final response = await supabase.from('parent_enrollments').select('''
-            *,
-            enrollments!parent_enrollment_id(
-              course_id,
-              courses!inner(
-                id,
-                title,
-                thumbnail_url,
-                price
-              )
-            )
-          ''').eq('id', paymentId).maybeSingle();
-
-      if (response == null) return null;
-
-      final enrollments = response['enrollments'] as List<dynamic>?;
-      final courses = <PaymentCourseModel>[];
-
-      if (enrollments != null) {
-        for (final enrollment in enrollments) {
-          final course = enrollment['courses'];
-          if (course != null) {
-            courses.add(PaymentCourseModel(
-              courseId: course['id'] as String,
-              title: course['title'] as String,
-              thumbnailUrl: course['thumbnail_url'] as String?,
-              price: (course['price'] as num).toDouble(),
-            ));
-          }
-        }
-      }
-
-      return PaymentModel.fromJson({
-        ...response,
-        'courses': courses
-            .map((c) => {
-                  'course_id': c.courseId,
-                  'title': c.title,
-                  'thumbnail_url': c.thumbnailUrl,
-                  'price': c.price,
-                })
-            .toList(),
-      });
+      final response = await apiClient.get('/payments/$paymentId');
+      if (response['payment'] == null) return null;
+      return PaymentModel.fromJson(response['payment'] as Map<String, dynamic>);
     } catch (e) {
-      throw Exception('Failed to fetch payment: $e');
+      debugPrint('⚠️ [PaymentsRemote] getPaymentById failed: $e');
+      throw ServerException(e.toString());
     }
   }
 }

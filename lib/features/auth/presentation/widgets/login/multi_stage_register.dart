@@ -1,9 +1,7 @@
 import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/utils/toast_utils.dart';
 import '../../../domain/entities/user_entity.dart';
 import 'register_stages/stage_role_selection.dart';
 import 'register_stages/stage_basic_info.dart';
@@ -72,9 +70,7 @@ class _MultiStageRegisterState extends State<MultiStageRegister> {
   final _basicInfoFormKey = GlobalKey<FormState>();
   final _contactInfoFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
-  bool _isCheckingEmail = false;
-  String? _lastCheckedEmail;
-  bool? _lastCheckedEmailAvailable;
+  final bool _isCheckingEmail = false;
 
   bool get _isInstructorApplicationFlow =>
       widget.selectedRole == UserRole.instructor;
@@ -143,47 +139,7 @@ class _MultiStageRegisterState extends State<MultiStageRegister> {
   }
 
   Future<bool> _validateEmailAvailability() async {
-    final email = widget.emailCtrl.text.trim().toLowerCase();
-    final isArabic = context.locale.languageCode == 'ar';
-
-    if (_lastCheckedEmail == email && _lastCheckedEmailAvailable != null) {
-      if (_lastCheckedEmailAvailable == false) {
-        ToastUtils.showError('auth.errors.email_already_in_use'.tr());
-      }
-      return _lastCheckedEmailAvailable!;
-    }
-
-    setState(() => _isCheckingEmail = true);
-
-    try {
-      final result = await Supabase.instance.client
-          .from('profiles')
-          .select('id')
-          .ilike('email', email)
-          .limit(1);
-
-      final isTaken = result.isNotEmpty;
-      _lastCheckedEmail = email;
-      _lastCheckedEmailAvailable = !isTaken;
-
-      if (isTaken) {
-        ToastUtils.showError('auth.errors.email_already_in_use'.tr());
-        return false;
-      }
-
-      return true;
-    } catch (_) {
-      ToastUtils.showError(
-        isArabic
-            ? 'تعذر التحقق من البريد الإلكتروني الآن، حاول مرة أخرى'
-            : 'Unable to verify email right now. Please try again.',
-      );
-      return false;
-    } finally {
-      if (mounted) {
-        setState(() => _isCheckingEmail = false);
-      }
-    }
+    return true;
   }
 
   @override

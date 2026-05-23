@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/animations/widgets/feedback/animated_snackbar.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/services/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -91,22 +93,36 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
     setState(() => _isUploadingImage = true);
 
     try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) throw Exception('User not authenticated');
+      final apiClient = sl<ApiClient>();
+      final token = await apiClient.getToken();
 
-      final fileName =
-          'quiz_${widget.quizId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final path = 'quiz_questions/$fileName';
       final bytes = await _selectedImage!.readAsBytes();
+      final fileName = 'quiz_${widget.quizId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-      await supabase.storage.from('courses').uploadBinary(
-            path,
-            bytes,
-            fileOptions: const FileOptions(contentType: 'image/jpeg'),
-          );
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${apiClient.baseUrl}/upload/image'),
+      );
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+      request.files.add(http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: fileName,
+      ));
 
-      final url = supabase.storage.from('courses').getPublicUrl(path);
+      final streamedResponse = await request.send();
+      final responseBody = await streamedResponse.stream.bytesToString();
+
+      if (streamedResponse.statusCode != 200 && streamedResponse.statusCode != 201) {
+        throw Exception('Upload failed: ${streamedResponse.statusCode}');
+      }
+
+      // Parse URL from response
+      final decoded = apiClient.parseJson(responseBody);
+      final url = (decoded['url'] ?? decoded['path'] ?? decoded['image_url']) as String?;
+
+      if (url == null) throw Exception('No URL in response');
 
       setState(() {
         _imageUrl = url;

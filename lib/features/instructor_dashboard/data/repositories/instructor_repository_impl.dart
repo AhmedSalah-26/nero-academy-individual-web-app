@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/network/api_client.dart';
 import '../../domain/entities/instructor_entities.dart';
 import '../../domain/repositories/instructor_repository.dart';
 import '../datasources/instructor_data_sources.dart';
@@ -7,7 +7,7 @@ import '../models/instructor_balance_model.dart';
 
 /// Instructor Repository Implementation
 class InstructorRepositoryImpl implements InstructorRepository {
-  final SupabaseClient _client;
+  final ApiClient _apiClient;
   final InstructorStatsDataSource _statsDataSource;
   final InstructorCoursesDataSource _coursesDataSource;
   final InstructorStudentsDataSource _studentsDataSource;
@@ -19,7 +19,7 @@ class InstructorRepositoryImpl implements InstructorRepository {
   final InstructorAnnouncementsDataSource _announcementsDataSource;
 
   InstructorRepositoryImpl({
-    required SupabaseClient client,
+    required ApiClient apiClient,
     required InstructorStatsDataSource statsDataSource,
     required InstructorCoursesDataSource coursesDataSource,
     required InstructorStudentsDataSource studentsDataSource,
@@ -29,7 +29,7 @@ class InstructorRepositoryImpl implements InstructorRepository {
     required InstructorReviewsDataSource reviewsDataSource,
     required InstructorCourseEditorDataSource courseEditorDataSource,
     required InstructorAnnouncementsDataSource announcementsDataSource,
-  })  : _client = client,
+  })  : _apiClient = apiClient,
         _statsDataSource = statsDataSource,
         _coursesDataSource = coursesDataSource,
         _studentsDataSource = studentsDataSource,
@@ -308,7 +308,7 @@ class InstructorRepositoryImpl implements InstructorRepository {
         .getAvailableCoursesForStudent(studentId);
   }
 
-  // Wallet & Earnings (NEW SCHEMA)
+  // Wallet & Earnings
   @override
   Future<WalletSummaryModel> getWalletSummary() async {
     return await _earningsDataSource.getWalletSummary();
@@ -474,12 +474,10 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<List<CategoryModel>> getAdminCategories({bool? isActive}) async {
     try {
-      var query = _client.from('categories').select();
-      if (isActive != null) {
-        query = query.eq('is_active', isActive);
-      }
-      final response = await query.order('sort_order', ascending: true);
-      return response.map((e) => CategoryModel.fromJson(e)).toList();
+      final activeParam = isActive != null ? '?isActive=$isActive' : '';
+      final response = await _apiClient.get('/instructor/admin/categories$activeParam');
+      final list = response as List;
+      return list.map((e) => CategoryModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
       rethrow;
     }
@@ -488,14 +486,17 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<CategoryModel> createCategory(CategoryCreateDto dto) async {
     try {
-      final response = await _client.from('categories').insert({
-        'name_ar': dto.nameAr,
-        'name_en': dto.nameEn,
-        'description': dto.description,
-        'icon': dto.icon,
-        'parent_id': dto.parentId,
-      }).select().single();
-      return CategoryModel.fromJson(response);
+      final response = await _apiClient.post(
+        '/instructor/admin/categories',
+        body: {
+          'name_ar': dto.nameAr,
+          'name_en': dto.nameEn,
+          'description': dto.description,
+          'icon': dto.icon,
+          'parentId': dto.parentId,
+        },
+      );
+      return CategoryModel.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       rethrow;
     }
@@ -509,17 +510,15 @@ class InstructorRepositoryImpl implements InstructorRepository {
       if (dto.nameEn != null) data['name_en'] = dto.nameEn;
       if (dto.description != null) data['description'] = dto.description;
       if (dto.icon != null) data['icon'] = dto.icon;
-      if (dto.parentId != null) data['parent_id'] = dto.parentId;
+      if (dto.parentId != null) data['parentId'] = dto.parentId;
       if (dto.isActive != null) data['is_active'] = dto.isActive;
       if (dto.sortOrder != null) data['sort_order'] = dto.sortOrder;
 
-      final response = await _client
-          .from('categories')
-          .update(data)
-          .eq('id', id)
-          .select()
-          .single();
-      return CategoryModel.fromJson(response);
+      final response = await _apiClient.put(
+        '/instructor/admin/categories/$id',
+        body: data,
+      );
+      return CategoryModel.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       rethrow;
     }
@@ -528,11 +527,7 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<bool> toggleCategoryStatus(String id) async {
     try {
-      final categories = await getAdminCategories();
-      final category = categories.firstWhere((c) => c.id == id);
-      await _client.from('categories').update({
-        'is_active': !category.isActive,
-      }).eq('id', id);
+      await _apiClient.post('/instructor/admin/categories/$id/toggle');
       return true;
     } catch (e) {
       rethrow;
@@ -543,12 +538,10 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<List<BannerModel>> getBanners({BannerType? type, bool? isActive}) async {
     try {
-      var query = _client.from('banners').select();
-      if (isActive != null) {
-        query = query.eq('is_active', isActive);
-      }
-      final response = await query.order('sort_order', ascending: true);
-      return response.map((e) => BannerModel.fromJson(e)).toList();
+      final activeParam = isActive != null ? '?isActive=$isActive' : '';
+      final response = await _apiClient.get('/instructor/admin/banners$activeParam');
+      final list = response as List;
+      return list.map((e) => BannerModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
       rethrow;
     }
@@ -557,19 +550,22 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<BannerModel> createBanner(BannerCreateDto dto) async {
     try {
-      final response = await _client.from('banners').insert({
-        'title_ar': dto.titleAr,
-        'title_en': dto.titleEn,
-        'subtitle_ar': dto.subtitleAr,
-        'subtitle_en': dto.subtitleEn,
-        'image_url': dto.imageUrl,
-        'link_type': dto.linkType,
-        'link_value': dto.linkValue,
-        'sort_order': dto.sortOrder,
-        'start_date': dto.startDate?.toUtc().toIso8601String(),
-        'end_date': dto.endDate?.toUtc().toIso8601String(),
-      }).select().single();
-      return BannerModel.fromJson(response);
+      final response = await _apiClient.post(
+        '/instructor/admin/banners',
+        body: {
+          'title_ar': dto.titleAr,
+          'title_en': dto.titleEn,
+          'subtitle_ar': dto.subtitleAr,
+          'subtitle_en': dto.subtitleEn,
+          'image_url': dto.imageUrl,
+          'link_type': dto.linkType,
+          'link_value': dto.linkValue,
+          'sort_order': dto.sortOrder,
+          'start_date': dto.startDate?.toUtc().toIso8601String(),
+          'end_date': dto.endDate?.toUtc().toIso8601String(),
+        },
+      );
+      return BannerModel.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       rethrow;
     }
@@ -578,13 +574,11 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<BannerModel> updateBanner(String id, BannerUpdateDto dto) async {
     try {
-      final response = await _client
-          .from('banners')
-          .update(dto.toJson())
-          .eq('id', id)
-          .select()
-          .single();
-      return BannerModel.fromJson(response);
+      final response = await _apiClient.put(
+        '/instructor/admin/banners/$id',
+        body: dto.toJson(),
+      );
+      return BannerModel.fromJson(response as Map<String, dynamic>);
     } catch (e) {
       rethrow;
     }
@@ -593,7 +587,7 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<bool> deleteBanner(String id) async {
     try {
-      await _client.from('banners').delete().eq('id', id);
+      await _apiClient.delete('/instructor/admin/banners/$id');
       return true;
     } catch (e) {
       rethrow;
@@ -603,15 +597,7 @@ class InstructorRepositoryImpl implements InstructorRepository {
   @override
   Future<bool> toggleBannerStatus(String id) async {
     try {
-      final banner = await _client
-          .from('banners')
-          .select('is_active')
-          .eq('id', id)
-          .single();
-      final currentStatus = banner['is_active'] as bool? ?? false;
-      await _client.from('banners').update({
-        'is_active': !currentStatus,
-      }).eq('id', id);
+      await _apiClient.post('/instructor/admin/banners/$id/toggle');
       return true;
     } catch (e) {
       rethrow;

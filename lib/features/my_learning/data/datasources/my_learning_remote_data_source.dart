@@ -1,5 +1,6 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/network/api_client.dart';
 import '../../domain/entities/enrollment_entity.dart';
 import '../models/enrollment_model.dart';
 import '../models/learning_progress_model.dart';
@@ -37,34 +38,11 @@ abstract class MyLearningRemoteDataSource {
   });
 }
 
-/// My Learning Remote Data Source Implementation
+/// My Learning Remote Data Source Implementation using Laravel REST APIs
 class MyLearningRemoteDataSourceImpl implements MyLearningRemoteDataSource {
-  final SupabaseClient _client;
+  final ApiClient apiClient;
 
-  MyLearningRemoteDataSourceImpl(this._client);
-
-  static const _enrollmentSelect = '''
-    id,
-    course_id,
-    user_id,
-    progress_percentage,
-    completed_lessons,
-    status,
-    enrolled_at,
-    last_accessed_at,
-    completed_at,
-    courses!inner (
-      title_ar,
-      title_en,
-      thumbnail_url,
-      total_lessons,
-      total_duration,
-      rating,
-      rating_count,
-      instructor_id,
-      profiles!courses_instructor_id_fkey (id, name, avatar_url)
-    )
-  ''';
+  MyLearningRemoteDataSourceImpl(this.apiClient);
 
   @override
   Future<List<EnrollmentModel>> getEnrollments({
@@ -74,96 +52,44 @@ class MyLearningRemoteDataSourceImpl implements MyLearningRemoteDataSource {
     int limit = 20,
   }) async {
     try {
-      var query = _client
-          .from('enrollments')
-          .select(_enrollmentSelect)
-          .eq('user_id', userId);
+      final response = await apiClient.get('/enrollments');
+      final list = response['enrollments'] as List;
+      final enrollments = list.map((json) => EnrollmentModel.fromJson(json)).toList();
 
       if (status != null) {
-        query = query.eq('status', status.name);
+        return enrollments.where((e) => e.status == status).toList();
       }
 
-      final response = await query
-          .order('last_accessed_at', ascending: false)
-          .range((page - 1) * limit, page * limit - 1);
-
-      final enrollments = (response as List)
-          .map((json) => EnrollmentModel.fromJson(json))
-          .toList();
-
-      // Enrich with instructor data
-      final enrichedEnrollments = <EnrollmentModel>[];
-      for (final enrollment in enrollments) {
-        if (enrollment.instructorId != null) {
-          final instructorData =
-              await _getInstructorProfile(enrollment.instructorId!);
-          if (instructorData != null) {
-            enrichedEnrollments.add(enrollment.copyWithInstructor(
-              instructorName: instructorData['display_name'] as String?,
-              instructorAvatar: instructorData['avatar_url'] as String?,
-            ));
-            continue;
-          }
-        }
-        enrichedEnrollments.add(enrollment);
-      }
-
-      return enrichedEnrollments;
+      // Implement simple pagination
+      final startIndex = (page - 1) * limit;
+      if (startIndex >= enrollments.length) return [];
+      final endIndex = page * limit;
+      return enrollments.sublist(
+        startIndex,
+        endIndex > enrollments.length ? enrollments.length : endIndex,
+      );
     } catch (e) {
-      throw ServerException('Failed to load enrollments: $e');
+      debugPrint('⚠️ [MyLearningRemote] getEnrollments failed: $e');
+      if (e is ServerException) rethrow;
+      throw ServerException(e.toString());
     }
   }
 
   @override
   Future<EnrollmentModel?> getContinueLearning(String userId) async {
     try {
-      final response = await _client
-          .from('enrollments')
-          .select(_enrollmentSelect)
-          .eq('user_id', userId)
-          .eq('status', 'active')
-          .gt('progress_percentage', 0)
-          .order('last_accessed_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      if (response == null) return null;
-
-      // Get instructor full data from instructor_profiles
-      final enrollment = EnrollmentModel.fromJson(response);
-
-      if (enrollment.instructorId != null) {
-        final instructorData =
-            await _getInstructorProfile(enrollment.instructorId!);
-        if (instructorData != null) {
-          final enriched = enrollment.copyWithInstructor(
-            instructorName: instructorData['display_name'] as String?,
-            instructorAvatar: instructorData['avatar_url'] as String?,
-          );
-          return enriched;
-        }
-      }
-
-      return enrollment;
+      final enrollments = await getEnrollments(userId: userId);
+      final active = enrollments.where((e) => e.status == EnrollmentStatus.active && e.progressPercentage > 0).toList();
+      if (active.isEmpty) return null;
+      active.sort((a, b) {
+        if (a.lastAccessedAt == null && b.lastAccessedAt == null) return 0;
+        if (a.lastAccessedAt == null) return 1;
+        if (b.lastAccessedAt == null) return -1;
+        return b.lastAccessedAt!.compareTo(a.lastAccessedAt!);
+      });
+      return active.first;
     } catch (e) {
-      throw ServerException('Failed to load continue learning: $e');
-    }
-  }
-
-  /// Get instructor profile data
-  Future<Map<String, dynamic>?> _getInstructorProfile(
-      String instructorId) async {
-    try {
-      final response = await _client
-          .from('instructor_profiles')
-          .select('display_name, avatar_url')
-          .eq('instructor_id', instructorId)
-          .maybeSingle();
-
-      // Debug log
-
-      return response;
-    } catch (e) {
+      debugPrint('⚠️ [MyLearningRemote] getContinueLearning failed: $e');
       return null;
     }
   }
@@ -171,15 +97,17 @@ class MyLearningRemoteDataSourceImpl implements MyLearningRemoteDataSource {
   @override
   Future<EnrollmentModel> getEnrollmentById(String enrollmentId) async {
     try {
-      final response = await _client
-          .from('enrollments')
-          .select(_enrollmentSelect)
-          .eq('id', enrollmentId)
-          .single();
-
-      return EnrollmentModel.fromJson(response);
+      final response = await apiClient.get('/enrollments');
+      final list = response['enrollments'] as List;
+      final match = list.firstWhere(
+        (json) => json['id'] == enrollmentId,
+        orElse: () => throw const ServerException('Enrollment not found'),
+      );
+      return EnrollmentModel.fromJson(match);
     } catch (e) {
-      throw ServerException('Failed to load enrollment: $e');
+      debugPrint('⚠️ [MyLearningRemote] getEnrollmentById failed: $e');
+      if (e is ServerException) rethrow;
+      throw ServerException(e.toString());
     }
   }
 
@@ -191,25 +119,20 @@ class MyLearningRemoteDataSourceImpl implements MyLearningRemoteDataSource {
     bool isCompleted = false,
   }) async {
     try {
-      // Use the database function which triggers enrollment progress update
-      await _client.rpc('update_lesson_progress', params: {
-        'p_lesson_id': lessonId,
-        'p_watch_time': watchedSeconds,
-        'p_last_position': watchedSeconds,
-        'p_is_completed': isCompleted,
-      });
-
-      // Fetch the updated progress
-      final response = await _client
-          .from('lesson_progress')
-          .select()
-          .eq('enrollment_id', enrollmentId)
-          .eq('lesson_id', lessonId)
-          .single();
-
-      return LearningProgressModel.fromJson(response);
+      final response = await apiClient.post(
+        '/enrollments/progress',
+        body: {
+          'lesson_id': lessonId,
+          'watch_time': watchedSeconds,
+          'last_position': watchedSeconds,
+          'is_completed': isCompleted,
+        },
+      );
+      return LearningProgressModel.fromJson(response['data'] as Map<String, dynamic>);
     } catch (e) {
-      throw ServerException('Failed to update progress: $e');
+      debugPrint('⚠️ [MyLearningRemote] updateLessonProgress failed: $e');
+      if (e is ServerException) rethrow;
+      throw ServerException(e.toString());
     }
   }
 
@@ -219,37 +142,26 @@ class MyLearningRemoteDataSourceImpl implements MyLearningRemoteDataSource {
     required String lessonId,
   }) async {
     try {
-      final response = await _client
-          .from('lesson_progress')
-          .select()
-          .eq('enrollment_id', enrollmentId)
-          .eq('lesson_id', lessonId)
-          .maybeSingle();
-
-      if (response == null) return null;
-      return LearningProgressModel.fromJson(response);
+      final response = await apiClient.get(
+        '/enrollments/progress?enrollment_id=$enrollmentId&lesson_id=$lessonId',
+      );
+      if (response['data'] == null) return null;
+      return LearningProgressModel.fromJson(response['data'] as Map<String, dynamic>);
     } catch (e) {
-      throw ServerException('Failed to load lesson progress: $e');
+      debugPrint('⚠️ [MyLearningRemote] getLessonProgress failed: $e');
+      return null;
     }
   }
 
   @override
   Future<EnrollmentModel> markCourseCompleted(String enrollmentId) async {
     try {
-      final response = await _client
-          .from('enrollments')
-          .update({
-            'status': 'completed',
-            'progress_percentage': 100,
-            'completed_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', enrollmentId)
-          .select(_enrollmentSelect)
-          .single();
-
-      return EnrollmentModel.fromJson(response);
+      final response = await apiClient.post('/enrollments/$enrollmentId/complete');
+      return EnrollmentModel.fromJson(response['enrollment'] as Map<String, dynamic>);
     } catch (e) {
-      throw ServerException('Failed to mark course completed: $e');
+      debugPrint('⚠️ [MyLearningRemote] markCourseCompleted failed: $e');
+      if (e is ServerException) rethrow;
+      throw ServerException(e.toString());
     }
   }
 
@@ -258,19 +170,6 @@ class MyLearningRemoteDataSourceImpl implements MyLearningRemoteDataSource {
     required String userId,
     int limit = 5,
   }) async {
-    try {
-      // Get courses user hasn't enrolled in, based on popular courses
-      final response = await _client.rpc(
-        'get_recommended_courses',
-        params: {'p_user_id': userId, 'p_limit': limit},
-      );
-
-      return (response as List)
-          .map((json) => EnrollmentModel.fromJson(json))
-          .toList();
-    } catch (e) {
-      // Fallback: return empty list if RPC doesn't exist
-      return [];
-    }
+    return [];
   }
 }

@@ -3,7 +3,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/animations/animations.dart';
@@ -13,6 +12,7 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/services/app_logger.dart';
 import '../../../../core/shared_widgets/report_dialog.dart';
 import '../../../../core/services/reports_service.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../cart/presentation/cubit/cart_cubit.dart';
 import '../../../cart/presentation/cubit/cart_state.dart';
 import '../../../wishlist/presentation/cubit/wishlist_cubit.dart';
@@ -71,7 +71,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   }
 
   void _loadCourseDetails() {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = sl<AuthCubit>().state.user?.id;
     context.read<CourseDetailsCubit>().loadCourseDetails(
           widget.courseId,
           userId: userId,
@@ -534,8 +534,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   }
 
   Future<void> _handleAddToCart(CourseDetailsEntity course) async {
-    // Get current user ID from Supabase
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    // Get current user ID from AuthCubit
+    final userId = sl<AuthCubit>().state.user?.id;
 
     if (userId == null) {
       AppLogger.e('[CourseDetails] User not logged in!');

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../di/injection_container.dart';
+import '../network/api_client.dart';
 import 'app_logger.dart';
 import 'user_role_service.dart';
 import 'video_cache_service.dart';
@@ -16,12 +17,11 @@ class LogoutService {
     try {
       AppLogger.i('🚪 [Logout] Signing out & clearing caches...');
 
-      // 1. Sign out from Supabase
+      // 1. Clear API Client token
       try {
-        await Supabase.instance.client.auth.signOut(scope: SignOutScope.global);
-      } catch (_) {
-        // Fallback to local sign out
-        await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+        await sl<ApiClient>().clearToken();
+      } catch (e) {
+        AppLogger.e('🚪 [Logout] Error clearing API client token', e);
       }
 
       // 2. Clear all caches

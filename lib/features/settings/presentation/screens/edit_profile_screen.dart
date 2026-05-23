@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/shared_widgets/back_button.dart';
 import '../../../../core/shared_widgets/phone_input_field.dart';
@@ -60,7 +62,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _ensureProfileLoaded() async {
     final cubit = context.read<ProfileCubit>();
     if (cubit.state.profile == null) {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
+      final userId = context.read<AuthCubit>().state.user?.id;
       if (userId != null) {
         await cubit.loadProfile(userId);
       }
@@ -172,21 +174,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required String userId,
     required String fileName,
   }) async {
-    final client = Supabase.instance.client;
-    final storagePath = '$userId/$fileName';
-
-    await client.storage.from('avatars').uploadBinary(
-          storagePath,
-          bytes,
-          fileOptions: const FileOptions(
-            cacheControl: '3600',
-            upsert: true,
-            contentType: 'image/jpeg',
-          ),
-        );
-
-    final publicUrl = client.storage.from('avatars').getPublicUrl(storagePath);
-    return '$publicUrl?v=${DateTime.now().millisecondsSinceEpoch}';
+    final response = await sl<ApiClient>().uploadFile(
+      '/upload',
+      bytes: bytes,
+      fieldName: 'file',
+      fileName: fileName,
+      fields: {'type': 'avatar'},
+    );
+    return response['url'] as String;
   }
 
   Future<void> _saveProfile() async {
@@ -223,7 +218,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     }
 
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = context.read<AuthCubit>().state.user?.id;
     if (userId == null) {
       setState(() => _isLoading = false);
       if (mounted) {

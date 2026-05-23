@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/network/api_client.dart';
+import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/theme/app_colors.dart';
 
 /// Course Selection Dialog - Used for selecting courses in coupon editor
@@ -48,18 +49,7 @@ class _CourseSelectionDialogState extends State<CourseSelectionDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final response = await supabase
-          .from('courses')
-          .select('id, title_ar, title_en, thumbnail_url, is_published')
-          .eq('instructor_id', userId)
-          .order('created_at', ascending: false);
+      final response = await sl<ApiClient>().get('/instructor/courses');
 
       if (mounted) {
         setState(() {

@@ -23,14 +23,18 @@ class InstructorModel extends InstructorEntity {
   factory InstructorModel.fromJson(Map<String, dynamic> json) {
     // Parse expertise array
     List<String>? expertise;
-    if (json['expertise'] != null) {
-      expertise = (json['expertise'] as List).cast<String>();
+    final rawExpertise = json['expertise'];
+    if (rawExpertise is List) {
+      expertise = rawExpertise.map((e) => e.toString()).toList();
     }
 
     // Parse social links
     Map<String, String>? socialLinks;
-    if (json['social_links'] != null) {
-      socialLinks = Map<String, String>.from(json['social_links'] as Map);
+    final rawSocialLinks = json['social_links'];
+    if (rawSocialLinks is Map) {
+      socialLinks = rawSocialLinks.map(
+        (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
+      );
     }
 
     return InstructorModel(

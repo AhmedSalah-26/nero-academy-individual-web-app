@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/injection_container.dart';
-import 'package:lms_platform/features/auth/data/datasources/auth_local_data_source.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import 'package:video_player/video_player.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -92,8 +92,13 @@ class _SplashScreenState extends State<SplashScreen> {
     _hasNavigated = true;
 
     try {
-      final user = await sl<AuthLocalDataSource>().getCachedUser();
-      if (user != null) {
+      final authCubit = sl<AuthCubit>();
+      await authCubit.checkAuthStatus();
+      final authState = authCubit.state;
+
+      if (authState.needsInterests) {
+        if (mounted) context.go('/interests');
+      } else if (authState.isLoggedIn) {
         if (mounted) context.go('/home');
       } else {
         if (mounted) context.go('/login');

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../di/injection_container.dart';
+import '../network/api_client.dart';
 import '../services/app_logger.dart';
 import '../services/user_role_service.dart';
 import '../services/reports_service.dart';
@@ -110,6 +111,15 @@ import '../../features/instructor/presentation/screens/instructor_profile_screen
 /// App Router - Centralized routing configuration
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+  static bool _requiresAuth(String path) {
+    const publicPaths = {
+      '/splash',
+      '/login',
+      '/forgot-password',
+    };
+    return !publicPaths.contains(path);
+  }
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -1011,8 +1021,22 @@ class AppRouter {
       ),
     ],
     redirect: (context, state) async {
-      final isLoggedIn = sl<AuthCubit>().state.isLoggedIn;
       final path = state.uri.path;
+      var isLoggedIn = sl<AuthCubit>().state.isLoggedIn;
+      final hasToken = sl<ApiClient>().isAuthenticated;
+
+      if (_requiresAuth(path) && !hasToken) {
+        return '/login';
+      }
+
+      if (_requiresAuth(path) && hasToken && !isLoggedIn) {
+        await sl<AuthCubit>().checkAuthStatus();
+        isLoggedIn = sl<AuthCubit>().state.isLoggedIn;
+
+        if (!isLoggedIn) {
+          return '/login';
+        }
+      }
 
       // Instructor dashboard access control (only /instructor route, not /instructor/:id profiles)
       if (path == '/instructor' || path == '/instructor/') {

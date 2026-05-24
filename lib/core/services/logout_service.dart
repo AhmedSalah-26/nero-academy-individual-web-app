@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../di/injection_container.dart';
 import '../network/api_client.dart';
+import '../../features/auth/data/datasources/auth_local_data_source.dart';
+import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import 'app_logger.dart';
 import 'user_role_service.dart';
 import 'video_cache_service.dart';
@@ -17,27 +19,39 @@ class LogoutService {
     try {
       AppLogger.i('🚪 [Logout] Signing out & clearing caches...');
 
-      // 1. Clear API Client token
+      // 1. Sign out and clear auth state/cache
+      try {
+        await sl<AuthCubit>().logout();
+      } catch (e) {
+        AppLogger.e('🚪 [Logout] Error signing out auth cubit', e);
+      }
+
       try {
         await sl<ApiClient>().clearToken();
       } catch (e) {
         AppLogger.e('🚪 [Logout] Error clearing API client token', e);
       }
 
-      // 2. Clear all caches
+      try {
+        await sl<AuthLocalDataSource>().clearCache();
+      } catch (e) {
+        AppLogger.e('🚪 [Logout] Error clearing auth cache', e);
+      }
+
+      // 2. Clear all non-auth caches
       await _clearAllCaches();
 
       AppLogger.success('🚪 [Logout] Done');
 
-      // 3. Navigate to splash
+      // 3. Navigate to login
       if (context.mounted) {
-        GoRouter.of(context).go('/splash');
+        GoRouter.of(context).go('/login');
       }
     } catch (e) {
       AppLogger.e('🚪 [Logout] Error', e);
       // Even on error, try to navigate away
       if (context.mounted) {
-        GoRouter.of(context).go('/splash');
+        GoRouter.of(context).go('/login');
       }
     }
   }

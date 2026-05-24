@@ -3,6 +3,7 @@ import '../../../../core/errors/failures.dart';
 import '../entities/banner_entity.dart';
 import '../entities/category_entity.dart';
 import '../entities/course_entity.dart';
+import '../entities/home_courses_entity.dart';
 
 /// Home Repository Contract - Abstract Interface
 abstract class HomeRepository {
@@ -11,6 +12,9 @@ abstract class HomeRepository {
 
   /// Get all active categories
   Future<Either<Failure, List<CategoryEntity>>> getCategories();
+
+  /// Get all home course groups using one courses fetch.
+  Future<Either<Failure, HomeCoursesEntity>> getHomeCourses({int limit = 10});
 
   /// Get featured courses (is_featured = true)
   Future<Either<Failure, List<CourseEntity>>> getFeaturedCourses(

@@ -5,6 +5,7 @@ import '../../../../core/network/network_info.dart';
 import '../../domain/entities/banner_entity.dart';
 import '../../domain/entities/category_entity.dart';
 import '../../domain/entities/course_entity.dart';
+import '../../domain/entities/home_courses_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../datasources/home_local_data_source.dart';
 import '../datasources/home_remote_data_source.dart';
@@ -57,6 +58,33 @@ class HomeRepositoryImpl implements HomeRepository {
         return Right(cachedCategories);
       } on CacheException {
         return const Left(NetworkFailure('لا يوجد اتصال بالإنترنت'));
+      }
+    }
+  }
+
+  @override
+  Future<Either<Failure, HomeCoursesEntity>> getHomeCourses(
+      {int limit = 10}) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final courses = await remoteDataSource.getHomeCourses(limit: limit);
+        return Right(courses);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message, code: e.code));
+      }
+    } else {
+      try {
+        return Right(HomeCoursesEntity(
+          featuredCourses: await localDataSource.getCachedCourses('featured'),
+          popularCourses: await localDataSource.getCachedCourses('popular'),
+          newCourses: await localDataSource.getCachedCourses('new'),
+          flashSaleCourses:
+              await localDataSource.getCachedCourses('flash_sale'),
+        ));
+      } on CacheException {
+        return const Left(
+          NetworkFailure('Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ø§ØªØµØ§Ù„ Ø¨Ø§Ù„Ø¥Ù†ØªØ±Ù†Øª'),
+        );
       }
     }
   }

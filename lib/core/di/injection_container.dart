@@ -29,6 +29,7 @@ import '../../features/home/domain/usecases/get_banners_usecase.dart';
 import '../../features/home/domain/usecases/get_categories_usecase.dart';
 import '../../features/home/domain/usecases/get_featured_courses_usecase.dart';
 import '../../features/home/domain/usecases/get_flash_sale_courses_usecase.dart';
+import '../../features/home/domain/usecases/get_home_courses_usecase.dart';
 import '../../features/home/domain/usecases/get_new_courses_usecase.dart';
 import '../../features/home/domain/usecases/get_popular_courses_usecase.dart';
 import '../../features/home/presentation/cubit/home_cubit.dart';
@@ -247,15 +248,13 @@ void _initHome() {
   sl.registerFactory(() => HomeCubit(
         getBannersUseCase: sl(),
         getCategoriesUseCase: sl(),
-        getFeaturedCoursesUseCase: sl(),
-        getPopularCoursesUseCase: sl(),
-        getNewCoursesUseCase: sl(),
-        getFlashSaleCoursesUseCase: sl(),
+        getHomeCoursesUseCase: sl(),
       ));
 
   // Use Cases
   sl.registerLazySingleton(() => GetBannersUseCase(sl()));
   sl.registerLazySingleton(() => GetCategoriesUseCase(sl()));
+  sl.registerLazySingleton(() => GetHomeCoursesUseCase(sl()));
   sl.registerLazySingleton(() => GetFeaturedCoursesUseCase(sl()));
   sl.registerLazySingleton(() => GetPopularCoursesUseCase(sl()));
   sl.registerLazySingleton(() => GetNewCoursesUseCase(sl()));

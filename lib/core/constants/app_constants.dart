@@ -15,7 +15,7 @@ class AppConstants {
       'sb_publishable_wJvu57s6WvTFFi9JTZhBbg_mS3tYCE7';
 
   // Laravel Backend Configuration
-  static const String apiBaseUrl = 'http://127.0.0.1:8000/api';
+  static const String apiBaseUrl = 'https://nero24.kesug.com/api';
 
   // Storage Buckets
   static const String avatarsBucket = 'avatars';

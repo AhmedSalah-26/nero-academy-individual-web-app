@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:toastification/toastification.dart';
 
@@ -11,6 +12,7 @@ import 'core/di/injection_container.dart';
 import 'core/routing/app_router.dart';
 import 'core/services/dev_http_overrides.dart';
 import 'core/services/theme_service.dart';
+import 'features/auth/presentation/cubit/auth_cubit.dart';
 import 'features/payment/data/services/paymob_service.dart';
 
 void main() async {
@@ -70,34 +72,37 @@ class MyApp extends StatelessWidget {
       valueListenable: ThemeService.instance.isDarkMode,
       builder: (context, isDark, _) {
         return ToastificationWrapper(
-          child: MaterialApp.router(
-            title: 'app_name'.tr(),
-            debugShowCheckedModeBanner: false,
-            // Disable stretch/glow overscroll indicator globally.
-            // This avoids _StretchController assertions seen on some Android ROMs (e.g. MIUI).
-            scrollBehavior:
-                const MaterialScrollBehavior().copyWith(overscroll: false),
-            // Localization
-            localizationsDelegates: context.localizationDelegates,
-            supportedLocales: context.supportedLocales,
-            locale: context.locale,
-            // Theme
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-            // Router
-            routerConfig: AppRouter.router,
-            // Builder for RTL support
-            builder: (context, child) {
-              final app = Directionality(
-                textDirection: context.locale.languageCode == 'ar'
-                    ? ui.TextDirection.rtl
-                    : ui.TextDirection.ltr,
-                child: child ?? const SizedBox(),
-              );
+          child: BlocProvider.value(
+            value: sl<AuthCubit>(),
+            child: MaterialApp.router(
+              title: 'app_name'.tr(),
+              debugShowCheckedModeBanner: false,
+              // Disable stretch/glow overscroll indicator globally.
+              // This avoids _StretchController assertions seen on some Android ROMs (e.g. MIUI).
+              scrollBehavior:
+                  const MaterialScrollBehavior().copyWith(overscroll: false),
+              // Localization
+              localizationsDelegates: context.localizationDelegates,
+              supportedLocales: context.supportedLocales,
+              locale: context.locale,
+              // Theme
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+              // Router
+              routerConfig: AppRouter.router,
+              // Builder for RTL support
+              builder: (context, child) {
+                final app = Directionality(
+                  textDirection: context.locale.languageCode == 'ar'
+                      ? ui.TextDirection.rtl
+                      : ui.TextDirection.ltr,
+                  child: child ?? const SizedBox(),
+                );
 
-              return kIsWeb ? MobileWebViewport(child: app) : app;
-            },
+                return kIsWeb ? MobileWebViewport(child: app) : app;
+              },
+            ),
           ),
         );
       },

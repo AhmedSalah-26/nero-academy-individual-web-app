@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/lesson_entity.dart';
 
@@ -30,51 +31,104 @@ class LessonItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final locale = context.locale.languageCode;
 
-    return Material(
-      color: _getBackgroundColor(),
-      child: InkWell(
-        onTap: isLocked ? null : onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: isCurrentLesson
-                ? const Border(
-                    left: BorderSide(
-                      color: AppColors.primary,
-                      width: 4,
-                    ),
-                  )
-                : null,
-          ),
+    return Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isLocked ? null : onTap,
           child: Opacity(
-            opacity: isLocked ? 0.7 : 1.0,
-            child: Row(
-              children: [
-                _buildStatusIcon(),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTitle(locale),
-                      const SizedBox(height: 4),
-                      _buildSubtitle(),
-                    ],
-                  ),
+            opacity: isLocked ? 0.62 : 1,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _backgroundColor(),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isCurrentLesson
+                      ? AppColors.primary.withValues(alpha: 0.28)
+                      : Colors.transparent,
                 ),
-                if (onDownloadTap != null && !isLocked) _buildDownloadButton(),
-                if (lessonNumber > 0) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    '$lessonNumber',
-                    style: TextStyle(
-                      color: isDark ? AppColors.grey500 : AppColors.grey400,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildLeadingIcon(),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            _buildLessonNumber(),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                lesson.getTitle(locale),
+                                textAlign: TextAlign.right,
+                                style: TextStyle(
+                                  color: isCurrentLesson
+                                      ? AppColors.primary
+                                      : (isDark
+                                          ? AppColors.textMainDark
+                                          : AppColors.textMainLight),
+                                  fontSize: 14,
+                                  fontWeight: isCurrentLesson
+                                      ? FontWeight.w800
+                                      : FontWeight.w700,
+                                  height: 1.35,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            if (isCurrentLesson) _buildPlayingBadge(),
+                            Text(
+                              isCurrentLesson
+                                  ? 'تمت المشاهدة 35%'
+                                  : _subtitleText(),
+                              style: TextStyle(
+                                color: isCurrentLesson
+                                    ? AppColors.primary.withValues(alpha: 0.82)
+                                    : (isDark
+                                        ? AppColors.textMutedDark
+                                        : AppColors.textMutedLight),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
+                  if (onDownloadTap != null && !isLocked) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: onDownloadTap,
+                      icon: Icon(
+                        isCompleted ? Icons.download_done : Icons.download,
+                        color: isCompleted
+                            ? AppColors.primary
+                            : (isDark
+                                ? AppColors.textMutedDark
+                                : AppColors.textMutedLight),
+                        size: 18,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -82,81 +136,88 @@ class LessonItem extends StatelessWidget {
     );
   }
 
-  Color _getBackgroundColor() {
+  Color _backgroundColor() {
     if (isCurrentLesson) {
-      return AppColors.primary.withValues(alpha: isDark ? 0.1 : 0.05);
+      return AppColors.primary.withValues(alpha: isDark ? 0.16 : 0.08);
     }
-    return isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    return isDark ? AppColors.surfaceDark : AppColors.white;
   }
 
-  Widget _buildStatusIcon() {
-    if (isCurrentLesson) {
-      return Container(
-        width: 24,
-        height: 24,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.play_arrow,
-          color: Colors.white,
-          size: 16,
-        ),
-      );
-    }
+  Widget _buildLeadingIcon() {
+    final icon = isLocked
+        ? Icons.lock_outline_rounded
+        : isCompleted
+            ? Icons.check_rounded
+            : isCurrentLesson
+                ? Icons.play_arrow_rounded
+                : _getLessonTypeIcon();
 
-    if (isCompleted) {
-      return Container(
-        width: 24,
-        height: 24,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.check,
-          color: Colors.white,
-          size: 14,
-        ),
-      );
-    }
+    final color = isLocked
+        ? (isDark ? AppColors.textMutedDark : AppColors.textMutedLight)
+        : AppColors.white;
 
-    if (isLocked) {
-      return Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-            width: 1,
-          ),
-        ),
-        child: Icon(
-          Icons.lock,
-          color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
-          size: 12,
-        ),
-      );
-    }
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: isLocked
+            ? (isDark ? AppColors.cardDark : const Color(0xFFF3EEF9))
+            : AppColors.primary,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color, size: 18),
+    );
+  }
 
+  Widget _buildLessonNumber() {
     return Container(
       width: 24,
       height: 24,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-          width: 1,
+        color: isCurrentLesson
+            ? AppColors.primary.withValues(alpha: 0.12)
+            : (isDark ? AppColors.cardDark : const Color(0xFFF5F0FB)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        lessonNumber > 0 ? '$lessonNumber' : '1',
+        style: TextStyle(
+          color: isCurrentLesson
+              ? AppColors.primary
+              : (isDark ? AppColors.textMutedDark : AppColors.textMutedLight),
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      child: Icon(
-        _getLessonTypeIcon(),
-        color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
-        size: 12,
+    );
+  }
+
+  Widget _buildPlayingBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Text(
+        'قيد التشغيل',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+        ),
       ),
     );
+  }
+
+  String _subtitleText() {
+    if (isLocked) return 'غير متاح الآن';
+    if (lesson.durationInMinutes > 0) {
+      return '${lesson.durationInMinutes} ${'course_player.min'.tr()}';
+    }
+    return isCompleted ? 'تمت المشاهدة' : 'جاهز للمشاهدة';
   }
 
   IconData _getLessonTypeIcon() {
@@ -176,73 +237,5 @@ class LessonItem extends StatelessWidget {
       case LessonType.document:
         return Icons.insert_drive_file_outlined;
     }
-  }
-
-  Widget _buildTitle(String locale) {
-    return Text(
-      lesson.getTitle(locale),
-      style: TextStyle(
-        color: isCurrentLesson
-            ? AppColors.primary
-            : (isDark ? AppColors.textMainDark : AppColors.textMainLight),
-        fontSize: 14,
-        fontWeight: isCurrentLesson ? FontWeight.bold : FontWeight.w500,
-      ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildSubtitle() {
-    return Row(
-      children: [
-        Text(
-          lesson.durationInMinutes > 0
-              ? '${lesson.durationInMinutes} ${'course_player.min'.tr()}'
-              : '',
-          style: TextStyle(
-            color: isCurrentLesson
-                ? AppColors.primary.withValues(alpha: 0.8)
-                : (isDark ? AppColors.textMutedDark : AppColors.textMutedLight),
-            fontSize: 12,
-          ),
-        ),
-        if (isCurrentLesson) ...[
-          const SizedBox(width: 8),
-          const Text('•', style: TextStyle(color: AppColors.primary)),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              'course_player.playing'.tr().toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDownloadButton() {
-    return IconButton(
-      onPressed: onDownloadTap,
-      icon: Icon(
-        isCompleted ? Icons.download_done : Icons.download,
-        color: isCompleted
-            ? AppColors.primary
-            : (isDark ? AppColors.textMutedDark : AppColors.textMutedLight),
-        size: 20,
-      ),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-    );
   }
 }

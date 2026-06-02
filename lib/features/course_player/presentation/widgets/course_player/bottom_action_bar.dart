@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import '../../../../../core/theme/app_colors.dart';
 
 /// Bottom Action Bar Widget
@@ -26,7 +27,7 @@ class BottomActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       decoration: BoxDecoration(
         color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         boxShadow: [
@@ -39,21 +40,22 @@ class BottomActionBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            // Resources button
-            Expanded(
-              child: _buildResourcesButton(),
-            ),
-            const SizedBox(width: 12),
-            // Next lesson or Complete course button
-            Expanded(
-              flex: 2,
-              child: isLastLesson
-                  ? _buildCompleteCourseButton()
-                  : _buildNextLessonButton(),
-            ),
-          ],
+        child: Directionality(
+          textDirection: ui.TextDirection.rtl,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: isLastLesson
+                    ? _buildCompleteCourseButton()
+                    : _buildNextLessonButton(),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildResourcesButton(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -67,7 +69,8 @@ class BottomActionBar extends StatelessWidget {
         onTap: onResourcesTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
@@ -91,7 +94,7 @@ class BottomActionBar extends StatelessWidget {
                   color:
                       isDark ? AppColors.textMainDark : AppColors.textMainLight,
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -113,21 +116,22 @@ class BottomActionBar extends StatelessWidget {
         onTap: hasNextLesson ? onNextLessonTap : null,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'course_player.next_lesson'.tr(),
-                style: const TextStyle(
+                'إكمال والانتقال للتالي',
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(width: 6),
-              const Icon(
-                Icons.arrow_forward,
+              SizedBox(width: 6),
+              Icon(
+                Icons.arrow_back_rounded,
                 color: Colors.white,
                 size: 18,
               ),
@@ -148,7 +152,8 @@ class BottomActionBar extends StatelessWidget {
         onTap: isCompletingCourse ? null : onCompleteCourse,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

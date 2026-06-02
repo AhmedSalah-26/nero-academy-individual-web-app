@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/shared_widgets/empty_state.dart';
 import '../../../domain/entities/section_entity.dart';
 import '../../../domain/entities/lesson_entity.dart';
@@ -36,13 +37,31 @@ class CurriculumList extends StatelessWidget {
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _calculateItemCount(),
-      itemBuilder: (context, index) {
-        return _buildItem(index);
-      },
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : AppColors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : const Color(0xFFE8DDF7),
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _calculateItemCount(),
+              itemBuilder: (context, index) {
+                return _buildItem(index);
+              },
+            ),
+          ),
+        ),
+      ),
     );
   }
 

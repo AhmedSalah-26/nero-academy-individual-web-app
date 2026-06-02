@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/section_entity.dart';
 
@@ -24,59 +25,55 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final locale = context.locale.languageCode;
 
-    return Column(
-      children: [
-        if (showDivider && sectionIndex > 0)
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: isDark ? AppColors.grey700 : AppColors.grey200,
-          ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : AppColors.backgroundLight.withValues(alpha: 0.5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  '${section.getTitle(locale)} - ${_toArabicNumber(sectionIndex + 1)} ${'course_player.section'.tr()}',
+    return Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: Column(
+        children: [
+          if (showDivider && sectionIndex > 0)
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: isDark ? AppColors.grey700 : const Color(0xFFE8DDF7),
+            ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 13, 14, 10),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : AppColors.backgroundLight.withValues(alpha: 0.45),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    section.getTitle(locale),
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.textMainDark
+                          : AppColors.textMainLight,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      height: 1.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'قائمة المحاضرات',
                   style: TextStyle(
                     color: isDark
-                        ? AppColors.textMutedDark
-                        : AppColors.textMutedLight,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                        ? AppColors.textMutedDark.withValues(alpha: 0.75)
+                        : AppColors.textMutedLight.withValues(alpha: 0.75),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '$completedCount / ${section.totalLessons}',
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.textMutedDark.withValues(alpha: 0.7)
-                      : AppColors.textMutedLight.withValues(alpha: 0.7),
-                  fontSize: 12,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
-  }
-
-  String _toArabicNumber(int number) {
-    const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return number.toString().split('').map((digit) {
-      final index = int.tryParse(digit);
-      return index != null ? arabicNumbers[index] : digit;
-    }).join();
   }
 }

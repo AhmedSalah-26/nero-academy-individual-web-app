@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import '../../../../../core/theme/app_colors.dart';
 
 /// Content Tabs Widget
@@ -27,14 +27,17 @@ class ContentTabs extends StatelessWidget {
           ),
         ),
       ),
-      child: Row(
-        children: [
-          _buildTab(0, 'course_player.lectures'.tr()),
-          _buildTab(1, 'course_player.more'.tr()),
-          _buildTab(2, 'course_player.qa'.tr()),
-          _buildTab(3, 'course_player.quizzes'.tr()),
-          _buildTab(4, 'course_player.rating'.tr()),
-        ],
+      child: Directionality(
+        textDirection: ui.TextDirection.rtl,
+        child: Row(
+          children: [
+            _buildTab(0, 'المحاضرات'),
+            _buildTab(1, 'المزيد'),
+            _buildTab(2, 'الأسئلة'),
+            _buildTab(3, 'الاختبارات'),
+            _buildTab(4, 'التقييم'),
+          ],
+        ),
       ),
     );
   }
@@ -46,12 +49,12 @@ class ContentTabs extends StatelessWidget {
       child: InkWell(
         onTap: () => onTabChanged(index),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 4),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
                 color: isSelected ? AppColors.primary : Colors.transparent,
-                width: 2,
+                width: 2.4,
               ),
             ),
           ),
@@ -67,8 +70,8 @@ class ContentTabs extends StatelessWidget {
                     : (isDark
                         ? AppColors.textMutedDark
                         : AppColors.textMutedLight),
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 13.5,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
           ),

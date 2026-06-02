@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/lesson_entity.dart';
 import '../../cubit/course_player_cubit.dart';
@@ -51,6 +52,32 @@ class VideoPlayerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: isDark ? 0.32 : 0.22),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: _buildPlayerContent(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayerContent(BuildContext context) {
     if (lesson.videoUrl != null && lesson.videoUrl!.isNotEmpty) {
       final videoUrl = lesson.videoUrl!.trim();
       final progress = context.read<CoursePlayerCubit>().state.currentProgress;
@@ -75,7 +102,7 @@ class VideoPlayerSection extends StatelessWidget {
       }
 
       return YouTubePlayerWidget(
-        key: ValueKey(lesson.id), // Prevent rebuilds when switching lessons
+        key: ValueKey(lesson.id),
         videoUrl: videoUrl,
         isDark: isDark,
         initialPosition: initialPosition,
@@ -84,7 +111,6 @@ class VideoPlayerSection extends StatelessWidget {
       );
     }
 
-    // No video URL - show error message
     return _buildNoVideoWidget();
   }
 

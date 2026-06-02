@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -155,30 +156,67 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        setState(() => _isPlaying = false);
-        _saveProgress();
-        context.go('/home');
+        _navigateBackFromPlayer();
       },
       child: Scaffold(
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         appBar: AppBar(
-          backgroundColor: isDark ? AppColors.cardDark : AppColors.white,
+          backgroundColor:
+              isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
+          toolbarHeight: 64,
           leading: AppBackButton(
             onPressed: _handleBack,
           ),
-          title: Text(
-            widget.courseTitle,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.textMainDark : AppColors.textMainLight,
+          title: Directionality(
+            textDirection: ui.TextDirection.rtl,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'كيمياء - الصف الثالث الثانوي',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? AppColors.textMainDark
+                        : AppColors.textMainLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'الباب الأول: البناء الذري والجدول الدوري',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppColors.textMutedDark
+                        : AppColors.textMutedLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              onPressed: () => HapticFeedback.selectionClick(),
+              icon: Icon(
+                Icons.more_horiz_rounded,
+                color:
+                    isDark ? AppColors.textMainDark : AppColors.textMainLight,
+              ),
+              tooltip: 'المزيد',
+            ),
+          ],
         ),
         body: SafeArea(
           bottom: false,
@@ -292,8 +330,8 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
           lessonIndex: lessonIndex,
           isBookmarked: state.isBookmarked,
           isDark: isDark,
-          instructorName: state.instructorName,
-          instructorAvatar: state.instructorAvatar,
+          instructorName: null,
+          instructorAvatar: null,
           onBookmarkTap: () {
             HapticFeedback.lightImpact();
             builderContext.read<CoursePlayerCubit>().toggleBookmark();
@@ -319,9 +357,19 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
   }
 
   void _handleBack() {
-    setState(() => _isPlaying = false);
+    _navigateBackFromPlayer();
+  }
+
+  void _navigateBackFromPlayer() {
+    if (mounted) {
+      setState(() => _isPlaying = false);
+    }
     _saveProgress();
-    context.go('/home');
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go('/my-learning');
   }
 
   Widget _buildTabContent(CoursePlayerState state, bool isDark) {

@@ -1,10 +1,11 @@
+import 'dart:ui' as ui;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/routing/app_router.dart';
-import '../../../../../core/shared_widgets/glass_icon_button.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../cart/presentation/cubit/cart_cubit.dart';
@@ -23,105 +24,119 @@ class HomeAppBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final horizontalPadding = screenWidth * 0.04;
-    final verticalPadding = screenWidth * 0.03;
+    final verticalPadding = screenWidth * 0.018;
 
-    final String helloText = 'home.hello'.tr();
-    final String displayName = (userName != null && userName!.isNotEmpty)
+    final helloText = 'home.hello'.tr();
+    final displayName = (userName != null && userName!.isNotEmpty)
         ? userName!.trim().split(' ').take(2).join(' ')
         : '';
 
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: verticalPadding,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: RichText(
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              text: TextSpan(
-                text: helloText,
-                style: AppTextStyles.headlineMedium.copyWith(
-                  color:
-                      isDark ? AppColors.textMainDark : AppColors.textMainLight,
-                  fontWeight: FontWeight.w700,
-                  fontSize: (screenWidth * 0.05).clamp(18.0, 22.0),
-                  fontFamily: 'Almarai',
-                ),
+    return Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: verticalPadding,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  Text(
+                    helloText,
+                    textAlign: TextAlign.right,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: isDark
+                          ? AppColors.textMutedDark
+                          : AppColors.textMutedLight,
+                      fontWeight: FontWeight.w700,
+                      fontSize: (screenWidth * 0.034).clamp(12.0, 14.0),
+                      fontFamily: 'Almarai',
+                    ),
+                  ),
+                  if (displayName.isNotEmpty) const SizedBox(height: 2),
                   if (displayName.isNotEmpty)
-                    TextSpan(
-                      text: ' $displayName',
-                      style: GoogleFonts.dancingScript(
+                    Text(
+                      displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: AppTextStyles.headlineMedium.copyWith(
                         color: const Color(0xFF6D28D9),
-                        fontWeight: FontWeight.w400,
-                        fontStyle: FontStyle.italic,
-                        fontSize: (screenWidth * 0.06).clamp(22.0, 26.0),
+                        fontWeight: FontWeight.w800,
+                        fontSize: (screenWidth * 0.047).clamp(18.0, 21.0),
+                        fontFamily: 'Almarai',
                       ),
                     ),
                 ],
               ),
             ),
-          ),
-          Row(
-            children: [
-              // Wishlist button
-              _ActionButton(
-                icon: Icons.favorite_border_rounded,
-                onTap: () => AppRouter.goToWishlist(context),
-              ),
-              SizedBox(width: screenWidth * 0.02),
-              // History button
-              _ActionButton(
-                icon: Icons.history_rounded,
-                onTap: () => AppRouter.goToHistory(context),
-              ),
-              SizedBox(width: screenWidth * 0.02),
-              // Cart button with badge from CartCubit
-              BlocBuilder<CartCubit, CartState>(
-                bloc: sl<CartCubit>(),
-                builder: (context, state) {
-                  return _ActionButton(
-                    icon: Icons.shopping_cart_outlined,
-                    onTap: () => AppRouter.goToCart(context),
-                    badgeCount: state.itemsCount,
-                    compactBadge: true,
-                  );
-                },
-              ),
-              SizedBox(width: screenWidth * 0.02),
-              BlocBuilder<NotificationsCubit, NotificationsState>(
-                bloc: sl<NotificationsCubit>(),
-                builder: (context, state) {
-                  final hasUnread =
-                      state is NotificationsLoaded && state.unreadCount > 0;
-                  return _ActionButton(
-                    icon: Icons.notifications_outlined,
-                    onTap: () => AppRouter.goToNotifications(context),
-                    hasNotification: hasUnread,
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+            SizedBox(width: screenWidth * 0.02),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                BlocBuilder<NotificationsCubit, NotificationsState>(
+                  bloc: sl<NotificationsCubit>(),
+                  builder: (context, state) {
+                    final hasUnread =
+                        state is NotificationsLoaded && state.unreadCount > 0;
+                    return _QuickAction(
+                      icon: Icons.notifications_outlined,
+                      label: 'تنبيهات',
+                      onTap: () => AppRouter.goToNotifications(context),
+                      hasNotification: hasUnread,
+                    );
+                  },
+                ),
+                SizedBox(width: screenWidth * 0.01),
+                BlocBuilder<CartCubit, CartState>(
+                  bloc: sl<CartCubit>(),
+                  builder: (context, state) {
+                    return _QuickAction(
+                      icon: Icons.shopping_cart_outlined,
+                      label: 'المتجر',
+                      onTap: () => AppRouter.goToCart(context),
+                      badgeCount: state.itemsCount,
+                      compactBadge: true,
+                    );
+                  },
+                ),
+                SizedBox(width: screenWidth * 0.01),
+                _QuickAction(
+                  icon: Icons.history_rounded,
+                  label: 'سجل التعلم',
+                  onTap: () => AppRouter.goToHistory(context),
+                ),
+                SizedBox(width: screenWidth * 0.01),
+                _QuickAction(
+                  icon: Icons.favorite_border_rounded,
+                  label: 'المفضلة',
+                  onTap: () => AppRouter.goToWishlist(context),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ActionButton extends StatelessWidget {
+class _QuickAction extends StatelessWidget {
   final IconData icon;
+  final String label;
   final VoidCallback onTap;
   final bool hasNotification;
   final int? badgeCount;
   final bool compactBadge;
 
-  const _ActionButton({
+  const _QuickAction({
     required this.icon,
+    required this.label,
     required this.onTap,
     this.hasNotification = false,
     this.badgeCount,
@@ -131,19 +146,110 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final buttonSize = (screenWidth * 0.09).clamp(34.0, 40.0);
-    final iconSize = (screenWidth * 0.045).clamp(17.0, 20.0);
-    final borderRadius = (screenWidth * 0.025).clamp(8.0, 11.0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final buttonSize = (screenWidth * 0.082).clamp(32.0, 38.0);
+    final iconSize = (screenWidth * 0.042).clamp(16.0, 19.0);
 
-    return GlassIconButton(
-      icon: icon,
+    return GestureDetector(
       onTap: onTap,
-      size: buttonSize,
-      iconSize: iconSize,
-      borderRadius: borderRadius,
-      hasNotification: hasNotification,
-      badgeCount: badgeCount,
-      compactBadge: compactBadge,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: buttonSize,
+                height: buttonSize,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : AppColors.white,
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.26),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  icon,
+                  color: AppColors.primary,
+                  size: iconSize,
+                ),
+              ),
+              if (hasNotification)
+                PositionedDirectional(
+                  top: -1,
+                  end: -1,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? AppColors.cardDark : AppColors.white,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              if ((badgeCount ?? 0) > 0)
+                PositionedDirectional(
+                  top: -5,
+                  end: -5,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      minWidth: compactBadge ? 16 : 18,
+                      minHeight: compactBadge ? 16 : 18,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                        color: isDark ? AppColors.cardDark : AppColors.white,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      badgeCount! > 99 ? '99+' : badgeCount.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          SizedBox(
+            width: (screenWidth * 0.14).clamp(44.0, 58.0),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color:
+                    isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                fontSize: (screenWidth * 0.023).clamp(8.5, 10.0),
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

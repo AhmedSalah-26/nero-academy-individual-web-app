@@ -206,17 +206,6 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
             ),
           ),
           centerTitle: true,
-          actions: [
-            IconButton(
-              onPressed: () => HapticFeedback.selectionClick(),
-              icon: Icon(
-                Icons.more_horiz_rounded,
-                color:
-                    isDark ? AppColors.textMainDark : AppColors.textMainLight,
-              ),
-              tooltip: 'المزيد',
-            ),
-          ],
         ),
         body: SafeArea(
           bottom: false,

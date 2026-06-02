@@ -136,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final locale = context.locale.languageCode;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final sectionSpacing = screenWidth * 0.045;
+    final sectionSpacing = screenWidth * 0.055;
 
     final sections = <Widget>[];
     int sectionIndex = 0;
@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
         SlideFadeIn.fromBottom(
           delay: Duration(milliseconds: 100 * sectionIndex++),
           child: Padding(
-            padding: EdgeInsets.only(top: screenWidth * 0.012),
+            padding: EdgeInsets.only(top: screenWidth * 0.04),
             child: HomeBannerCarousel(banners: state.banners, locale: locale),
           ),
         ),
@@ -236,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Bottom Spacing
-    sections.add(SizedBox(height: screenHeight * 0.08));
+    sections.add(SizedBox(height: (screenHeight * 0.08).clamp(110.0, 130.0)));
 
     return sections;
   }

@@ -56,38 +56,41 @@ class CourseCard extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(radius - borderWidth),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildThumbnail(isDark),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // Title
                         Text(
                           course.getTitle(locale),
+                          textAlign: TextAlign.right,
                           style: TextStyle(
                             color: isDark
                                 ? AppColors.textMainDark
                                 : AppColors.textMainLight,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                            height: 1.25,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11.5,
+                            height: 1.22,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         // Instructor
                         Text(
                           course.instructorName ?? '',
+                          textAlign: TextAlign.right,
                           style: TextStyle(
                             color: isDark
                                 ? AppColors.textMutedDark
                                 : AppColors.textMutedLight,
-                            fontSize: 10,
+                            fontSize: 9.8,
+                            fontWeight: FontWeight.w600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -124,17 +127,10 @@ class CourseCard extends StatelessWidget {
                     placeholder: (_, __) => Container(
                       color: isDark ? AppColors.surfaceDark : AppColors.grey200,
                     ),
-                    errorWidget: (_, __, ___) => Container(
-                      color: isDark ? AppColors.surfaceDark : AppColors.grey200,
-                      child: const Icon(Icons.play_circle_outline,
-                          color: AppColors.grey400),
-                    ),
+                    errorWidget: (_, __, ___) =>
+                        _buildThumbnailFallback(isDark),
                   )
-                : Container(
-                    color: isDark ? AppColors.surfaceDark : AppColors.grey200,
-                    child: const Icon(Icons.play_circle_outline,
-                        color: AppColors.grey400),
-                  ),
+                : _buildThumbnailFallback(isDark),
           ),
         ),
         // Custom Badge, Free Badge, or Discount Badge (Priority Order)
@@ -244,21 +240,40 @@ class CourseCard extends StatelessWidget {
     );
   }
 
+  Widget _buildThumbnailFallback(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: isDark
+              ? const [Color(0xFF251643), Color(0xFF151225)]
+              : const [Color(0xFFE7D7FF), Color(0xFFF7F0FF)],
+        ),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.science_outlined,
+            color: AppColors.primary.withValues(alpha: 0.28),
+            size: 38,
+          ),
+          Icon(
+            Icons.play_circle_outline_rounded,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.72)
+                : AppColors.primary.withValues(alpha: 0.72),
+            size: 30,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatsRow(bool isDark) {
     return Row(
       children: [
-        // Students
-        Icon(Icons.people_alt_outlined,
-            size: 12, color: isDark ? AppColors.grey400 : AppColors.grey500),
-        const SizedBox(width: 3),
-        Text(
-          _formatCount(course.enrolledCount),
-          style: TextStyle(
-            color: isDark ? AppColors.grey400 : AppColors.grey500,
-            fontSize: 10,
-          ),
-        ),
-        const Spacer(),
         // Rating
         Text(
           '(${_formatCount(course.ratingCount)})',
@@ -278,6 +293,18 @@ class CourseCard extends StatelessWidget {
             fontSize: 10.5,
           ),
         ),
+        const Spacer(),
+        Text(
+          _formatCount(course.enrolledCount),
+          style: TextStyle(
+            color: isDark ? AppColors.grey400 : AppColors.grey500,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 3),
+        Icon(Icons.people_alt_outlined,
+            size: 12, color: isDark ? AppColors.grey400 : AppColors.grey500),
       ],
     );
   }
@@ -300,37 +327,40 @@ class CourseCard extends StatelessWidget {
     final originalPrice = course.price;
     final currency = course.currency;
 
-    return Directionality(
-      textDirection: ui.TextDirection.ltr,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Text(
-              '$currency ${currentPrice.toStringAsFixed(0)}',
-              style: TextStyle(
-                color: isDark ? AppColors.white : AppColors.primary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (hasDiscount && originalPrice > currentPrice) ...[
-            const SizedBox(width: 4),
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: Directionality(
+        textDirection: ui.TextDirection.ltr,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Flexible(
               child: Text(
-                originalPrice.toStringAsFixed(0),
+                '$currency ${currentPrice.toStringAsFixed(0)}',
                 style: TextStyle(
-                  color: isDark ? AppColors.grey500 : AppColors.grey400,
-                  decoration: TextDecoration.lineThrough,
-                  fontSize: 10,
+                  color: isDark ? AppColors.white : AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (hasDiscount && originalPrice > currentPrice) ...[
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  originalPrice.toStringAsFixed(0),
+                  style: TextStyle(
+                    color: isDark ? AppColors.grey500 : AppColors.grey400,
+                    decoration: TextDecoration.lineThrough,
+                    fontSize: 10,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../../core/shared_widgets/glass_search_bar.dart';
 import '../../../../../core/theme/app_colors.dart';
 import 'home_app_bar.dart';
@@ -14,7 +15,9 @@ class HomeSliverAppBar extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final w = size.width;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final expandedHeight = (w * 0.56 + 72.0).clamp(265.0, 330.0);
+    final toolbarHeight = (w * 0.24).clamp(92.0, 108.0);
+    final expandedHeight =
+        (w * 0.58 + toolbarHeight + 54.0).clamp(335.0, 395.0);
 
     return SliverAppBar(
       pinned: true,
@@ -22,7 +25,7 @@ class HomeSliverAppBar extends StatelessWidget {
       backgroundColor:
           isDark ? AppColors.backgroundDark : const Color(0xFFEEE4FC),
       expandedHeight: expandedHeight,
-      toolbarHeight: 58,
+      toolbarHeight: toolbarHeight,
       titleSpacing: 0,
       title: HomeAppBar(userName: userName),
       flexibleSpace: FlexibleSpaceBar(
@@ -31,7 +34,7 @@ class HomeSliverAppBar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 58),
+              SizedBox(height: toolbarHeight),
               Expanded(
                 child: isDark
                     ? Image.asset(
@@ -43,11 +46,15 @@ class HomeSliverAppBar extends StatelessWidget {
                     : Stack(
                         fit: StackFit.expand,
                         children: [
-                          Image.asset(
-                            'assets/home_hero_generated_reference.png',
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            alignment: Alignment.center,
+                          Transform.scale(
+                            scale: 0.94,
+                            alignment: Alignment.centerRight,
+                            child: Image.asset(
+                              'assets/home_hero_generated_reference.png',
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.centerRight,
+                            ),
                           ),
                           const _HeroCopy(),
                         ],
@@ -58,21 +65,20 @@ class HomeSliverAppBar extends StatelessWidget {
         ),
       ),
       bottom: PreferredSize(
-        preferredSize: Size.fromHeight(44.0 + (w * 0.028) + 4.0),
+        preferredSize: Size.fromHeight(46.0 + (w * 0.038) + 8.0),
         child: Container(
           color: Colors.transparent,
           padding: EdgeInsets.only(
             left: w * 0.04,
             right: w * 0.04,
-            bottom: w * 0.028,
-            top: 4,
+            bottom: w * 0.038,
+            top: 8,
           ),
           child: GlassSearchBar(
-            hintText:
-                '\u0627\u0628\u062d\u062b \u0639\u0646 \u062f\u0631\u0633\u060c \u0627\u0645\u062a\u062d\u0627\u0646\u060c \u0645\u0630\u0643\u0631\u0629 ...',
+            hintText: 'ابحث عن درس، امتحان، مذكرة ...',
             onTap: () => context.pushNamed('search'),
             readOnly: true,
-            height: 44,
+            height: 46,
             borderRadius: 12,
             iconSize: w * 0.05,
             hintStyle: TextStyle(fontSize: w * 0.033),
@@ -96,9 +102,9 @@ class _HeroCopy extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: Padding(
           padding: EdgeInsets.only(
-            left: w * 0.055,
-            right: w * 0.54,
-            bottom: w * 0.018,
+            left: w * 0.05,
+            right: w * 0.50,
+            bottom: w * 0.02,
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -108,30 +114,20 @@ class _HeroCopy extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'مرحباً بك في',
+                  'مرحبا بك في منصة',
                   style: TextStyle(
                     color: const Color(0xFF1E135C),
-                    fontSize: (w * 0.027).clamp(10.0, 13.0),
+                    fontSize: (w * 0.03).clamp(11.0, 14.0),
                     fontWeight: FontWeight.w800,
                     height: 1.25,
                   ),
                 ),
-                SizedBox(height: w * 0.006),
-                Text(
-                  'منصة',
-                  style: TextStyle(
-                    color: AppColors.primaryDark,
-                    fontSize: (w * 0.032).clamp(12.0, 15.0),
-                    fontWeight: FontWeight.w900,
-                    height: 1.15,
-                  ),
-                ),
-                SizedBox(height: w * 0.01),
+                SizedBox(height: w * 0.012),
                 Text(
                   'أحمد الشيخ',
                   style: TextStyle(
                     color: const Color(0xFF1E135C),
-                    fontSize: (w * 0.075).clamp(26.0, 37.0),
+                    fontSize: (w * 0.078).clamp(27.0, 39.0),
                     fontWeight: FontWeight.w900,
                     height: 1.08,
                   ),

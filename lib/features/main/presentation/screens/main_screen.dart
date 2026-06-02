@@ -96,10 +96,10 @@ class _MainScreenState extends State<MainScreen> {
             bottomNavigationBar: SafeArea(
               child: Padding(
                 padding: EdgeInsets.only(
-                  left: screenWidth * 0.08,
-                  right: screenWidth * 0.08,
-                  bottom: screenWidth * 0.04,
-                  top: screenWidth * 0.02,
+                  left: screenWidth * 0.09,
+                  right: screenWidth * 0.09,
+                  bottom: screenWidth * 0.032,
+                  top: screenWidth * 0.014,
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(40),
@@ -107,8 +107,8 @@ class _MainScreenState extends State<MainScreen> {
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.04,
-                        vertical: screenWidth * 0.028,
+                        horizontal: screenWidth * 0.035,
+                        vertical: screenWidth * 0.018,
                       ),
                       decoration: BoxDecoration(
                         color: isDark
@@ -201,8 +201,8 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
-    final iconSize = (screenWidth * 0.055).clamp(22.0, 26.0);
-    final padding = screenWidth * 0.025;
+    final iconSize = (screenWidth * 0.052).clamp(21.0, 24.0);
+    final padding = (screenWidth * 0.021).clamp(8.0, 10.0);
 
     return GestureDetector(
       onTap: onTap,

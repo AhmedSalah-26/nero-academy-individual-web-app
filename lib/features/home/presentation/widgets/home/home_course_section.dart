@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,34 +41,42 @@ class HomeCourseSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Section Header
-        Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04, vertical: screenHeight * 0.006),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: isDark
-                        ? AppColors.textMainDark
-                        : AppColors.textMainLight,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (onSeeAll != null)
-                GestureDetector(
-                  onTap: onSeeAll,
+        Directionality(
+          textDirection: ui.TextDirection.rtl,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.055,
+              vertical: screenHeight * 0.006,
+            ),
+            child: Row(
+              children: [
+                Expanded(
                   child: Text(
-                    'home.see_all'.tr(),
-                    style: AppTextStyles.labelMedium
-                        .copyWith(color: AppColors.primary, fontSize: 12),
+                    title,
+                    textAlign: TextAlign.right,
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: isDark
+                          ? AppColors.textMainDark
+                          : AppColors.textMainLight,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-            ],
+                if (onSeeAll != null)
+                  GestureDetector(
+                    onTap: onSeeAll,
+                    child: Text(
+                      'home.see_all'.tr(),
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         // Course List with BlocBuilder for proper rebuilds
@@ -85,8 +95,8 @@ class HomeCourseSection extends StatelessWidget {
 
   Widget _buildHorizontalList(BuildContext context, double screenWidth,
       double screenHeight, WishlistState wishlistState) {
-    final cardWidth = (screenWidth * 0.5).clamp(172.0, 220.0);
-    final listHeight = (cardWidth * 1.16).clamp(205.0, 260.0);
+    final cardWidth = (screenWidth * 0.46).clamp(160.0, 205.0);
+    final listHeight = (cardWidth * 1.14).clamp(195.0, 242.0);
     // Extra padding for shadow/glow visibility
     const shadowPadding = 10.0;
 
@@ -95,13 +105,13 @@ class HomeCourseSection extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.04,
+          horizontal: screenWidth * 0.055,
           vertical: shadowPadding,
         ),
         clipBehavior: Clip.none,
         physics: const BouncingScrollPhysics(),
         itemCount: courses.length,
-        separatorBuilder: (_, __) => SizedBox(width: screenWidth * 0.03),
+        separatorBuilder: (_, __) => SizedBox(width: screenWidth * 0.035),
         itemBuilder: (context, index) {
           final course = courses[index];
           final isInWishlist =

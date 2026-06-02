@@ -26,7 +26,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.88);
+    _pageController = PageController(viewportFraction: 1);
     _startAutoScroll();
   }
 
@@ -58,16 +58,19 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: bannerHeight,
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) => setState(() => _currentPage = index),
-            itemCount: widget.banners.length,
-            itemBuilder: (context, index) => _BannerItem(
-              banner: widget.banners[index],
-              locale: widget.locale,
-              screenWidth: screenWidth,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.055),
+          child: SizedBox(
+            height: bannerHeight,
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) => setState(() => _currentPage = index),
+              itemCount: widget.banners.length,
+              itemBuilder: (context, index) => _BannerItem(
+                banner: widget.banners[index],
+                locale: widget.locale,
+                screenWidth: screenWidth,
+              ),
             ),
           ),
         ),
@@ -89,12 +92,9 @@ class _BannerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final padding = screenWidth * 0.016;
-
     return GestureDetector(
       onTap: () {},
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: padding),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           border: Border.all(

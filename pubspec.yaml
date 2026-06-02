@@ -86,7 +86,7 @@ dependencies:
   country_picker: ^2.0.26
   # Open Files
   open_filex: ^4.4.0
-  font_awesome_flutter: ^10.12.0
+  font_awesome_flutter: ^11.0.0
   uuid: ^4.5.1
   mime: ^2.0.0
   image: ^4.8.0

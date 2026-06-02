@@ -443,7 +443,7 @@ class _InstructorProfileScreenState extends State<InstructorProfileScreen> {
   }
 
   Widget _buildSocialButton({
-    required IconData icon,
+    required FaIconData icon,
     required String url,
     required bool isDark,
     Color? brandColor,

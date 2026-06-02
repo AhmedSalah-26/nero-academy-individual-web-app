@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/animations/animations.dart';
 import '../../../../core/routing/app_router.dart';
@@ -101,12 +100,10 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           },
           builder: (context, state) {
-            final topPadding = MediaQuery.of(context).padding.top;
             return RefreshIndicator(
               onRefresh: _onRefresh,
               color: AppColors.primary,
-              backgroundColor:
-                  isDark ? AppColors.cardDark : AppColors.white,
+              backgroundColor: isDark ? AppColors.cardDark : AppColors.white,
               displacement: 40,
               child: CustomScrollView(
                 controller: _scrollController,
@@ -139,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final locale = context.locale.languageCode;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final sectionSpacing = screenWidth * 0.06;
+    final sectionSpacing = screenWidth * 0.045;
 
     final sections = <Widget>[];
     int sectionIndex = 0;
@@ -150,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
         SlideFadeIn.fromBottom(
           delay: Duration(milliseconds: 100 * sectionIndex++),
           child: Padding(
-            padding: EdgeInsets.only(top: screenWidth * 0.02),
+            padding: EdgeInsets.only(top: screenWidth * 0.012),
             child: HomeBannerCarousel(banners: state.banners, locale: locale),
           ),
         ),
@@ -215,8 +212,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-
-
     // New Arrivals Section
     if (state.newCourses.isNotEmpty) {
       sections.add(
@@ -241,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Bottom Spacing
-    sections.add(SizedBox(height: screenHeight * 0.12));
+    sections.add(SizedBox(height: screenHeight * 0.08));
 
     return sections;
   }

@@ -41,7 +41,7 @@ class HomeCourseSection extends StatelessWidget {
         // Section Header
         Padding(
           padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04, vertical: screenHeight * 0.01),
+              horizontal: screenWidth * 0.04, vertical: screenHeight * 0.006),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -85,10 +85,10 @@ class HomeCourseSection extends StatelessWidget {
 
   Widget _buildHorizontalList(BuildContext context, double screenWidth,
       double screenHeight, WishlistState wishlistState) {
-    final cardWidth = (screenWidth * 0.58).clamp(200.0, 260.0);
-    final listHeight = (cardWidth * 1.3).clamp(260.0, 340.0);
+    final cardWidth = (screenWidth * 0.5).clamp(172.0, 220.0);
+    final listHeight = (cardWidth * 1.16).clamp(205.0, 260.0);
     // Extra padding for shadow/glow visibility
-    const shadowPadding = 16.0;
+    const shadowPadding = 10.0;
 
     return SizedBox(
       height: listHeight + (shadowPadding * 2),
@@ -101,7 +101,7 @@ class HomeCourseSection extends StatelessWidget {
         clipBehavior: Clip.none,
         physics: const BouncingScrollPhysics(),
         itemCount: courses.length,
-        separatorBuilder: (_, __) => SizedBox(width: screenWidth * 0.04),
+        separatorBuilder: (_, __) => SizedBox(width: screenWidth * 0.03),
         itemBuilder: (context, index) {
           final course = courses[index];
           final isInWishlist =

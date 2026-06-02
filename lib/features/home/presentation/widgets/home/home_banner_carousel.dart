@@ -26,7 +26,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.9);
+    _pageController = PageController(viewportFraction: 0.88);
     _startAutoScroll();
   }
 
@@ -53,7 +53,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final bannerHeight = (screenHeight * 0.22).clamp(150.0, 200.0);
+    final bannerHeight = (screenHeight * 0.17).clamp(118.0, 155.0);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -71,7 +71,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
             ),
           ),
         ),
-        SizedBox(height: screenHeight * 0.012),
+        SizedBox(height: screenHeight * 0.008),
         _DotsIndicator(
             count: widget.banners.length, currentIndex: _currentPage),
       ],
@@ -89,21 +89,21 @@ class _BannerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final padding = screenWidth * 0.02;
+    final padding = screenWidth * 0.016;
 
     return GestureDetector(
       onTap: () {},
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: padding),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: AppColors.primary.withValues(alpha: 0.5),
             width: 1.2,
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -136,9 +136,9 @@ class _BannerItem extends StatelessWidget {
                 ),
               ),
               Positioned(
-                left: screenWidth * 0.04,
-                right: screenWidth * 0.04,
-                bottom: screenWidth * 0.04,
+                left: screenWidth * 0.035,
+                right: screenWidth * 0.035,
+                bottom: screenWidth * 0.032,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -146,7 +146,7 @@ class _BannerItem extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.symmetric(
                           horizontal: screenWidth * 0.022,
-                          vertical: screenWidth * 0.012),
+                          vertical: screenWidth * 0.009),
                       decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(5)),
@@ -154,14 +154,14 @@ class _BannerItem extends StatelessWidget {
                           style: AppTextStyles.badge
                               .copyWith(color: AppColors.white, fontSize: 9)),
                     ),
-                    SizedBox(height: screenWidth * 0.02),
+                    SizedBox(height: screenWidth * 0.014),
                     if (banner.getTitle(locale).isNotEmpty)
                       Text(
                         banner.getTitle(locale),
                         style: AppTextStyles.titleLarge.copyWith(
                             color: AppColors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: screenWidth * 0.045),
+                            fontSize: screenWidth * 0.038),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -171,7 +171,7 @@ class _BannerItem extends StatelessWidget {
                         banner.getSubtitle(locale),
                         style: AppTextStyles.bodySmall.copyWith(
                             color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: screenWidth * 0.03),
+                            fontSize: screenWidth * 0.027),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

@@ -61,7 +61,7 @@ class CourseCard extends StatelessWidget {
                 _buildThumbnail(isDark),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -73,13 +73,13 @@ class CourseCard extends StatelessWidget {
                                 ? AppColors.textMainDark
                                 : AppColors.textMainLight,
                             fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            height: 1.3,
+                            fontSize: 12,
+                            height: 1.25,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         // Instructor
                         Text(
                           course.instructorName ?? '',
@@ -87,7 +87,7 @@ class CourseCard extends StatelessWidget {
                             color: isDark
                                 ? AppColors.textMutedDark
                                 : AppColors.textMutedLight,
-                            fontSize: 11,
+                            fontSize: 10,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -95,7 +95,7 @@ class CourseCard extends StatelessWidget {
                         const Spacer(),
                         // Stats Row
                         _buildStatsRow(isDark),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         // Price Row
                         _buildPrice(isDark),
                       ],
@@ -143,7 +143,7 @@ class CourseCard extends StatelessWidget {
             top: 8,
             left: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [
@@ -167,7 +167,7 @@ class CourseCard extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 10,
+                  fontSize: 9,
                 ),
               ),
             ),
@@ -177,7 +177,7 @@ class CourseCard extends StatelessWidget {
             top: 8,
             left: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: AppColors.success,
                 borderRadius: BorderRadius.circular(4),
@@ -187,7 +187,7 @@ class CourseCard extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
-                  fontSize: 11,
+                  fontSize: 9,
                 ),
               ),
             ),
@@ -198,7 +198,7 @@ class CourseCard extends StatelessWidget {
             top: 8,
             left: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: AppColors.error,
                 borderRadius: BorderRadius.circular(4),
@@ -208,7 +208,7 @@ class CourseCard extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
-                  fontSize: 11,
+                  fontSize: 9,
                 ),
               ),
             ),
@@ -222,9 +222,9 @@ class CourseCard extends StatelessWidget {
                 ? Icons.favorite_rounded
                 : Icons.favorite_border_rounded,
             onTap: onWishlistTap,
-            size: 40,
-            iconSize: 20,
-            borderRadius: 20,
+            size: 34,
+            iconSize: 17,
+            borderRadius: 17,
           ),
         ),
         // Add to Cart Button (overlay) - Accessible touch target
@@ -235,9 +235,9 @@ class CourseCard extends StatelessWidget {
             child: GlassIconButton(
               icon: Icons.add_shopping_cart_rounded,
               onTap: onAddToCart,
-              size: 40,
-              iconSize: 20,
-              borderRadius: 20,
+              size: 34,
+              iconSize: 17,
+              borderRadius: 17,
             ),
           ),
       ],
@@ -249,13 +249,13 @@ class CourseCard extends StatelessWidget {
       children: [
         // Students
         Icon(Icons.people_alt_outlined,
-            size: 14, color: isDark ? AppColors.grey400 : AppColors.grey500),
+            size: 12, color: isDark ? AppColors.grey400 : AppColors.grey500),
         const SizedBox(width: 3),
         Text(
           _formatCount(course.enrolledCount),
           style: TextStyle(
             color: isDark ? AppColors.grey400 : AppColors.grey500,
-            fontSize: 11,
+            fontSize: 10,
           ),
         ),
         const Spacer(),
@@ -264,18 +264,18 @@ class CourseCard extends StatelessWidget {
           '(${_formatCount(course.ratingCount)})',
           style: TextStyle(
             color: isDark ? AppColors.grey400 : AppColors.grey500,
-            fontSize: 11,
+            fontSize: 10,
           ),
         ),
         const SizedBox(width: 4),
-        const Icon(Icons.star_rounded, size: 14, color: AppColors.rating),
+        const Icon(Icons.star_rounded, size: 12, color: AppColors.rating),
         const SizedBox(width: 2),
         Text(
           course.rating.toStringAsFixed(1),
           style: const TextStyle(
             color: AppColors.rating,
             fontWeight: FontWeight.w700,
-            fontSize: 12,
+            fontSize: 10.5,
           ),
         ),
       ],
@@ -289,7 +289,7 @@ class CourseCard extends StatelessWidget {
         style: const TextStyle(
           color: AppColors.success,
           fontWeight: FontWeight.w700,
-          fontSize: 16,
+          fontSize: 14,
         ),
       );
     }
@@ -311,7 +311,7 @@ class CourseCard extends StatelessWidget {
               style: TextStyle(
                 color: isDark ? AppColors.white : AppColors.primary,
                 fontWeight: FontWeight.w700,
-                fontSize: 15,
+                fontSize: 13.5,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -324,7 +324,7 @@ class CourseCard extends StatelessWidget {
                 style: TextStyle(
                   color: isDark ? AppColors.grey500 : AppColors.grey400,
                   decoration: TextDecoration.lineThrough,
-                  fontSize: 11,
+                  fontSize: 10,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),

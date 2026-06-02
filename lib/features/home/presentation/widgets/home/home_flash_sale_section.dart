@@ -69,8 +69,8 @@ class _HomeFlashSaleSectionState extends State<HomeFlashSaleSection> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final cardWidth = (screenWidth * 0.42).clamp(155.0, 185.0);
-    final listHeight = (screenHeight * 0.32).clamp(230.0, 280.0);
+    final cardWidth = (screenWidth * 0.38).clamp(140.0, 170.0);
+    final listHeight = (screenHeight * 0.26).clamp(200.0, 240.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +81,7 @@ class _HomeFlashSaleSectionState extends State<HomeFlashSaleSection> {
           child: Container(
             padding: EdgeInsets.symmetric(
               horizontal: screenWidth * 0.03,
-              vertical: screenWidth * 0.02,
+              vertical: screenWidth * 0.016,
             ),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -93,8 +93,8 @@ class _HomeFlashSaleSectionState extends State<HomeFlashSaleSection> {
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFFDC2626).withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
                 BoxShadow(
                   color: const Color(0xFFDC2626).withValues(alpha: 0.2),
@@ -113,7 +113,7 @@ class _HomeFlashSaleSectionState extends State<HomeFlashSaleSection> {
                   style: const TextStyle(
                     color: AppColors.white,
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: 13,
                   ),
                 ),
                 const Spacer(),
@@ -122,7 +122,7 @@ class _HomeFlashSaleSectionState extends State<HomeFlashSaleSection> {
             ),
           ),
         ),
-        SizedBox(height: screenHeight * 0.012),
+        SizedBox(height: screenHeight * 0.008),
         // Course List with BlocBuilder
         BlocBuilder<WishlistCubit, WishlistState>(
           builder: (context, wishlistState) {
@@ -134,7 +134,7 @@ class _HomeFlashSaleSectionState extends State<HomeFlashSaleSection> {
                 physics: const BouncingScrollPhysics(),
                 itemCount: widget.courses.length,
                 separatorBuilder: (_, __) =>
-                    SizedBox(width: screenWidth * 0.04),
+                    SizedBox(width: screenWidth * 0.03),
                 itemBuilder: (context, index) {
                   final course = widget.courses[index];
                   final isInWishlist =

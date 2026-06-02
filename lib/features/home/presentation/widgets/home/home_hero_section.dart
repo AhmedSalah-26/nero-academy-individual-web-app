@@ -46,15 +46,12 @@ class HomeSliverAppBar extends StatelessWidget {
                     : Stack(
                         fit: StackFit.expand,
                         children: [
-                          Transform.scale(
-                            scale: 0.94,
+                          Image.asset(
+                            'assets/home_hero_clean.png',
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
                             alignment: Alignment.centerRight,
-                            child: Image.asset(
-                              'assets/home_hero_generated_reference.png',
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              alignment: Alignment.centerRight,
-                            ),
                           ),
                           const _HeroCopy(),
                         ],

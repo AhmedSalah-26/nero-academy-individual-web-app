@@ -91,7 +91,9 @@ class _MainScreenState extends State<MainScreen> {
           value:
               isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
           child: Scaffold(
-            extendBody: true,
+            backgroundColor:
+                isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+            extendBody: false,
             body: widget.navigationShell,
             bottomNavigationBar: SafeArea(
               child: Padding(
@@ -112,8 +114,8 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? AppColors.surfaceDark.withValues(alpha: 0.92)
-                            : Colors.white.withValues(alpha: 0.82),
+                            ? AppColors.surfaceDark.withValues(alpha: 0.58)
+                            : Colors.white.withValues(alpha: 0.52),
                         borderRadius: BorderRadius.circular(40),
                         border: Border.all(
                           color: isDark

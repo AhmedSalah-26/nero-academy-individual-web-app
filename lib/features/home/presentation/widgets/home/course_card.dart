@@ -254,17 +254,25 @@ class CourseCard extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(
-            Icons.science_outlined,
-            color: AppColors.primary.withValues(alpha: 0.28),
-            size: 38,
-          ),
-          Icon(
-            Icons.play_circle_outline_rounded,
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.72)
-                : AppColors.primary.withValues(alpha: 0.72),
-            size: 30,
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.12),
+              border: Border.all(
+                color:
+                    AppColors.primary.withValues(alpha: isDark ? 0.34 : 0.28),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              Icons.play_arrow_rounded,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.82)
+                  : AppColors.primary.withValues(alpha: 0.82),
+              size: 28,
+            ),
           ),
         ],
       ),

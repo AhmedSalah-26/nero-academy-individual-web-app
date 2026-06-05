@@ -1015,8 +1015,12 @@ class AppRouter {
       final user = Supabase.instance.client.auth.currentUser;
       final path = state.uri.path;
 
-      // Instructor dashboard access control (only /instructor route, not /instructor/:id profiles)
-      if (path == '/instructor' || path == '/instructor/') {
+      // Instructor workspace access control. Public instructor profiles live
+      // under /instructor/profile/:instructorId and remain publicly reachable.
+      final isInstructorWorkspace =
+          path == '/instructor' || path.startsWith('/instructor/');
+      final isPublicInstructorProfile = path.startsWith('/instructor/profile/');
+      if (isInstructorWorkspace && !isPublicInstructorProfile) {
         if (user == null) {
           return '/login';
         }

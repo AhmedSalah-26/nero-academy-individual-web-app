@@ -49,7 +49,6 @@ class ForumsListCubit extends Cubit<ForumsListState> {
           : const <InstructorForumCourse>[];
 
       final conversations = await _fetchConversations(
-        userId: userId,
         typeFilter: typeFilter,
         search: search,
       );
@@ -124,7 +123,6 @@ class ForumsListCubit extends Cubit<ForumsListState> {
 
   /// Fetch conversations using RPC
   Future<List<Conversation>> _fetchConversations({
-    required String userId,
     String? typeFilter,
     String? search,
   }) async {
@@ -132,7 +130,6 @@ class ForumsListCubit extends Cubit<ForumsListState> {
         '[$_tag] _fetchConversations: type=$typeFilter, search=$search');
 
     final response = await _supabase.rpc('get_user_conversations', params: {
-      'p_user_id': userId,
       'p_type': typeFilter,
     });
 
@@ -239,7 +236,6 @@ class ForumsListCubit extends Cubit<ForumsListState> {
     if (enabled) {
       await _supabase.rpc('get_or_create_course_conversation', params: {
         'p_course_id': courseId,
-        'p_user_id': userId,
       });
       return;
     }

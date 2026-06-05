@@ -68,7 +68,7 @@ class HomeAppBar extends StatelessWidget {
                       style: AppTextStyles.headlineMedium.copyWith(
                         color: const Color(0xFF6D28D9),
                         fontWeight: FontWeight.w800,
-                        fontSize: (screenWidth * 0.047).clamp(18.0, 21.0),
+                        fontSize: (screenWidth * 0.040).clamp(15.0, 17.0),
                         fontFamily: 'Almarai',
                       ),
                     ),
@@ -92,7 +92,7 @@ class HomeAppBar extends StatelessWidget {
                     );
                   },
                 ),
-                SizedBox(width: screenWidth * 0.01),
+                const SizedBox(width: 6),
                 BlocBuilder<CartCubit, CartState>(
                   bloc: sl<CartCubit>(),
                   builder: (context, state) {
@@ -105,13 +105,13 @@ class HomeAppBar extends StatelessWidget {
                     );
                   },
                 ),
-                SizedBox(width: screenWidth * 0.01),
+                const SizedBox(width: 6),
                 _QuickAction(
                   icon: Icons.history_rounded,
                   label: 'سجل التعلم',
                   onTap: () => AppRouter.goToHistory(context),
                 ),
-                SizedBox(width: screenWidth * 0.01),
+                const SizedBox(width: 6),
                 _QuickAction(
                   icon: Icons.favorite_border_rounded,
                   label: 'المفضلة',
@@ -147,107 +147,85 @@ class _QuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final buttonSize = (screenWidth * 0.082).clamp(32.0, 38.0);
-    final iconSize = (screenWidth * 0.042).clamp(16.0, 19.0);
+    final buttonSize = (screenWidth * 0.095).clamp(36.0, 44.0);
+    final iconSize = (screenWidth * 0.052).clamp(20.0, 24.0);
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: buttonSize,
-                height: buttonSize,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.cardDark : AppColors.white,
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.26),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.06),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  icon,
-                  color: AppColors.primary,
-                  size: iconSize,
-                ),
+          Container(
+            width: buttonSize,
+            height: buttonSize,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.cardDark : AppColors.white,
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.26),
               ),
-              if (hasNotification)
-                PositionedDirectional(
-                  top: -1,
-                  end: -1,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark ? AppColors.cardDark : AppColors.white,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              if ((badgeCount ?? 0) > 0)
-                PositionedDirectional(
-                  top: -5,
-                  end: -5,
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minWidth: compactBadge ? 16 : 18,
-                      minHeight: compactBadge ? 16 : 18,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border.all(
-                        color: isDark ? AppColors.cardDark : AppColors.white,
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      badgeCount! > 99 ? '99+' : badgeCount.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          SizedBox(
-            width: (screenWidth * 0.14).clamp(44.0, 58.0),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color:
-                    isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
-                fontSize: (screenWidth * 0.023).clamp(8.5, 10.0),
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-              ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.primary,
+              size: iconSize,
             ),
           ),
+          if (hasNotification)
+            PositionedDirectional(
+              top: -1,
+              end: -1,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? AppColors.cardDark : AppColors.white,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          if ((badgeCount ?? 0) > 0)
+            PositionedDirectional(
+              top: -5,
+              end: -5,
+              child: Container(
+                constraints: BoxConstraints(
+                  minWidth: compactBadge ? 16 : 18,
+                  minHeight: compactBadge ? 16 : 18,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(
+                    color: isDark ? AppColors.cardDark : AppColors.white,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  badgeCount! > 99 ? '99+' : badgeCount.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

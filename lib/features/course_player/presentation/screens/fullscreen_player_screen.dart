@@ -1,13 +1,23 @@
 import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/app_logger.dart';
 import '../../../../core/services/screen_protection_service.dart';
+import '../../data/services/youtube_stream_service.dart';
 
-/// Fullscreen Player Screen - Dedicated screen for fullscreen video playback
+/// Landscape fullscreen player for YouTube videos.
+///
+/// Uses [YouTubeStreamService] to fetch direct stream URLs (no iframes),
+/// then plays natively via [video_player] + [chewie].
+///
+/// Returns the last playback position (in seconds) via [Navigator.pop]
+/// so the caller can resume from where the user left off.
 class FullscreenPlayerScreen extends StatefulWidget {
   final String videoUrl;
   final int initialPosition;
@@ -27,201 +37,57 @@ class FullscreenPlayerScreen extends StatefulWidget {
 }
 
 class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
-  late YoutubePlayerController _controller;
-  bool _isControllerInitialized = false;
-  String? _videoId;
+  // ──────────────── State ────────────────
+  YouTubeStreamService? _streamService;
+  VideoPlayerController? _videoController;
+  ChewieController? _chewieController;
+
+  bool _isLoading = true;
+  String? _errorMessage;
   int _currentPosition = 0;
   bool _isExiting = false;
-  bool _hasAutoPlayed = false;
-  bool _isBuffering = false;
-  bool _isRestartingAfterEnd = false;
-  bool _isHandlingVideoEnd = false;
   bool _isPlaying = false;
   bool _showControls = true;
-  bool _isPreloading = true; // Flag for preload trick
-  bool _showOverlay = true; // Overlay to hide YouTube branding
-  Timer? _preloadCheckTimer; // Timer to check video position periodically
+  Timer? _controlsTimer;
+
+  // ══════════════════════════════════════════════════════════════
+  //  Lifecycle
+  // ══════════════════════════════════════════════════════════════
 
   @override
   void initState() {
     super.initState();
-    // Ensure screen protection stays on during fullscreen
+    _streamService = YouTubeStreamService();
     ScreenProtectionService.enable();
     unawaited(_setupFullscreen());
     _initializePlayer();
   }
 
+  @override
+  void dispose() {
+    unawaited(_restorePortraitMode());
+    _controlsTimer?.cancel();
+    _videoController?.removeListener(_onVideoChanged);
+    _chewieController?.dispose();
+    _videoController?.dispose();
+    _streamService?.dispose();
+    _streamService = null;
+    super.dispose();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  Orientation & System UI
+  // ══════════════════════════════════════════════════════════════
+
   Future<void> _setupFullscreen() async {
-    // Hide system UI for immersive experience
     await SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.immersiveSticky,
       overlays: [],
     );
-    // Force landscape orientation
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-  }
-
-  void _initializePlayer() {
-    _videoId = YoutubePlayer.convertUrlToId(widget.videoUrl);
-
-    if (_videoId == null) {
-      AppLogger.e('[Fullscreen] Invalid YouTube URL: ${widget.videoUrl}');
-      return;
-    }
-
-    _controller = YoutubePlayerController(
-      initialVideoId: _videoId!,
-      flags: const YoutubePlayerFlags(
-        autoPlay: true, // Auto play for preload trick
-        mute: true, // Mute during preload
-        enableCaption: false, // Disable captions
-        hideControls: true,
-        controlsVisibleAtStart: false,
-        startAt: 0, // Start from 0 for preload
-        hideThumbnail: true,
-        forceHD: true,
-        disableDragSeek: false,
-        loop: false, // Manual replay on end to block YouTube suggestions
-        isLive: false,
-      ),
-    );
-    _isControllerInitialized = true;
-
-    _controller.addListener(_updatePosition);
-    _controller.addListener(_onPlayerStateChanged);
-    AppLogger.i(
-        '[Fullscreen] Player initialized at position: ${widget.initialPosition}');
-
-    // Start preload trick - wait for actual video playback
-    _startPreloadCheck();
-
-    // Auto-hide controls initially
-    _startControlsTimer();
-  }
-
-  void _onPlayerStateChanged() {
-    if (!mounted || !_isControllerInitialized) return;
-
-    final playerValue = _controller.value;
-    final playerState = playerValue.playerState;
-
-    final isBufferingNow = playerState == PlayerState.buffering;
-    final isPlayingNow = playerValue.isPlaying;
-
-    if (isBufferingNow != _isBuffering || isPlayingNow != _isPlaying) {
-      setState(() {
-        _isBuffering = isBufferingNow;
-        _isPlaying = isPlayingNow;
-      });
-    }
-
-    final totalMs = playerValue.metaData.duration.inMilliseconds;
-    final positionMs = playerValue.position.inMilliseconds;
-    final remainingMs = totalMs - positionMs;
-    final shouldRestartBeforeLastSecond = !_isPreloading &&
-        isPlayingNow &&
-        totalMs > 1500 &&
-        remainingMs <= 900 &&
-        remainingMs >= 0;
-
-    if (shouldRestartBeforeLastSecond && !_isHandlingVideoEnd) {
-      unawaited(_restartAfterVideoEnd());
-      return;
-    }
-
-    if (!_isPreloading &&
-        playerState == PlayerState.ended &&
-        !_isHandlingVideoEnd) {
-      unawaited(_restartAfterVideoEnd());
-      return;
-    }
-
-    if (!_hasAutoPlayed && _controller.value.isReady && !_isPreloading) {
-      _hasAutoPlayed = true;
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted && !_controller.value.isPlaying) {
-          _controller.play();
-        }
-      });
-    }
-  }
-
-  Future<void> _restartAfterVideoEnd() async {
-    if (!_isControllerInitialized || !mounted || _isHandlingVideoEnd) return;
-
-    _isHandlingVideoEnd = true;
-    if (!_isRestartingAfterEnd) {
-      setState(() => _isRestartingAfterEnd = true);
-    }
-
-    try {
-      _controller.pause();
-      await Future.delayed(const Duration(milliseconds: 60));
-      _controller.seekTo(Duration.zero);
-      await Future.delayed(const Duration(milliseconds: 120));
-      if (mounted) {
-        _controller.play();
-      }
-    } catch (_) {
-      // Ignore transient webview/player errors during forced replay.
-    } finally {
-      if (mounted) {
-        await Future.delayed(const Duration(milliseconds: 250));
-        if (mounted) {
-          setState(() => _isRestartingAfterEnd = false);
-        }
-      }
-      _isHandlingVideoEnd = false;
-    }
-  }
-
-  /// Start checking for actual video playback position
-  /// Wait until video has actually played for 3 seconds (not wall-clock time)
-  void _startPreloadCheck() {
-    // Check every 500ms if video has played 3 seconds
-    _preloadCheckTimer =
-        Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-
-      // Check if video position has reached 3 seconds
-      final currentPosition = _controller.value.position.inSeconds;
-
-      if (currentPosition >= 3) {
-        timer.cancel();
-        _completePreload();
-      }
-    });
-  }
-
-  /// Complete the preload trick after 3 actual seconds of video playback
-  void _completePreload() {
-    if (!mounted) return;
-
-    // Pause, unmute, and seek to initial position
-    _controller.pause();
-    _controller.unMute(); // Unmute
-    _controller.seekTo(Duration(seconds: widget.initialPosition));
-
-    setState(() {
-      _showOverlay = false; // Hide black overlay
-      _isPreloading = false;
-      _isPlaying = false;
-    });
-
-    AppLogger.i(
-        '[Fullscreen] Preload complete (3 actual seconds played), ready for user');
-  }
-
-  void _updatePosition() {
-    if (mounted && _controller.value.isReady) {
-      _currentPosition = _controller.value.position.inSeconds;
-    }
   }
 
   Future<void> _restorePortraitMode() async {
@@ -235,43 +101,123 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
     ]);
   }
 
-  Future<void> _exitFullscreen() async {
-    if (_isExiting) return;
-    _isExiting = true;
+  // ══════════════════════════════════════════════════════════════
+  //  Player initialization
+  // ══════════════════════════════════════════════════════════════
 
-    await _restorePortraitMode();
+  Future<void> _initializePlayer() async {
+    final videoId = YouTubeStreamService.extractVideoId(widget.videoUrl);
 
-    // Return current position to previous screen
-    if (mounted) {
-      Navigator.of(context).pop(_currentPosition);
+    if (videoId == null) {
+      AppLogger.e('[Fullscreen] Invalid YouTube URL: ${widget.videoUrl}');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'errors.invalid_video_url'.tr();
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      // 1) Resolve direct stream URL
+      final result = await _streamService!.resolveStreamUrl(widget.videoUrl);
+
+      if (!mounted) return;
+
+      // 2) Create native video player
+      _videoController = VideoPlayerController.networkUrl(
+        result.streamUrl,
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      );
+
+      await _videoController!.initialize();
+
+      if (!mounted) return;
+
+      // 3) Seek to saved position
+      if (widget.initialPosition > 0) {
+        await _videoController!.seekTo(
+          Duration(seconds: widget.initialPosition),
+        );
+      }
+
+      // 4) Chewie for controls
+      _chewieController = ChewieController(
+        videoPlayerController: _videoController!,
+        autoPlay: true,
+        looping: false,
+        aspectRatio: _videoController!.value.aspectRatio == 0
+            ? 16 / 9
+            : _videoController!.value.aspectRatio,
+        materialProgressColors: ChewieProgressColors(
+          playedColor: AppColors.primary,
+          handleColor: AppColors.primary,
+          backgroundColor: Colors.white12,
+          bufferedColor: Colors.white24,
+        ),
+        allowFullScreen: false,
+        allowPlaybackSpeedChanging: true,
+        showControls: true,
+      );
+
+      _videoController!.addListener(_onVideoChanged);
+      _startControlsTimer();
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+
+      AppLogger.i(
+        '[Fullscreen] Player initialized at position: '
+        '${widget.initialPosition}s',
+      );
+    } on YouTubeStreamException catch (e) {
+      AppLogger.e('[Fullscreen] Stream error: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'course_player.video_unavailable'.tr();
+          _isLoading = false;
+        });
+      }
+    } catch (e, stack) {
+      AppLogger.e('[Fullscreen] Failed to initialize', e, stack);
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'course_player.video_unavailable'.tr();
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  @override
-  void dispose() {
-    unawaited(_restorePortraitMode());
+  // ══════════════════════════════════════════════════════════════
+  //  Playback listener
+  // ══════════════════════════════════════════════════════════════
 
-    _controlsTimer?.cancel();
-    _preloadCheckTimer?.cancel();
-    if (_isControllerInitialized) {
-      _controller.removeListener(_updatePosition);
-      _controller.removeListener(_onPlayerStateChanged);
-      final controller = _controller;
-      Future.microtask(() {
-        try {
-          controller.dispose();
-        } catch (_) {}
+  void _onVideoChanged() {
+    if (!mounted || _videoController == null) return;
+
+    if (_videoController!.value.hasError) {
+      setState(() {
+        _errorMessage = 'course_player.video_unavailable'.tr();
       });
+      return;
     }
-    super.dispose();
+
+    _currentPosition = _videoController!.value.position.inSeconds;
+    final isPlayingNow = _videoController!.value.isPlaying;
+    if (isPlayingNow != _isPlaying) {
+      setState(() => _isPlaying = isPlayingNow);
+    }
   }
 
-  Timer? _controlsTimer;
+  // ══════════════════════════════════════════════════════════════
+  //  Controls visibility
+  // ══════════════════════════════════════════════════════════════
 
   void _toggleControls() {
-    setState(() {
-      _showControls = !_showControls;
-    });
+    setState(() => _showControls = !_showControls);
 
     if (_showControls) {
       _startControlsTimer();
@@ -283,13 +229,28 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
   void _startControlsTimer() {
     _controlsTimer?.cancel();
     _controlsTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _showControls = false;
-        });
-      }
+      if (mounted) setState(() => _showControls = false);
     });
   }
+
+  // ══════════════════════════════════════════════════════════════
+  //  Navigation
+  // ══════════════════════════════════════════════════════════════
+
+  Future<void> _exitFullscreen() async {
+    if (_isExiting) return;
+    _isExiting = true;
+
+    await _restorePortraitMode();
+
+    if (mounted) {
+      Navigator.of(context).pop(_currentPosition);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  Build
+  // ══════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
@@ -300,257 +261,327 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
           unawaited(_exitFullscreen());
         }
       },
-      child: _videoId == null
-          ? _buildErrorScreen()
-          : Scaffold(
-              backgroundColor: Colors.black,
-              body: GestureDetector(
-                onTap: _toggleControls,
-                behavior: HitTestBehavior.opaque,
-                child: Stack(
-                  children: [
-                    // Video Player
-                    Center(
-                      child: YoutubePlayer(
-                        controller: _controller,
-                        bufferIndicator: const SizedBox.shrink(),
-                        showVideoProgressIndicator:
-                            false, // Hide loading indicator
-                        progressIndicatorColor: AppColors.primary,
-                        progressColors: const ProgressBarColors(
-                          playedColor: AppColors.primary,
-                          handleColor: AppColors.primary,
-                          bufferedColor: Colors.white24,
-                          backgroundColor: Colors.white12,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: _isLoading
+            ? _buildLoadingScreen()
+            : _errorMessage != null
+                ? _buildErrorScreen()
+                : GestureDetector(
+                    onTap: _toggleControls,
+                    behavior: HitTestBehavior.opaque,
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: AspectRatio(
+                            aspectRatio:
+                                _videoController!.value.aspectRatio == 0
+                                    ? 16 / 9
+                                    : _videoController!.value.aspectRatio,
+                            child: Chewie(controller: _chewieController!),
+                          ),
                         ),
-                        // Disable default actions as we build custom ones
-                        bottomActions: const [],
-                        topActions: const [],
-                      ),
-                    ),
 
-                    if (_showOverlay || _isBuffering || _isRestartingAfterEnd)
-                      Positioned.fill(
-                        child: _buildLoadingOverlay(isInitial: _showOverlay),
-                      ),
-
-                    // Custom Controls Overlay
-                    AnimatedOpacity(
-                      opacity: _showControls ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      child: IgnorePointer(
-                        ignoring: !_showControls,
-                        child: Stack(
-                          children: [
-                            // Top Bar (Back & Title)
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 8),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.black.withValues(alpha: 0.8),
-                                      Colors.transparent,
-                                    ],
-                                  ),
-                                ),
-                                child: SafeArea(
-                                  bottom: false,
-                                  child: Row(
-                                    children: [
-                                      IconButton(
-                                        onPressed: () =>
-                                            unawaited(_exitFullscreen()),
-                                        icon: const Icon(
-                                          Icons.arrow_back_ios_new_rounded,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            if (widget.courseTitle != null)
-                                              Text(
-                                                widget.courseTitle!,
-                                                style: const TextStyle(
-                                                  color: Colors.white70,
-                                                  fontSize: 12,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            if (widget.lessonTitle != null)
-                                              Text(
-                                                widget.lessonTitle!,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            // Center Play/Pause Button
-                            Center(
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    _controller.value.isPlaying
-                                        ? _controller.pause()
-                                        : _controller.play();
-                                    setState(() {}); // Update UI
-                                    _startControlsTimer(); // Reset timer
-                                  },
-                                  borderRadius: BorderRadius.circular(50),
+                        // Overlay controls (top bar + center play/pause + bottom bar)
+                        AnimatedOpacity(
+                          opacity: _showControls ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          child: IgnorePointer(
+                            ignoring: !_showControls,
+                            child: Stack(
+                              children: [
+                                // ── Top bar ──
+                                Positioned(
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
                                   child: Container(
-                                    padding: const EdgeInsets.all(12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.5),
-                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.black
+                                              .withValues(alpha: 0.8),
+                                          Colors.transparent,
+                                        ],
+                                      ),
                                     ),
-                                    child: Icon(
-                                      _isPlaying
-                                          ? Icons.pause
-                                          : Icons.play_arrow,
-                                      color: Colors.white,
-                                      size: 48,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            // Bottom Controls (Progress Bar, etc.)
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.only(
-                                    bottom: 20, left: 16, right: 16, top: 8),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                    colors: [
-                                      Colors.black.withValues(alpha: 0.8),
-                                      Colors.transparent,
-                                    ],
-                                  ),
-                                ),
-                                child: SafeArea(
-                                  top: false,
-                                  child: Row(
-                                    children: [
-                                      CurrentPosition(controller: _controller),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: ProgressBar(
-                                          isExpanded: true,
-                                          colors: const ProgressBarColors(
-                                            playedColor: AppColors.primary,
-                                            handleColor: AppColors.primary,
-                                            bufferedColor: Colors.white24,
-                                            backgroundColor: Colors.white12,
+                                    child: SafeArea(
+                                      bottom: false,
+                                      child: Row(
+                                        children: [
+                                          IconButton(
+                                            onPressed: () => unawaited(
+                                                _exitFullscreen()),
+                                            icon: const Icon(
+                                              Icons
+                                                  .arrow_back_ios_new_rounded,
+                                              color: Colors.white,
+                                              size: 22,
+                                            ),
                                           ),
-                                          controller: _controller,
-                                        ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisSize:
+                                                  MainAxisSize.min,
+                                              children: [
+                                                if (widget.courseTitle !=
+                                                    null)
+                                                  Text(
+                                                    widget.courseTitle!,
+                                                    style: const TextStyle(
+                                                      color:
+                                                          Colors.white70,
+                                                      fontSize: 12,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow
+                                                        .ellipsis,
+                                                  ),
+                                                if (widget.lessonTitle !=
+                                                    null)
+                                                  Text(
+                                                    widget.lessonTitle!,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow
+                                                        .ellipsis,
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 8),
-                                      RemainingDuration(
-                                          controller: _controller),
-                                      const SizedBox(width: 8),
-                                      // Rewind 10 seconds button
-                                      IconButton(
-                                        onPressed: () {
-                                          final currentPosition =
-                                              _controller.value.position;
-                                          final newPosition = currentPosition -
-                                              const Duration(seconds: 10);
-                                          _controller.seekTo(
-                                            newPosition.isNegative
-                                                ? Duration.zero
-                                                : newPosition,
-                                          );
-                                          _startControlsTimer();
-                                        },
-                                        icon: const Icon(
-                                          Icons.replay_10,
-                                          color: Colors.white,
-                                          size: 28,
-                                        ),
-                                        tooltip: 'رجوع 10 ثواني',
-                                      ),
-                                      // Forward 10 seconds button
-                                      IconButton(
-                                        onPressed: () {
-                                          final currentPosition =
-                                              _controller.value.position;
-                                          final duration =
-                                              _controller.metadata.duration;
-                                          final newPosition = currentPosition +
-                                              const Duration(seconds: 10);
-                                          _controller.seekTo(
-                                            newPosition > duration
-                                                ? duration
-                                                : newPosition,
-                                          );
-                                          _startControlsTimer();
-                                        },
-                                        icon: const Icon(
-                                          Icons.forward_10,
-                                          color: Colors.white,
-                                          size: 28,
-                                        ),
-                                        tooltip: 'تقديم 10 ثواني',
-                                      ),
-                                      PlaybackSpeedButton(
-                                          controller: _controller),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        onPressed: () =>
-                                            unawaited(_exitFullscreen()),
-                                        icon: const Icon(
-                                          Icons.fullscreen_exit,
-                                          color: Colors.white,
-                                          size: 28,
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ),
-                              ),
+
+                                // ── Center play/pause ──
+                                Center(
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        if (_videoController!
+                                            .value.isPlaying) {
+                                          _videoController!.pause();
+                                        } else {
+                                          _videoController!.play();
+                                        }
+                                        setState(() {});
+                                        _startControlsTimer();
+                                      },
+                                      borderRadius:
+                                          BorderRadius.circular(50),
+                                      child: Container(
+                                        padding:
+                                            const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          _isPlaying
+                                              ? Icons.pause
+                                              : Icons.play_arrow,
+                                          color: Colors.white,
+                                          size: 48,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // ── Bottom bar ──
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 20,
+                                      left: 16,
+                                      right: 16,
+                                      top: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                        colors: [
+                                          Colors.black
+                                              .withValues(alpha: 0.8),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                    child: SafeArea(
+                                      top: false,
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            _formatDuration(
+                                              _videoController!
+                                                  .value.position,
+                                            ),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child:
+                                                VideoProgressIndicator(
+                                              _videoController!,
+                                              allowScrubbing: true,
+                                              colors:
+                                                  const VideoProgressColors(
+                                                playedColor:
+                                                    AppColors.primary,
+                                                bufferedColor:
+                                                    Colors.white24,
+                                                backgroundColor:
+                                                    Colors.white12,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            _formatDuration(
+                                              _videoController!
+                                                  .value.duration,
+                                            ),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            onPressed: () {
+                                              final pos = _videoController!
+                                                  .value.position;
+                                              final newPos = pos -
+                                                  const Duration(
+                                                      seconds: 10);
+                                              _videoController!.seekTo(
+                                                newPos.isNegative
+                                                    ? Duration.zero
+                                                    : newPos,
+                                              );
+                                              _startControlsTimer();
+                                            },
+                                            icon: const Icon(
+                                              Icons.replay_10,
+                                              color: Colors.white,
+                                              size: 28,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            onPressed: () {
+                                              final pos = _videoController!
+                                                  .value.position;
+                                              final dur = _videoController!
+                                                  .value.duration;
+                                              final newPos = pos +
+                                                  const Duration(
+                                                      seconds: 10);
+                                              _videoController!.seekTo(
+                                                newPos > dur
+                                                    ? dur
+                                                    : newPos,
+                                              );
+                                              _startControlsTimer();
+                                            },
+                                            icon: const Icon(
+                                              Icons.forward_10,
+                                              color: Colors.white,
+                                              size: 28,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            onPressed: () => unawaited(
+                                                _exitFullscreen()),
+                                            icon: const Icon(
+                                              Icons.fullscreen_exit,
+                                              color: Colors.white,
+                                              size: 28,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  Helpers
+  // ══════════════════════════════════════════════════════════════
+
+  String _formatDuration(Duration duration) {
+    final minutes =
+        duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds =
+        duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    if (duration.inHours > 0) {
+      return '${duration.inHours}:$minutes:$seconds';
+    }
+    return '$minutes:$seconds';
+  }
+
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 42,
+              height: 42,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: AppColors.primary,
               ),
             ),
+            const SizedBox(height: 14),
+            Text(
+              'common.loading'.tr(),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -568,7 +599,7 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'errors.invalid_video_url'.tr(),
+              _errorMessage ?? 'errors.invalid_video_url'.tr(),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -584,46 +615,6 @@ class _FullscreenPlayerScreenState extends State<FullscreenPlayerScreen> {
                 foregroundColor: Colors.white,
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingOverlay({required bool isInitial}) {
-    final showLabel = isInitial;
-
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF101010), Color(0xFF000000)],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: 42,
-              height: 42,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: AppColors.primary,
-              ),
-            ),
-            if (showLabel) ...[
-              const SizedBox(height: 14),
-              Text(
-                'common.loading'.tr(),
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
           ],
         ),
       ),

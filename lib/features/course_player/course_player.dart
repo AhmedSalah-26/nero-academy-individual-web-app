@@ -40,6 +40,9 @@ export 'data/datasources/course_player_local_data_source.dart';
 // Repository Implementation
 export 'data/repositories/course_player_repository_impl.dart';
 
+// Services
+export 'data/services/youtube_stream_service.dart';
+
 // ============ Presentation ============
 // Cubit
 export 'presentation/cubit/course_player_cubit.dart';

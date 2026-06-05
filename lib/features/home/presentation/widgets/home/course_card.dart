@@ -63,44 +63,62 @@ class CourseCard extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Title
-                        Text(
-                          course.getTitle(locale),
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.textMainDark
-                                : AppColors.textMainLight,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11.5,
-                            height: 1.22,
+                        // Top Section
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Title
+                              Flexible(
+                                child: Text(
+                                  course.getTitle(locale),
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? AppColors.textMainDark
+                                        : AppColors.textMainLight,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11.5,
+                                    height: 1.22,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              // Instructor
+                              Text(
+                                course.instructorName ?? '',
+                                textAlign: TextAlign.right,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? AppColors.textMutedDark
+                                      : AppColors.textMutedLight,
+                                  fontSize: 9.8,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        // Instructor
-                        Text(
-                          course.instructorName ?? '',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.textMutedDark
-                                : AppColors.textMutedLight,
-                            fontSize: 9.8,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        // Bottom Section
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Stats Row
+                            _buildStatsRow(isDark),
+                            const SizedBox(height: 6),
+                            // Price Row
+                            _buildPrice(isDark),
+                          ],
                         ),
-                        const Spacer(),
-                        // Stats Row
-                        _buildStatsRow(isDark),
-                        const SizedBox(height: 6),
-                        // Price Row
-                        _buildPrice(isDark),
                       ],
                     ),
                   ),

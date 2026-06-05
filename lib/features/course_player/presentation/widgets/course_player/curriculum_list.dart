@@ -29,7 +29,9 @@ class CurriculumList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (sections.isEmpty || _calculateItemCount() == 0) {
+    final totalLessons = _calculateTotalLessons();
+
+    if (sections.isEmpty || totalLessons == 0) {
       return const Center(
         child: EmptyState(
           type: EmptyStateType.lessons,
@@ -56,7 +58,7 @@ class CurriculumList extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _calculateItemCount(),
               itemBuilder: (context, index) {
-                return _buildItem(index);
+                return _buildItem(index, totalLessons);
               },
             ),
           ),
@@ -74,9 +76,40 @@ class CurriculumList extends StatelessWidget {
     return count;
   }
 
-  Widget _buildItem(int index) {
+  int _calculateTotalLessons() {
+    return sections.fold<int>(
+      0,
+      (total, section) => total + section.lessons.length,
+    );
+  }
+
+  int? _currentLessonNumber() {
+    if (currentLesson == null) return null;
+
+    int lessonNumber = 0;
+    for (final section in sections) {
+      for (final lesson in section.lessons) {
+        lessonNumber++;
+        if (lesson.id == currentLesson!.id) {
+          return lessonNumber;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  String? _lessonProgressLabel(int totalLessons) {
+    final currentNumber = _currentLessonNumber();
+    if (currentNumber == null || totalLessons == 0) return null;
+
+    return 'محاضرة رقم $currentNumber من $totalLessons';
+  }
+
+  Widget _buildItem(int index, int totalLessons) {
     int currentIndex = 0;
     int globalLessonNumber = 0;
+    final lessonProgressLabel = _lessonProgressLabel(totalLessons);
 
     // First, calculate the global lesson number up to this index
     for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
@@ -90,6 +123,7 @@ class CurriculumList extends StatelessWidget {
           completedCount: getSectionCompletedCount(section),
           isDark: isDark,
           showDivider: sectionIndex > 0,
+          lessonProgressLabel: lessonProgressLabel,
         );
       }
       currentIndex++;

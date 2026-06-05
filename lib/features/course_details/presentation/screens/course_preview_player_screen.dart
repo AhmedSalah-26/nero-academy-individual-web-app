@@ -1,10 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../course_player/presentation/widgets/course_player/youtube_player_widget.dart';
+import '../../../course_player/data/services/youtube_stream_service.dart';
+import '../../../course_player/presentation/widgets/course_player/clean_youtube_player.dart';
 
-/// In-app preview player screen for course preview videos.
 class CoursePreviewPlayerScreen extends StatelessWidget {
   final String videoUrl;
   final String? courseTitle;
@@ -17,7 +16,8 @@ class CoursePreviewPlayerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasValidVideo = YoutubePlayer.convertUrlToId(videoUrl) != null;
+    final hasValidVideo =
+        YouTubeStreamService.extractVideoId(videoUrl) != null;
 
     return Scaffold(
       backgroundColor: Colors.black,

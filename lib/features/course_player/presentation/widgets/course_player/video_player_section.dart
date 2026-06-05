@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,9 +6,8 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/lesson_entity.dart';
 import '../../cubit/course_player_cubit.dart';
 import 'direct_video_player_widget.dart';
-import 'youtube_player_widget.dart';
+import 'clean_youtube_player.dart';
 
-/// Video Player Section Widget
 class VideoPlayerSection extends StatelessWidget {
   final LessonEntity lesson;
   final int currentPosition;
@@ -84,9 +82,9 @@ class VideoPlayerSection extends StatelessWidget {
       final initialPosition = progress?.lastPosition ?? 0;
       final isYouTube = _isYouTubeUrl(videoUrl) ||
           lesson.videoProvider == VideoProvider.youtube;
-      final shouldUseDirectPlayer = !isYouTube ||
-          lesson.videoProvider == VideoProvider.supabase ||
-          lesson.videoProvider == VideoProvider.bunny;
+      final shouldUseDirectPlayer = !isYouTube &&
+          (lesson.videoProvider == VideoProvider.supabase ||
+              lesson.videoProvider == VideoProvider.bunny);
 
       if (shouldUseDirectPlayer) {
         return DirectVideoPlayerWidget(
@@ -95,10 +93,6 @@ class VideoPlayerSection extends StatelessWidget {
           isDark: isDark,
           initialPosition: initialPosition,
         );
-      }
-
-      if (kIsWeb) {
-        return _buildUnsupportedWebYouTubeWidget();
       }
 
       return YouTubePlayerWidget(
@@ -119,47 +113,6 @@ class VideoPlayerSection extends StatelessWidget {
     return lower.contains('youtube.com') ||
         lower.contains('youtube-nocookie.com') ||
         lower.contains('youtu.be');
-  }
-
-  Widget _buildUnsupportedWebYouTubeWidget() {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: Container(
-        color: Colors.black,
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.public_off_rounded,
-                color: AppColors.error,
-                size: 44,
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'course_player.video_unavailable'.tr(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'YouTube links need an embed player on web. Upload a direct MP4/Supabase video URL to play with the web video player.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey.shade400,
-                  fontSize: 12,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildNoVideoWidget() {

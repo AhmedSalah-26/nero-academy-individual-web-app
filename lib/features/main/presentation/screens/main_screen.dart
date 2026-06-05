@@ -214,8 +214,16 @@ class _NavItem extends StatelessWidget {
         padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.12)
+              ? AppColors.primary.withValues(alpha: isDark ? 0.08 : 0.04)
               : Colors.transparent,
+          border: isSelected
+              ? Border.all(
+                  color: AppColors.primary.withValues(
+                    alpha: isDark ? 0.22 : 0.16,
+                  ),
+                  width: 1,
+                )
+              : null,
           borderRadius: BorderRadius.circular(screenWidth * 0.03),
         ),
         child: Icon(

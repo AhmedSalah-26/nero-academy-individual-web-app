@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/animations/animations.dart';
 import '../../../../core/routing/app_router.dart';
@@ -15,6 +14,7 @@ import '../../../../core/shared_widgets/report_dialog.dart';
 import '../../../../core/services/reports_service.dart';
 import '../../../cart/presentation/cubit/cart_cubit.dart';
 import '../../../cart/presentation/cubit/cart_state.dart';
+import '../../../course_player/data/services/youtube_stream_service.dart';
 import '../../../wishlist/presentation/cubit/wishlist_cubit.dart';
 import '../../../wishlist/presentation/cubit/wishlist_state.dart';
 import '../../domain/entities/course_details_entity.dart';
@@ -437,7 +437,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
       return;
     }
 
-    final videoId = YoutubePlayer.convertUrlToId(normalizedUrl);
+    final videoId = YouTubeStreamService.extractVideoId(normalizedUrl);
     if (videoId != null) {
       _openPreviewPlayerScreen(normalizedUrl, course);
       return;
@@ -492,7 +492,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
 
     final normalizedUrl = _normalizePreviewUrl(rawUrl);
     if (normalizedUrl == null ||
-        YoutubePlayer.convertUrlToId(normalizedUrl) == null) {
+        YouTubeStreamService.extractVideoId(normalizedUrl) == null) {
       _showErrorSnackBar('course_details.invalid_preview_link'.tr());
       return;
     }

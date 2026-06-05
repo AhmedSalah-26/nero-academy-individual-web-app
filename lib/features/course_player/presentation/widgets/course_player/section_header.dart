@@ -1,6 +1,8 @@
+import 'dart:ui' as ui;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
+
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/section_entity.dart';
 
@@ -11,6 +13,7 @@ class SectionHeader extends StatelessWidget {
   final int completedCount;
   final bool isDark;
   final bool showDivider;
+  final String? lessonProgressLabel;
 
   const SectionHeader({
     super.key,
@@ -19,6 +22,7 @@ class SectionHeader extends StatelessWidget {
     required this.completedCount,
     required this.isDark,
     this.showDivider = true,
+    this.lessonProgressLabel,
   });
 
   @override
@@ -60,7 +64,7 @@ class SectionHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'قائمة المحاضرات',
+                  lessonProgressLabel ?? 'قائمة المحاضرات',
                   style: TextStyle(
                     color: isDark
                         ? AppColors.textMutedDark.withValues(alpha: 0.75)

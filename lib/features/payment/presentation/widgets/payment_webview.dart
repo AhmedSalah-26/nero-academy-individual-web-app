@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/shared_widgets/error_state.dart';
 import '../../domain/entities/payment_result.dart';
 
 class PaymentWebView extends StatefulWidget {
@@ -303,53 +304,20 @@ class _PaymentWebViewState extends State<PaymentWebView> {
             ),
           if (_errorMessage != null && !_isLoading)
             Container(
-              color: Colors.white,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red.shade400,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      isRtl
-                          ? 'فشل في تحميل صفحة الدفع'
-                          : 'Failed to load payment page',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _errorMessage = null;
-                          _isLoading = true;
-                        });
-                        _controller?.loadRequest(Uri.parse(widget.paymentUrl));
-                      },
-                      child: Text(isRtl ? 'إعادة المحاولة' : 'Retry'),
-                    ),
-                  ],
-                ),
+              color: theme.scaffoldBackgroundColor,
+              child: ErrorState(
+                type: ErrorType.server,
+                title: isRtl
+                    ? 'فشل في تحميل صفحة الدفع'
+                    : 'Failed to load payment page',
+                message: _errorMessage!,
+                onRetry: () {
+                  setState(() {
+                    _errorMessage = null;
+                    _isLoading = true;
+                  });
+                  _controller?.loadRequest(Uri.parse(widget.paymentUrl));
+                },
               ),
             ),
         ],

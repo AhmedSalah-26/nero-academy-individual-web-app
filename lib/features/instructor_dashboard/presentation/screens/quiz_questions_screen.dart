@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/app_logger.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/shared_widgets/responsive_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../cubit/instructor_quizzes_cubit.dart';
@@ -88,7 +89,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
 
   Widget _buildBody(bool isArabic, bool isDark) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingState();
     }
 
     if (_questions.isEmpty) {
@@ -110,6 +111,7 @@ class _QuizQuestionsScreenState extends State<QuizQuestionsScreen> {
           child: ReorderableListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: _questions.length,
+            // ignore: deprecated_member_use
             onReorder: _onReorderQuestions,
             proxyDecorator: (child, index, animation) {
               return AnimatedBuilder(

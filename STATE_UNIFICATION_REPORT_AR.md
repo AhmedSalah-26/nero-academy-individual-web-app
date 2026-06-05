@@ -13,6 +13,24 @@
 
 الهدف: نخلي كل حالة full-screen أو section-level تمشي من نفس النظام، ونسيب الحالات الصغيرة داخل الأزرار والكروت لكن نوحد شكلها وتوكنز الألوان.
 
+## حالة التنفيذ
+
+- تم بدء تنفيذ توحيد أسلوب الخطأ.
+- تم تحديث `ErrorState` ليكون production-ready مع دعم `fullPage`, `section`, `compact`.
+- تم ربط النصوص بـ `easy_localization` عبر مفاتيح `error_state`.
+- تم تحويل `CartErrorState` و`WishlistErrorState` لاستخدام `ErrorState` بدل تكرار UI محلي.
+- تم تحويل أخطاء `CourseDetailsScreen` و`CourseSearchScreen` لاستخدام `ErrorState`.
+- تم تحويل `payment_webview.dart` لاستخدام `ErrorState` داخل شاشة الدفع.
+- تم تحويل `QuizInfoScreen` و`InstructorsScreen` لاستخدام `ErrorState`.
+- تم تحويل `AttachmentPreviewScreen` لاستخدام `ErrorState`.
+- تم تحويل `InstructorProfileScreen` لاستخدام `ErrorState`.
+- تم إنشاء `AppLoadingState` لتوحيد حالات التحميل full-page/section/compact.
+- تم إنشاء `AsyncStateView` لاستخدامه في الشاشات الجديدة أو التحويلات المستقبلية.
+- تم تحويل حالات التحميل المباشرة في History, Settings, Profile, Quizzes, Course Player tabs/sheets, Course Forum, Instructor Dashboard, My Learning.
+- تم تحويل empty states المحلية في Notes/Bookmarks/Quiz Info/Rating إلى `EmptyState`.
+- تم إنهاء المسح المستهدف لـ full-screen/section `CircularProgressIndicator`؛ لم يعد هناك استخدام مباشر في المسارات التي تم فحصها.
+- تم تنظيف ملاحظات `flutter analyze` على مستوى المشروع، وأصبح التحليل الكامل يمر بدون مشاكل.
+
 ## القاعدة المستهدفة
 
 1. حالات الخطأ العامة تستخدم `ErrorState`.

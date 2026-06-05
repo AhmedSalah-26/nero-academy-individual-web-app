@@ -7,6 +7,7 @@ import '../../../../core/animations/animations.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/shared_widgets/back_button.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/shared_widgets/responsive_dialog.dart';
 import '../cubit/settings_cubit.dart';
 import '../cubit/settings_state.dart';
@@ -64,8 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary));
+            return const AppLoadingState();
           }
           return _buildContent(state, isDark);
         },

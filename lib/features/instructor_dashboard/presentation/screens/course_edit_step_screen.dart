@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_colors.dart';
 
 import '../cubit/course_editor_cubit.dart';
@@ -98,7 +99,7 @@ class _CourseEditStepScreenState extends State<CourseEditStepScreen> {
           if (state.isLoading &&
               state.sections.isEmpty &&
               state.titleAr.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingState();
           }
           return body;
         },

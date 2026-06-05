@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/shared_widgets/back_button.dart';
+import '../../../../core/shared_widgets/error_state.dart';
 
 // Conditional imports
 import 'attachment_preview_mobile.dart'
@@ -114,7 +115,7 @@ class _AttachmentPreviewScreenState extends State<AttachmentPreviewScreen> {
         child: _isDownloading
             ? _buildDownloadingState(isDark)
             : _errorMessage != null
-                ? _buildErrorState(isDark)
+                ? _buildErrorState()
                 : _buildSuccessState(isDark),
       ),
     );
@@ -144,38 +145,12 @@ class _AttachmentPreviewScreenState extends State<AttachmentPreviewScreen> {
     );
   }
 
-  Widget _buildErrorState(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: isDark ? AppColors.grey500 : AppColors.grey400,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _errorMessage!,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? AppColors.grey400 : AppColors.textMutedLight,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _downloadAndOpenFile,
-            icon: const Icon(Icons.refresh),
-            label: const Text('إعادة المحاولة'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
+  Widget _buildErrorState() {
+    return ErrorState(
+      type: ErrorType.generic,
+      display: ErrorStateDisplay.section,
+      message: _errorMessage!,
+      onRetry: _downloadAndOpenFile,
     );
   }
 

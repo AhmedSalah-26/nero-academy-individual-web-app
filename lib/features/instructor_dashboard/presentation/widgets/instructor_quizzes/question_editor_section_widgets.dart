@@ -282,6 +282,7 @@ class QuestionEditorOptionsSection extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
+              // ignore: deprecated_member_use
               onReorder: onReorderOptions,
               children: options.asMap().entries.map((entry) {
                 return _OptionItem(

@@ -5,6 +5,7 @@ import '../../../../core/services/lesson_history_service.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/shared_widgets/empty_state.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
 
 /// History Screen - Shows recently watched lessons
@@ -49,7 +50,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 future: _historyService.getHistory(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const AppLoadingState();
                   }
 
                   final history = snapshot.data ?? [];

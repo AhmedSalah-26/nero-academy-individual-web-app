@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/animations/widgets/micro/pulse_animation.dart';
 import '../../../../core/shared_widgets/responsive_dialog.dart';
 import '../../../../core/shared_widgets/error_state.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../generated/locale_keys.g.dart';
@@ -105,7 +106,7 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen> {
           },
           builder: (context, state) {
             if (state.isLoading || !state.hasQuestions) {
-              return const Center(child: CircularProgressIndicator());
+              return const AppLoadingState();
             }
 
             if (state.isError) {

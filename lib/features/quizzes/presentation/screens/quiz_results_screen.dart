@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/animations/widgets/feedback/completion_animation.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../generated/locale_keys.g.dart';
@@ -47,7 +48,7 @@ class QuizResultsScreen extends StatelessWidget {
       body: BlocBuilder<QuizCubit, QuizState>(
         builder: (context, state) {
           if (state.completedAttempt == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingState();
           }
 
           return _buildContent(context, state, theme, isDark);

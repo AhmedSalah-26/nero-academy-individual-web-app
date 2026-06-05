@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/animations/animations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/shared_widgets/back_button.dart';
+import '../../../../core/shared_widgets/error_state.dart';
+import '../../../../core/shared_widgets/empty_state.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../generated/locale_keys.g.dart';
 import '../cubit/quiz_cubit.dart';
@@ -66,7 +69,7 @@ class _QuizInfoScreenState extends State<QuizInfoScreen> {
       body: BlocBuilder<QuizCubit, QuizState>(
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingState();
           }
 
           if (state.isError) {
@@ -99,41 +102,18 @@ class _QuizInfoScreenState extends State<QuizInfoScreen> {
   }
 
   Widget _buildErrorState(BuildContext context, QuizState state) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.error,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              state.errorMessage ?? LocaleKeys.error.tr(),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            ElevatedButton.icon(
-              onPressed: _loadQuiz,
-              icon: const Icon(Icons.refresh),
-              label: Text(LocaleKeys.retry.tr()),
-            ),
-          ],
-        ),
-      ),
+    return ErrorState(
+      type: ErrorType.generic,
+      display: ErrorStateDisplay.section,
+      message: state.errorMessage ?? LocaleKeys.error.tr(),
+      onRetry: _loadQuiz,
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Text(
-        LocaleKeys.quiz_not_found.tr(),
-        style: Theme.of(context).textTheme.bodyLarge,
-      ),
+    return EmptyState(
+      type: EmptyStateType.quizzes,
+      message: LocaleKeys.quiz_not_found.tr(),
     );
   }
 

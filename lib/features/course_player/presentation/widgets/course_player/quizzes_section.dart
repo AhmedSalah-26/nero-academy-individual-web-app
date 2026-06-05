@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/services/app_logger.dart';
 import '../../../../../core/shared_widgets/empty_state.dart';
+import '../../../../../core/shared_widgets/loading_state.dart';
 import '../../../../quizzes/domain/entities/quiz_entity.dart';
 import '../../../../quizzes/domain/repositories/quizzes_repository.dart';
 
@@ -63,9 +64,7 @@ class _QuizzesSectionState extends State<QuizzesSection> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 200,
-            child: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            child: AppLoadingState.section(),
           );
         }
 

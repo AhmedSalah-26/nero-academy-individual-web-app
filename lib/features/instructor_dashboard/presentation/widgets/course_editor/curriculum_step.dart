@@ -66,6 +66,7 @@ class CurriculumStep extends StatelessWidget {
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: state.sections.length,
+      // ignore: deprecated_member_use
       onReorder: (oldIndex, newIndex) {
         cubit.reorderSections(oldIndex, newIndex);
       },

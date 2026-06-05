@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../../../../core/shared_widgets/empty_state.dart';
+import '../../../../../core/shared_widgets/loading_state.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/note_entity.dart';
 
@@ -27,7 +29,7 @@ class NotesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingState.section();
     }
 
     return Column(
@@ -75,39 +77,11 @@ class NotesTab extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.note_alt_outlined,
-            size: 64,
-            color: isDark
-                ? AppColors.textMutedDark.withValues(alpha: 0.5)
-                : AppColors.textMutedLight.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'course_player.no_notes'.tr(),
-            style: TextStyle(
-              color:
-                  isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'course_player.no_notes_desc'.tr(),
-            style: TextStyle(
-              color: isDark
-                  ? AppColors.textMutedDark.withValues(alpha: 0.7)
-                  : AppColors.textMutedLight.withValues(alpha: 0.7),
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return EmptyState(
+      type: EmptyStateType.notes,
+      title: 'course_player.no_notes'.tr(),
+      message: 'course_player.no_notes_desc'.tr(),
+      compact: true,
     );
   }
 

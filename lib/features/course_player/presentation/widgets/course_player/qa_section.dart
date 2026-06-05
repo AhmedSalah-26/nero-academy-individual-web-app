@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/services/app_logger.dart';
 import '../../../../../core/shared_widgets/empty_state.dart';
+import '../../../../../core/shared_widgets/loading_state.dart';
 import '../../../../../core/shared_widgets/responsive_dialog.dart';
 import '../../../domain/entities/qa_question_entity.dart';
 import '../../../domain/repositories/course_player_repository.dart';
@@ -72,9 +73,7 @@ class _QASectionState extends State<QASection> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 200,
-            child: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            child: AppLoadingState.section(),
           );
         }
 

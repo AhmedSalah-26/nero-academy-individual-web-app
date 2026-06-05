@@ -8,6 +8,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 
 import '../../../../core/shared_widgets/back_button.dart';
+import '../../../../core/shared_widgets/error_state.dart';
 import '../cubit/instructor_cubit.dart';
 import '../cubit/instructor_state.dart';
 import '../widgets/instructor_course_grid.dart';
@@ -73,11 +74,11 @@ class _InstructorProfileScreenState extends State<InstructorProfileScreen> {
           }
 
           if (state.isError) {
-            return _buildError(state.errorMessage, isDark);
+            return _buildError(state.errorMessage);
           }
 
           if (state.instructor == null) {
-            return _buildError('Instructor not found', isDark);
+            return _buildError('Instructor not found');
           }
 
           return _buildContent(state, isDark);
@@ -479,30 +480,11 @@ class _InstructorProfileScreenState extends State<InstructorProfileScreen> {
     );
   }
 
-  Widget _buildError(String? message, bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            size: 64,
-            color: isDark ? AppColors.grey600 : AppColors.grey400,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message ?? 'common.error'.tr(),
-            style: TextStyle(
-              color: isDark ? AppColors.grey400 : AppColors.grey500,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('common.go_back'.tr()),
-          ),
-        ],
-      ),
+  Widget _buildError(String? message) {
+    return ErrorState(
+      type: ErrorType.generic,
+      message: message ?? 'common.error'.tr(),
+      onGoBack: () => Navigator.pop(context),
     );
   }
 }

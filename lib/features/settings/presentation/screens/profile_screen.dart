@@ -10,6 +10,7 @@ import '../../../../core/services/logout_service.dart';
 import '../../../../core/services/user_role_service.dart';
 import '../../../../core/shared_widgets/responsive_dialog.dart';
 import '../../../../core/shared_widgets/error_state.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
@@ -46,8 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary));
+            return const AppLoadingState();
           }
           if (state.isError) {
             return _buildError(state, isDark);

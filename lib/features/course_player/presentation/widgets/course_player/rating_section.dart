@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/shared_widgets/empty_state.dart';
+import '../../../../../core/shared_widgets/loading_state.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/utils/toast_utils.dart';
 import '../../../../../core/services/app_logger.dart';
@@ -218,9 +220,7 @@ class _RatingSectionState extends State<RatingSection> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading && !_hasExistingRating) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return const AppLoadingState.section();
     }
 
     return SingleChildScrollView(
@@ -294,25 +294,13 @@ class _RatingSectionState extends State<RatingSection> {
 
   Widget _buildReviewsList() {
     if (_isLoadingReviews) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return const AppLoadingState.section();
     }
 
     if (_reviews.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(
-            'لا توجد تقييمات بعد',
-            style: TextStyle(
-              fontSize: 16,
-              color: widget.isDark
-                  ? AppColors.textMutedDark
-                  : AppColors.textMutedLight,
-            ),
-          ),
-        ),
+      return const EmptyState(
+        type: EmptyStateType.reviews,
+        compact: true,
       );
     }
 

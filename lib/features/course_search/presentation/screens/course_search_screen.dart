@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/shared_widgets/empty_state.dart';
+import '../../../../core/shared_widgets/error_state.dart';
 import '../../../../core/animations/widgets/entry/staggered_list.dart';
 import '../../../../core/animations/widgets/loading/custom_refresh_indicator.dart';
 import '../../../../generated/locale_keys.g.dart';
@@ -81,7 +82,7 @@ class _CourseSearchScreenState extends State<CourseSearchScreen> {
                 }
 
                 if (state.isError) {
-                  return _buildErrorState(theme, state);
+                  return _buildErrorState(state);
                 }
 
                 if (!state.hasResults) {
@@ -252,37 +253,13 @@ class _CourseSearchScreenState extends State<CourseSearchScreen> {
     );
   }
 
-  Widget _buildErrorState(ThemeData theme, CourseSearchState state) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 64,
-              color: AppColors.error.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              state.errorMessage ?? LocaleKeys.error.tr(),
-              style: theme.textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                context
-                    .read<CourseSearchCubit>()
-                    .search(_searchController.text);
-              },
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(LocaleKeys.retry.tr()),
-            ),
-          ],
-        ),
-      ),
+  Widget _buildErrorState(CourseSearchState state) {
+    return ErrorState(
+      type: ErrorType.generic,
+      message: state.errorMessage ?? LocaleKeys.error.tr(),
+      onRetry: () {
+        context.read<CourseSearchCubit>().search(_searchController.text);
+      },
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/course_forums_management_models.dart';
 
@@ -215,7 +216,7 @@ class _CourseGroupMembersScreenState extends State<CourseGroupMembersScreen> {
 
   Widget _buildBody(bool isDark, bool isArabic) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingState();
     }
 
     if (_error != null) {
@@ -334,10 +335,9 @@ class _CourseGroupMembersScreenState extends State<CourseGroupMembersScreen> {
                         ? Icons.manage_accounts_outlined
                         : Icons.more_vert,
                   ),
-                  tooltip:
-                      member.role == 'admin'
-                          ? (isArabic ? 'إعدادات الأدمن' : 'Admin settings')
-                          : (isArabic ? 'إدارة العضو' : 'Manage member'),
+                  tooltip: member.role == 'admin'
+                      ? (isArabic ? 'إعدادات الأدمن' : 'Admin settings')
+                      : (isArabic ? 'إدارة العضو' : 'Manage member'),
                   onSelected: (value) => _onMemberMenuTap(member, value),
                   itemBuilder: (_) {
                     final items = <PopupMenuEntry<String>>[];

@@ -7,6 +7,7 @@ import '../../../../core/animations/animations.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/shared_widgets/glass_icon_button.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/toast_utils.dart';
 import '../../../../core/shared_widgets/empty_state.dart';
@@ -246,7 +247,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
           if (state.isLoadingMore)
             const Padding(
               padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: AppLoadingState.compact(),
             ),
         ],
       ),

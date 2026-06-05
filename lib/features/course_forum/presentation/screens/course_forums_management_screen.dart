@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/course_forums_management_models.dart';
 import 'course_group_members_screen.dart';
@@ -129,7 +130,7 @@ class _CourseForumsManagementScreenState
 
   Widget _buildBody(bool isDark, bool isArabic) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingState();
     }
 
     if (_error != null) {

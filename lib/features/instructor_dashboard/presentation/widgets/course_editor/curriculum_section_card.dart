@@ -87,6 +87,7 @@ class _SectionCardState extends State<SectionCard> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
+              // ignore: deprecated_member_use
               onReorder: (oldIndex, newIndex) {
                 if (widget.onReorderLessons != null) {
                   widget.onReorderLessons!(oldIndex, newIndex);

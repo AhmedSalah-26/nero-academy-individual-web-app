@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:youtube_explode_dart/src/reverse_engineering/youtube_http_client.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../../../../core/constants/app_constants.dart';
@@ -22,24 +21,27 @@ class YouTubeStreamResult {
 /// A custom HTTP client that prepends a CORS proxy URL to requests when running on the web.
 class CorsProxyClient extends http.BaseClient {
   final http.Client _inner = http.Client();
-  
+
   // Use our custom Supabase Edge Function proxy
-  final String proxyUrl = '${AppConstants.supabaseUrl}/functions/v1/youtube-proxy?url=';
+  final String proxyUrl =
+      '${AppConstants.supabaseUrl}/functions/v1/youtube-proxy?url=';
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
     if (kIsWeb) {
-      final proxyUri = Uri.parse('$proxyUrl${Uri.encodeComponent(request.url.toString())}');
+      final proxyUri =
+          Uri.parse('$proxyUrl${Uri.encodeComponent(request.url.toString())}');
       final proxyRequest = http.Request(request.method, proxyUri);
       proxyRequest.headers.addAll(request.headers);
-      
+
       // Add Supabase authentication header for the Edge Function
-      proxyRequest.headers['Authorization'] = 'Bearer ${AppConstants.supabaseAnonKey}';
-      
+      proxyRequest.headers['Authorization'] =
+          'Bearer ${AppConstants.supabaseAnonKey}';
+
       // Remove restricted headers that cause issues with some proxies
       proxyRequest.headers.remove('origin');
       proxyRequest.headers.remove('referer');
-      
+
       if (request is http.Request) {
         proxyRequest.bodyBytes = request.bodyBytes;
       }
@@ -117,8 +119,7 @@ class YouTubeStreamService {
     try {
       AppLogger.i('[YouTubeStream] Fetching manifest for video: $videoId');
 
-      final manifest =
-          await _yt.videos.streamsClient.getManifest(videoId);
+      final manifest = await _yt.videos.streamsClient.getManifest(videoId);
 
       // 1) Try muxed streams first (audio + video in one container)
       if (manifest.muxed.isNotEmpty) {

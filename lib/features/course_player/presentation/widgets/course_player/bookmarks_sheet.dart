@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/services/app_logger.dart';
 import '../../../../../core/shared_widgets/empty_state.dart';
+import '../../../../../core/shared_widgets/loading_state.dart';
 import '../../../domain/entities/bookmark_entity.dart';
 import '../../../domain/repositories/course_player_repository.dart';
 
@@ -106,9 +107,7 @@ class BookmarksSheet extends StatelessWidget {
     AsyncSnapshot<List<BookmarkEntity>> snapshot,
   ) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return const AppLoadingState.section();
     }
 
     final bookmarks = snapshot.data ?? [];

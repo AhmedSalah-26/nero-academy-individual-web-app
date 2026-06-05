@@ -131,6 +131,7 @@ class AttachmentsStep extends StatelessWidget {
           child: ReorderableListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: state.attachments.length,
+            // ignore: deprecated_member_use
             onReorder: (oldIndex, newIndex) {
               cubit.reorderAttachments(oldIndex, newIndex);
             },

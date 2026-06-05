@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/shared_widgets/loading_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../cubit/instructor_earnings_cubit.dart';
 import '../../data/models/instructor_earning_model.dart';
@@ -344,7 +345,7 @@ class _EarningsHistoryScreenState extends State<EarningsHistoryScreen> {
     return BlocBuilder<InstructorEarningsCubit, InstructorEarningsState>(
       builder: (context, state) {
         if (state.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppLoadingState.section();
         }
 
         final filteredEarnings = _filterEarnings(state.earnings);

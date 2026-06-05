@@ -195,6 +195,7 @@ class _PerformanceOptimizedListViewState
       padding: widget.padding,
       shrinkWrap: widget.shrinkWrap,
       physics: widget.physics,
+      // ignore: deprecated_member_use
       cacheExtent: widget.cacheExtent.toDouble(),
       itemCount: widget.children.length,
       itemBuilder: (context, index) {

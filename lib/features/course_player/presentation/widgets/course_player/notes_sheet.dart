@@ -4,6 +4,7 @@ import '../../../../../core/shared_widgets/responsive_dialog.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/services/app_logger.dart';
 import '../../../../../core/shared_widgets/empty_state.dart';
+import '../../../../../core/shared_widgets/loading_state.dart';
 import '../../../domain/entities/note_entity.dart';
 import '../../../domain/repositories/course_player_repository.dart';
 
@@ -134,9 +135,7 @@ class NotesSheet extends StatelessWidget {
     AsyncSnapshot<List<NoteEntity>> snapshot,
   ) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return const AppLoadingState.section();
     }
 
     final notes = snapshot.data ?? [];

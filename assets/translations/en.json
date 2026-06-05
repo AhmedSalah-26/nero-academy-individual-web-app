@@ -56,6 +56,18 @@
     "required_fields": "Some required fields are empty",
     "invalid_video_url": "Invalid video URL"
   },
+  "error_state": {
+    "network_title": "Connection lost",
+    "network_message": "Check your internet connection, then try again.",
+    "server_title": "Service unavailable",
+    "server_message": "Something went wrong on our side. Please try again in a moment.",
+    "not_found_title": "Nothing here yet",
+    "not_found_message": "The content you are looking for is unavailable or has been moved.",
+    "unauthorized_title": "Access required",
+    "unauthorized_message": "Please sign in or check your permissions to continue.",
+    "generic_title": "Something went wrong",
+    "generic_message": "We could not complete this action. Please try again."
+  },
   "auth": {
     "login": "Login",
     "register": "Register",

@@ -10,8 +10,8 @@ void main() {
     final r = pixel.r.toInt().toRadixString(16).padLeft(2, '0');
     final g = pixel.g.toInt().toRadixString(16).padLeft(2, '0');
     final b = pixel.b.toInt().toRadixString(16).padLeft(2, '0');
-    print('Exact Color: #$r$g$b');
+    stdout.writeln('Exact Color: #$r$g$b');
   } else {
-    print('Failed to decode');
+    stdout.writeln('Failed to decode');
   }
 }

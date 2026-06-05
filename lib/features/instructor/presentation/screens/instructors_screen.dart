@@ -7,6 +7,7 @@ import '../../../../core/shared_widgets/glass_search_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/shared_widgets/empty_state.dart';
+import '../../../../core/shared_widgets/error_state.dart';
 import '../../../../core/shared_widgets/loading_skeleton.dart';
 import '../../../../core/utils/arabic_utils.dart';
 import '../../data/datasources/instructor_remote_data_source.dart';
@@ -295,18 +296,10 @@ class _InstructorsScreenState extends State<InstructorsScreen> {
   }
 
   Widget _buildError() {
-    final isArabic = context.locale.languageCode == 'ar';
-    return Center(
-      child: EmptyState(
-        type: EmptyStateType.generic,
-        icon: Icons.wifi_off_rounded,
-        title: isArabic ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection',
-        message: isArabic
-            ? 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى'
-            : 'Check your internet connection and try again',
-        actionText: isArabic ? 'إعادة المحاولة' : 'Retry',
-        onAction: _loadInstructors,
-      ),
+    return ErrorState(
+      type: ErrorType.network,
+      display: ErrorStateDisplay.section,
+      onRetry: _loadInstructors,
     );
   }
 

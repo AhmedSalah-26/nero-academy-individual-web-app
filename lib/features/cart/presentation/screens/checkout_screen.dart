@@ -670,8 +670,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context); // Close webview
                   }
-                  _showError(
-                      'الدفع قيد التأكيد. سيتم تفعيل الاشتراك بعد تأكيد البنك.');
+                  _showError('payment.pending_confirmation'.tr());
                 } else if (context.mounted) {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context); // Close webview

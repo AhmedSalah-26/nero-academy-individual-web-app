@@ -295,7 +295,8 @@
     "success_subtitle": "Your courses are now available in My Learning",
     "order_id": "Order ID:",
     "start_learning": "Start Learning",
-    "back_to_home": "Back to Home"
+    "back_to_home": "Back to Home",
+    "pending_confirmation": "Payment is still being confirmed. Your subscription will activate after the bank confirms the payment."
   },
   "my_learning": {
     "title": "My Learning",

@@ -295,7 +295,8 @@
     "success_subtitle": "دوراتك متاحة الآن في تعلمي",
     "order_id": "رقم الطلب:",
     "start_learning": "ابدأ التعلم",
-    "back_to_home": "العودة للرئيسية"
+    "back_to_home": "العودة للرئيسية",
+    "pending_confirmation": "الدفع قيد التأكيد. سيتم تفعيل الاشتراك بعد تأكيد البنك."
   },
   "my_learning": {
     "title": "دوراتي",

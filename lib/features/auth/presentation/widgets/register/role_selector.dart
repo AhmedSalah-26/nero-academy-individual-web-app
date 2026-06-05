@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/user_entity.dart';
 
-/// Role Selector - Select user role (Student, Instructor)
+/// Role Selector - student registration only.
 class RoleSelector extends StatelessWidget {
   final UserRole selectedRole;
   final ValueChanged<UserRole> onRoleChanged;
@@ -31,23 +31,12 @@ class RoleSelector extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            // Student
             Expanded(
               child: _RoleCard(
                 icon: Icons.school,
                 label: 'طالب',
                 isSelected: selectedRole == UserRole.student,
                 onTap: () => onRoleChanged(UserRole.student),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Instructor
-            Expanded(
-              child: _RoleCard(
-                icon: Icons.cast_for_education,
-                label: 'مدرس',
-                isSelected: selectedRole == UserRole.instructor,
-                onTap: () => onRoleChanged(UserRole.instructor),
               ),
             ),
           ],

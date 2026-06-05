@@ -5,14 +5,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/utils/toast_utils.dart';
 import '../../../domain/entities/user_entity.dart';
-import 'register_stages/stage_role_selection.dart';
 import 'register_stages/stage_basic_info.dart';
 import 'register_stages/stage_contact_info.dart';
 import 'register_stages/stage_password.dart';
 import 'register_stages/stage_profile_photo.dart';
 
 enum _RegisterStageType {
-  roleSelection,
   basicInfo,
   contactInfo,
   password,
@@ -76,24 +74,13 @@ class _MultiStageRegisterState extends State<MultiStageRegister> {
   String? _lastCheckedEmail;
   bool? _lastCheckedEmailAvailable;
 
-  bool get _isInstructorApplicationFlow =>
-      widget.selectedRole == UserRole.instructor;
-
   List<_RegisterStageType> get _stageTypes {
-    final base = <_RegisterStageType>[
-      _RegisterStageType.roleSelection,
+    return const <_RegisterStageType>[
       _RegisterStageType.basicInfo,
       _RegisterStageType.contactInfo,
+      _RegisterStageType.password,
+      _RegisterStageType.profilePhoto,
     ];
-
-    if (!_isInstructorApplicationFlow) {
-      base.addAll([
-        _RegisterStageType.password,
-        _RegisterStageType.profilePhoto,
-      ]);
-    }
-
-    return base;
   }
 
   _RegisterStageType get _currentStageType => _stageTypes[_currentStage];
@@ -126,8 +113,6 @@ class _MultiStageRegisterState extends State<MultiStageRegister> {
 
   Future<bool> _validateCurrentStage() async {
     switch (_currentStageType) {
-      case _RegisterStageType.roleSelection:
-        return true;
       case _RegisterStageType.basicInfo:
         return _basicInfoFormKey.currentState?.validate() ?? false;
       case _RegisterStageType.contactInfo:
@@ -209,12 +194,6 @@ class _MultiStageRegisterState extends State<MultiStageRegister> {
 
   Widget _getCurrentStage() {
     switch (_currentStageType) {
-      case _RegisterStageType.roleSelection:
-        return StageRoleSelection(
-          selectedRole: widget.selectedRole,
-          onRoleChanged: widget.onRoleChanged,
-          isDark: widget.isDark,
-        );
       case _RegisterStageType.basicInfo:
         return Form(
           key: _basicInfoFormKey,
@@ -304,9 +283,7 @@ class _MultiStageRegisterState extends State<MultiStageRegister> {
 
   Widget _buildNextButton() {
     final isLastStage = _currentStage == _totalStages - 1;
-    final isArabic = context.locale.languageCode == 'ar';
     final isSubmitting = _isCheckingEmail || widget.isSubmitting;
-    final isInstructorRequest = _isInstructorApplicationFlow;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -336,22 +313,16 @@ class _MultiStageRegisterState extends State<MultiStageRegister> {
                   children: [
                     Text(
                       isLastStage
-                          ? (isInstructorRequest
-                              ? (isArabic
-                                  ? 'تقديم طلب التدريس'
-                                  : 'Submit Instructor Request')
-                              : 'auth.create_account'.tr())
+                          ? 'auth.create_account'.tr()
                           : 'common.next'.tr(),
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(width: 8),
                     Icon(
-                      isLastStage && isInstructorRequest
-                          ? Icons.send_rounded
-                          : isLastStage
-                              ? Icons.check_rounded
-                              : Icons.arrow_forward_rounded,
+                      isLastStage
+                          ? Icons.check_rounded
+                          : Icons.arrow_forward_rounded,
                       size: 20,
                     ),
                   ],

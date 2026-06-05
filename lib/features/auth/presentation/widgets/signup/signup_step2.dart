@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/user_entity.dart';
-import 'signup_text_field.dart';
 
 class SignupStep2 extends StatelessWidget {
   final TextEditingController headlineCtrl;
@@ -87,29 +86,7 @@ class SignupStep2 extends StatelessWidget {
           ),
           const SizedBox(height: 32),
 
-          // Instructor-only fields
-          if (selectedRole == UserRole.instructor) ...[
-            SignupTextField(
-              controller: headlineCtrl,
-              label: 'auth.headline'.tr(),
-              hint: 'auth.headline_placeholder'.tr(),
-              icon: Icons.title_outlined,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            SignupTextField(
-              controller: bioCtrl,
-              label: 'auth.bio'.tr(),
-              hint: 'auth.bio_placeholder'.tr(),
-              icon: Icons.description_outlined,
-              maxLines: 4,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 24),
-          ],
-
-          if (selectedRole == UserRole.student)
-            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
         ],
       ),
     );

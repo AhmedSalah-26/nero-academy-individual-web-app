@@ -7,8 +7,6 @@ import '../../../../../core/shared_widgets/phone_input_field.dart';
 import '../../../domain/entities/user_entity.dart';
 import 'auth_text_field.dart';
 import 'avatar_picker.dart';
-import 'instructor_fields.dart';
-import 'role_card.dart';
 
 class RegisterFormFields extends StatefulWidget {
   final TextEditingController nameCtrl;
@@ -67,15 +65,6 @@ class _RegisterFormFieldsState extends State<RegisterFormFields> {
         ),
         const SizedBox(height: 20),
       ],
-      // Role Selection
-      Text('auth.i_am_a'.tr(),
-          style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: widget.isDark ? AppColors.grey300 : AppColors.grey700)),
-      const SizedBox(height: 12),
-      _buildRoleSelector(),
-      const SizedBox(height: 20),
       // Name Field
       AuthTextField(
           controller: widget.nameCtrl,
@@ -127,43 +116,7 @@ class _RegisterFormFieldsState extends State<RegisterFormFields> {
       const SizedBox(height: 8),
       Text('auth.password_hint'.tr(),
           style: const TextStyle(fontSize: 12, color: AppColors.grey400)),
-      // Role-specific fields
-      if (widget.selectedRole == UserRole.instructor &&
-          widget.headlineCtrl != null &&
-          widget.bioCtrl != null &&
-          widget.expertiseCtrl != null)
-        InstructorFields(
-          headlineCtrl: widget.headlineCtrl!,
-          bioCtrl: widget.bioCtrl!,
-          expertiseCtrl: widget.expertiseCtrl!,
-          isDark: widget.isDark,
-        ),
     ]);
-  }
-
-  Widget _buildRoleSelector() {
-    return LayoutBuilder(builder: (_, c) {
-      final s = (c.maxWidth - 12) / 2;
-      return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        RoleCard(
-            role: UserRole.instructor,
-            selectedRole: widget.selectedRole,
-            icon: Icons.cast_for_education_rounded,
-            label: 'auth.role_instructor'.tr(),
-            isDark: widget.isDark,
-            size: s,
-            onTap: () => widget.onRoleChanged(UserRole.instructor)),
-        const SizedBox(width: 12),
-        RoleCard(
-            role: UserRole.student,
-            selectedRole: widget.selectedRole,
-            icon: Icons.school_rounded,
-            label: 'auth.role_student'.tr(),
-            isDark: widget.isDark,
-            size: s,
-            onTap: () => widget.onRoleChanged(UserRole.student)),
-      ]);
-    });
   }
 
   /// الحصول على رقم الهاتف الكامل مع كود الدولة

@@ -42,7 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
   UserRole _role = UserRole.student;
   Uint8List? _avatarBytes;
   String _countryDialCode = '+20';
-  bool _isSubmittingInstructorRequest = false;
   bool _showAwaitingVerification = false;
 
   @override
@@ -124,94 +123,96 @@ class _LoginScreenState extends State<LoginScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const SizedBox(height: 32),
-                            FadeIn(
-                              duration: const Duration(milliseconds: 600),
-                              child: _titleSection(
-                                isDark,
-                                isArabic,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            SlideFadeIn.fromBottom(
-                              delay: const Duration(milliseconds: 200),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 24),
-                                child: AuthTabBar(
-                                  isLogin: _isLogin,
-                                  loginLabel: 'auth.login'.tr(),
-                                  registerLabel: 'auth.register'.tr(),
-                                  onChanged: (v) =>
-                                      setState(() => _isLogin = v),
-                                  isDark: isDark,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            SlideFadeIn.fromBottom(
-                              delay: const Duration(milliseconds: 300),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 24),
-                                child: _isLogin
-                                    ? Form(
-                                        key: _formKey,
-                                        child: Column(
-                                          children: [
-                                            _loginForm(isDark),
-                                            const SizedBox(height: 24),
-                                            _submitBtn(),
-                                            const SizedBox(height: 16),
-                                            _parentLoginBtn(isDark),
-                                            const SizedBox(height: 32),
-                                            _terms(),
-                                          ],
-                                        ),
-                                      )
-                                    : MultiStageRegister(
-                                        nameCtrl: _nameCtrl,
-                                        phoneCtrl: _phoneCtrl,
-                                        emailCtrl: _emailCtrl,
-                                        passCtrl: _passCtrl,
-                                        confirmPassCtrl: _confirmPassCtrl,
-                                        headlineCtrl: _headlineCtrl,
-                                        bioCtrl: _bioCtrl,
-                                        avatarBytes: _avatarBytes,
-                                        onPickAvatar: _pickAvatar,
-                                        obscurePassword: _obscure,
-                                        obscureConfirmPassword: _obscureConfirm,
-                                        onTogglePassword: () => setState(
-                                            () => _obscure = !_obscure),
-                                        onToggleConfirmPassword: () => setState(
-                                            () => _obscureConfirm =
-                                                !_obscureConfirm),
-                                        selectedRole: _role,
-                                        onRoleChanged: (r) =>
-                                            setState(() => _role = r),
-                                        onCountryCodeChanged: (code) =>
-                                            setState(
-                                                () => _countryDialCode = code),
+                                  FadeIn(
+                                    duration: const Duration(milliseconds: 600),
+                                    child: _titleSection(
+                                      isDark,
+                                      isArabic,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  SlideFadeIn.fromBottom(
+                                    delay: const Duration(milliseconds: 200),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 24),
+                                      child: AuthTabBar(
+                                        isLogin: _isLogin,
+                                        loginLabel: 'auth.login'.tr(),
+                                        registerLabel: 'auth.register'.tr(),
+                                        onChanged: (v) =>
+                                            setState(() => _isLogin = v),
                                         isDark: isDark,
-                                        isSubmitting:
-                                            _isSubmittingInstructorRequest,
-                                        onComplete: _submit,
                                       ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  SlideFadeIn.fromBottom(
+                                    delay: const Duration(milliseconds: 300),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 24),
+                                      child: _isLogin
+                                          ? Form(
+                                              key: _formKey,
+                                              child: Column(
+                                                children: [
+                                                  _loginForm(isDark),
+                                                  const SizedBox(height: 24),
+                                                  _submitBtn(),
+                                                  const SizedBox(height: 16),
+                                                  _parentLoginBtn(isDark),
+                                                  const SizedBox(height: 32),
+                                                  _terms(),
+                                                ],
+                                              ),
+                                            )
+                                          : MultiStageRegister(
+                                              nameCtrl: _nameCtrl,
+                                              phoneCtrl: _phoneCtrl,
+                                              emailCtrl: _emailCtrl,
+                                              passCtrl: _passCtrl,
+                                              confirmPassCtrl: _confirmPassCtrl,
+                                              headlineCtrl: _headlineCtrl,
+                                              bioCtrl: _bioCtrl,
+                                              avatarBytes: _avatarBytes,
+                                              onPickAvatar: _pickAvatar,
+                                              obscurePassword: _obscure,
+                                              obscureConfirmPassword:
+                                                  _obscureConfirm,
+                                              onTogglePassword: () => setState(
+                                                  () => _obscure = !_obscure),
+                                              onToggleConfirmPassword: () =>
+                                                  setState(() =>
+                                                      _obscureConfirm =
+                                                          !_obscureConfirm),
+                                              selectedRole: _role,
+                                              onRoleChanged: (_) => setState(
+                                                  () =>
+                                                      _role = UserRole.student),
+                                              onCountryCodeChanged: (code) =>
+                                                  setState(() =>
+                                                      _countryDialCode = code),
+                                              isDark: isDark,
+                                              isSubmitting: false,
+                                              onComplete: _submit,
+                                            ),
+                                    ),
+                                  ),
+                                  if (!_isLogin) ...[
+                                    const SizedBox(height: 16),
+                                    FadeIn(
+                                      delay: const Duration(milliseconds: 400),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24),
+                                        child: _terms(),
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 24),
+                                ],
                               ),
-                            ),
-                            if (!_isLogin) ...[
-                              const SizedBox(height: 16),
-                              FadeIn(
-                                delay: const Duration(milliseconds: 400),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 24),
-                                  child: _terms(),
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 24),
-                          ],
-                        ),
                       ),
                     ),
                   ),
@@ -455,135 +456,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final c = context.read<AuthCubit>();
     if (_isLogin) {
       c.login(email: _emailCtrl.text.trim(), password: _passCtrl.text);
-    } else if (_role == UserRole.instructor) {
-      _submitInstructorApplication();
     } else {
       c.register(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
         name: _nameCtrl.text.trim(),
         phone: _getFullPhoneNumber(),
-        role: _role,
-        headline:
-            _role == UserRole.instructor && _headlineCtrl.text.trim().isNotEmpty
-                ? _headlineCtrl.text.trim()
-                : null,
-        bio: _role == UserRole.instructor && _bioCtrl.text.trim().isNotEmpty
-            ? _bioCtrl.text.trim()
-            : null,
+        role: UserRole.student,
+        headline: null,
+        bio: null,
         avatarBytes: _avatarBytes,
       );
     }
-  }
-
-  Future<void> _submitInstructorApplication() async {
-    if (_isSubmittingInstructorRequest) return;
-
-    final isArabic = context.locale.languageCode == 'ar';
-    final name = _nameCtrl.text.trim();
-    final email = _emailCtrl.text.trim().toLowerCase();
-    final phone = _getFullPhoneNumber();
-
-    final nameError = Validators.required(
-      name,
-      message: isArabic ? 'الاسم مطلوب' : 'Name is required',
-    );
-    if (nameError != null) {
-      ToastUtils.showError(nameError);
-      return;
-    }
-
-    final emailError = Validators.email(
-      email,
-      emptyMessage: isArabic ? 'البريد الإلكتروني مطلوب' : 'Email is required',
-      invalidMessage:
-          isArabic ? 'البريد الإلكتروني غير صالح' : 'Invalid email address',
-    );
-    if (emailError != null) {
-      ToastUtils.showError(emailError);
-      return;
-    }
-
-    if (phone == null || phone.isEmpty) {
-      ToastUtils.showError(
-          isArabic ? 'رقم التواصل مطلوب' : 'Phone number is required');
-      return;
-    }
-
-    setState(() => _isSubmittingInstructorRequest = true);
-
-    try {
-      final client = Supabase.instance.client;
-      final existing = await client
-          .from('instructor_applications')
-          .select('id, status')
-          .eq('email', email)
-          .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      if (existing != null && existing['status'] == 'pending') {
-        ToastUtils.showInfo(
-          isArabic
-              ? 'تم إرسال طلب سابق لنفس البريد وهو قيد المراجعة'
-              : 'A request with this email is already pending review',
-        );
-        return;
-      }
-
-      await client.from('instructor_applications').insert({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'status': 'pending',
-      });
-
-      if (!mounted) return;
-      ToastUtils.showSuccess(
-        isArabic
-            ? 'تم إرسال طلب التدريس بنجاح. سيتواصل معك الأدمن بعد المراجعة.'
-            : 'Instructor request submitted successfully. Admin will contact you after review.',
-      );
-
-      _clearRegisterFields();
-      setState(() {
-        _isLogin = true;
-        _role = UserRole.student;
-      });
-    } on PostgrestException catch (e) {
-      final message = e.message.toLowerCase();
-      if (message.contains('relation') &&
-          message.contains('instructor_applications')) {
-        ToastUtils.showError(
-          isArabic
-              ? 'جدول طلبات المدرسين غير موجود. نفّذ سكربت قاعدة البيانات أولاً.'
-              : 'Instructor applications table is missing. Run the database script first.',
-        );
-      } else {
-        ToastUtils.showError(
-          isArabic ? 'تعذر إرسال الطلب حالياً' : 'Failed to submit request',
-        );
-      }
-    } catch (_) {
-      ToastUtils.showError(
-        isArabic ? 'حدث خطأ أثناء إرسال الطلب' : 'Unexpected error occurred',
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmittingInstructorRequest = false);
-      }
-    }
-  }
-
-  void _clearRegisterFields() {
-    _nameCtrl.clear();
-    _phoneCtrl.clear();
-    _emailCtrl.clear();
-    _passCtrl.clear();
-    _confirmPassCtrl.clear();
-    _headlineCtrl.clear();
-    _bioCtrl.clear();
-    _avatarBytes = null;
   }
 
   String? _getFullPhoneNumber() {
@@ -641,7 +525,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.grey800 : AppColors.grey100,
                   borderRadius: BorderRadius.circular(10),
@@ -720,7 +605,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                                valueColor:
+                                    AlwaysStoppedAnimation(AppColors.primary),
                               ),
                             )
                           : const Text(

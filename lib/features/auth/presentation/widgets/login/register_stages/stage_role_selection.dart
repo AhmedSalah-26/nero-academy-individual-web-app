@@ -52,16 +52,6 @@ class StageRoleSelection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             RoleCard(
-              role: UserRole.instructor,
-              selectedRole: selectedRole,
-              icon: Icons.cast_for_education_rounded,
-              label: 'auth.role_instructor'.tr(),
-              isDark: isDark,
-              size: s,
-              onTap: () => onRoleChanged(UserRole.instructor),
-            ),
-            const SizedBox(width: 12),
-            RoleCard(
               role: UserRole.student,
               selectedRole: selectedRole,
               icon: Icons.school_rounded,

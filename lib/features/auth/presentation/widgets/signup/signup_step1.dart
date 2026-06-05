@@ -176,30 +176,13 @@ class SignupStep1 extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: RoleSelectionCard(
-                  role: UserRole.student,
-                  label: 'auth.student'.tr(),
-                  icon: Icons.school_outlined,
-                  isSelected: selectedRole == UserRole.student,
-                  onTap: () => onRoleChanged(UserRole.student),
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: RoleSelectionCard(
-                  role: UserRole.instructor,
-                  label: 'auth.instructor'.tr(),
-                  icon: Icons.person_outline_rounded,
-                  isSelected: selectedRole == UserRole.instructor,
-                  onTap: () => onRoleChanged(UserRole.instructor),
-                  isDark: isDark,
-                ),
-              ),
-            ],
+          RoleSelectionCard(
+            role: UserRole.student,
+            label: 'auth.student'.tr(),
+            icon: Icons.school_outlined,
+            isSelected: true,
+            onTap: () => onRoleChanged(UserRole.student),
+            isDark: isDark,
           ),
           const SizedBox(height: 16),
 

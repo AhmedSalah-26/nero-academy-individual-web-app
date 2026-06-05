@@ -59,7 +59,7 @@ class CoursePlayerScreen extends StatefulWidget {
 class _CoursePlayerScreenState extends State<CoursePlayerScreen>
     with WidgetsBindingObserver {
   bool _isPlaying = false;
-  int _currentPosition = 260;
+  int _currentPosition = 0;
   final int _totalDuration = 765;
   Timer? _progressTimer;
 
@@ -121,7 +121,7 @@ class _CoursePlayerScreenState extends State<CoursePlayerScreen>
   }
 
   void _saveProgress() {
-    if (!mounted) return;
+    if (!mounted || !_isPlaying || _currentPosition <= 0) return;
     try {
       final cubit = context.read<CoursePlayerCubit>();
       if (cubit.state.currentLesson != null &&

@@ -8,6 +8,7 @@ import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/shared_widgets/back_button.dart';
 import '../../../payment/presentation/widgets/payment_webview.dart';
+import '../../data/datasources/enrollment_payment_service.dart';
 import '../../domain/entities/cart_entity.dart';
 import '../../domain/entities/payment_method_entity.dart';
 import '../cubit/cart_cubit.dart';
@@ -651,18 +652,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   '🔵 Payment result received: success=${result.success}, txnId=${result.transactionId}');
 
               if (result.success && result.transactionId != null) {
-                // Confirm payment in backend
+                // Wait for backend webhook confirmation.
                 if (!context.mounted) return;
-                final success =
+                final confirmation =
                     await checkoutCubit.confirmPayment(result.transactionId!);
 
-                if (success && context.mounted) {
+                if (confirmation == PaymentConfirmationStatus.paid &&
+                    context.mounted) {
                   // Clear cart and navigate to success
                   cartCubit.clearCart();
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context); // Close webview
                   }
                   _navigateToSuccess(orderId);
+                } else if (confirmation == PaymentConfirmationStatus.pending &&
+                    context.mounted) {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context); // Close webview
+                  }
+                  _showError(
+                      'الدفع قيد التأكيد. سيتم تفعيل الاشتراك بعد تأكيد البنك.');
                 } else if (context.mounted) {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context); // Close webview

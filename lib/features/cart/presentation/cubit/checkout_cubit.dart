@@ -168,7 +168,8 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       );
 
       if (paymentUrl != null) {
-        debugPrint('✅ [CheckoutCubit] Wallet payment URL generated successfully');
+        debugPrint(
+            '✅ [CheckoutCubit] Wallet payment URL generated successfully');
       } else {
         debugPrint('❌ [CheckoutCubit] Failed to generate wallet payment URL');
       }
@@ -180,26 +181,33 @@ class CheckoutCubit extends Cubit<CheckoutState> {
     }
   }
 
-  /// Confirm payment after successful Paymob transaction
-  Future<bool> confirmPayment(String transactionId) async {
-    if (_pendingParentEnrollmentId == null) return false;
+  /// Wait for the Paymob webhook to confirm payment on the backend.
+  Future<PaymentConfirmationStatus> confirmPayment(String transactionId) async {
+    if (_pendingParentEnrollmentId == null) {
+      return PaymentConfirmationStatus.failed;
+    }
 
     try {
-      final success = await enrollmentPaymentService.confirmPayment(
+      emit(state.copyWith(isProcessing: true));
+
+      final confirmation = await enrollmentPaymentService.confirmPayment(
         parentEnrollmentId: _pendingParentEnrollmentId!,
         transactionId: transactionId,
       );
 
-      if (success) {
-        // Update order status to completed
+      if (confirmation == PaymentConfirmationStatus.paid) {
         emit(state.copyWith(
+          isProcessing: false,
           order: state.order?.copyWith(status: OrderStatus.completed),
         ));
+      } else {
+        emit(state.copyWith(isProcessing: false));
       }
 
-      return success;
+      return confirmation;
     } catch (e) {
-      return false;
+      emit(state.copyWith(isProcessing: false));
+      return PaymentConfirmationStatus.failed;
     }
   }
 
